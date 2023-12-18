@@ -1,14 +1,15 @@
 # Experimental environment: 2 * A10
 # 2 * 20GB GPU memory
-nproc_per_node=2
+nproc_per_node=3
 
 PYTHONPATH=../../.. \
-CUDA_VISIBLE_DEVICES=0,1 \
+CUDA_VISIBLE_DEVICES=0,1,2 \
 torchrun \
     --nproc_per_node=$nproc_per_node \
     --master_port 29500 \
     llm_sft.py \
-    --model_id_or_path qwen/Qwen-14B-Chat-Int8 \
+    --model_type qwen-14b-chat-int8\
+    --model_cache_dir /home/css/models/Qwen-14B-Chat-Int8 \
     --model_revision master \
     --sft_type lora \
     --tuner_backend swift \
@@ -16,7 +17,7 @@ torchrun \
     --dtype fp16 \
     --output_dir output \
     --ddp_backend nccl \
-    --dataset lawyer-llama-zh \
+    --custom_train_dataset_path /home/hanlv/workspace/code/research/infodemic/LLM/LoRA/Qwen/data.jsonl \
     --train_dataset_sample -1 \
     --num_train_epochs 1 \
     --max_length 2048 \
@@ -25,7 +26,7 @@ torchrun \
     --lora_alpha 32 \
     --lora_dropout_p 0.05 \
     --lora_target_modules ALL \
-    --gradient_checkpointing true \
+    --gradient_checkpointing false \
     --batch_size 1 \
     --weight_decay 0.01 \
     --learning_rate 1e-4 \

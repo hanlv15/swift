@@ -3,6 +3,7 @@
 
 from swift.llm import InferArguments, ModelType
 from swift.llm.run import app_ui_main
+import custom
 
 if __name__ == '__main__':
     # Please refer to the `infer.sh` for setting the parameters.

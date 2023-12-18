@@ -21,10 +21,18 @@ class CustomModelType:
     tigerbot_13b = 'tigerbot-13b'
     tigerbot_13b_chat = 'tigerbot-13b-chat'
 
+    orca2_7b = "orca-2-7b"
+    openchat_35 = "openchat_3.5"
+    neural_chat_7b = "neural-chat-7b"
+    solar_10_7b = "solar-10.7b-instruct"
 
 class CustomTemplateType:
     tigerbot = 'tigerbot'
 
+    orca2 = "orca-2"
+    openchat_35 = "openchat_3.5"
+    neural = "neural"
+    solar="solar"
 
 class CustomDatasetName:
     stsb_en = 'stsb-en'
@@ -66,6 +74,70 @@ def get_tigerbot_model_tokenizer(model_dir: str,
             **model_kwargs)
     return model, tokenizer
 
+@register_model(CustomModelType.openchat_35,
+                '/home/css/models/openchat-3.5-1210', LoRATM.llama2,
+                CustomTemplateType.openchat_35)
+def get_openchat35_model_tokenizer(model_dir: str,
+                                 torch_dtype: Dtype,
+                                 model_kwargs: Dict[str, Any],
+                                 load_model: bool = True,
+                                 **kwargs):
+    model_config = AutoConfig.from_pretrained(model_dir)
+    # model_config.pretraining_tp = 1
+    model_config.torch_dtype = torch_dtype
+    logger.info(f'model_config: {model_config}')
+    tokenizer = AutoTokenizer.from_pretrained(model_dir)
+    model = None
+    if load_model:
+        model = AutoModelForCausalLM.from_pretrained(
+            model_dir,
+            config=model_config,
+            torch_dtype=torch_dtype,
+            **model_kwargs)
+    return model, tokenizer
+
+@register_model(CustomModelType.orca2_7b,
+                '/home/css/models/Orca-2-7b', LoRATM.llama2,
+                CustomTemplateType.orca2)
+def get_orca2_model_tokenizer(model_dir: str,
+                                 torch_dtype: Dtype,
+                                 model_kwargs: Dict[str, Any],
+                                 load_model: bool = True,
+                                 **kwargs):
+    model_config = AutoConfig.from_pretrained(model_dir)
+    # model_config.pretraining_tp = 1
+    model_config.torch_dtype = torch_dtype
+    logger.info(f'model_config: {model_config}')
+    tokenizer = AutoTokenizer.from_pretrained(model_dir, use_fast=False)
+    model = None
+    if load_model:
+        model = AutoModelForCausalLM.from_pretrained(
+            model_dir,
+            config=model_config,
+            torch_dtype=torch_dtype,
+            **model_kwargs)
+    return model, tokenizer
+
+@register_model(CustomModelType.solar_10_7b,
+                '/home/css/models/SOLAR-10.7B-Instruct-v1.0', LoRATM.llama2,
+                CustomTemplateType.solar)
+def get_solar_model_tokenizer(model_dir: str,
+                                 torch_dtype: Dtype,
+                                 model_kwargs: Dict[str, Any],
+                                 load_model: bool = True,
+                                 **kwargs):
+    model_config = AutoConfig.from_pretrained(model_dir)
+    model_config.torch_dtype = torch_dtype
+    logger.info(f'model_config: {model_config}')
+    tokenizer = AutoTokenizer.from_pretrained(model_dir)
+    model = None
+    if load_model:
+        model = AutoModelForCausalLM.from_pretrained(
+            model_dir,
+            config=model_config,
+            torch_dtype=torch_dtype,
+            **model_kwargs)
+    return model, tokenizer
 
 # Ref: https://github.com/TigerResearch/TigerBot/blob/main/infer.py
 register_template(
@@ -73,6 +145,36 @@ register_template(
     Template(['{{SYSTEM}}'],
              ['\n\n### Instruction:\n{{QUERY}}\n\n### Response:\n'], [],
              [['eos_token_id']], ''))
+
+register_template(
+    CustomTemplateType.openchat_35,
+    Template(
+        [],
+        ['GPT4 Correct User: {{QUERY}}<|end_of_turn|>GPT4 Correct Assistant:'],
+        ['<|end_of_turn|>'], [None], None, ['{{SYSTEM}}<|end_of_turn|>']))
+
+# 不支持多轮对话
+register_template(
+    CustomTemplateType.orca2,
+    Template(
+        [], ['<|im_start|>user\n{{QUERY}}<|im_end|>\n<|im_start|>assistant\n'],
+        ['<|im_end|>\n'], [None], None,
+        ['<|im_start|>system\n{{SYSTEM}}<|im_end|>\n']))
+
+# 待完善
+register_template(
+    CustomTemplateType.neural,
+    Template( 
+        [],
+        ['### User:\n{{QUERY}}\n### Assistant:\n'],
+        ['<|end_of_turn|>'], ['<|end_of_turn|>'], None, ['### System:\n{{SYSTEM}}\n']))
+
+register_template(
+    CustomTemplateType.solar,
+    Template( 
+        [],
+        ['### User:\n{{QUERY}}\n\n### Assistant:\n'],
+        ['\n\n'], [None], None, ['### System:\n{{SYSTEM}}\n\n']))
 
 
 def _preprocess_stsb(dataset: HfDataset) -> HfDataset:
