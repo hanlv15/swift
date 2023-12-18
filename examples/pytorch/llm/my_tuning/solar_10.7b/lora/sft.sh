@@ -20,7 +20,7 @@ if [ "$train_ratio" = "1" ] || [ -z "$train_ratio" ]; then
 fi
 output_name="$(date +"%Y%m%d-%H:%M:%S")-split_type=$split_type-train_ratio=$train_ratio"
 
-nproc_per_node=2
+nproc_per_node=1
 # eval_times=15
 gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
 # num_train_data=$(echo "scale=0; 12192 * (1 - $test_size) * $train_ratio / 1" | bc)

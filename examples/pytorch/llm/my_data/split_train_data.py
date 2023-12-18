@@ -7,9 +7,9 @@ from sklearn.model_selection import train_test_split
 import argparse
 import os
 
-parser = argparse.ArgumentParser(description='manual to this script')
-parser.add_argument("--size", type=float, default=0.1)
-args = parser.parse_args()
+# parser = argparse.ArgumentParser(description='manual to this script')
+# parser.add_argument("--size", type=float, default=0.1)
+# args = parser.parse_args()
 
 DEFAULT_SEED = 42
 def set_seed(seed=DEFAULT_SEED):
@@ -17,7 +17,7 @@ def set_seed(seed=DEFAULT_SEED):
     random.seed(seed)
 
 # data_dir = "/home/hanlv/workspace/code/research/infodemic/LLM/LoRA/swift_data/"
-data_dir = "./with_info/"
+data_dir = "./without_info/"
 
 
 data_path = data_dir + f"train_test_split/8:2/"
@@ -33,10 +33,11 @@ with jsonlines.open(
 
 set_seed()
 
-sample_size = int(args.size * len(train_data))
-new_train_data = random.sample(train_data, sample_size)
-    
-with jsonlines.open(data_path + f"subtrain_data/train_data_{args.size}.jsonl", mode="w") as file_jsonl:
-    for line in new_train_data:
-        file_jsonl.write(line)
+for size in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
+    sample_size = int(size * len(train_data))
+    new_train_data = random.sample(train_data, sample_size)
+        
+    with jsonlines.open(data_path + f"subtrain_data/train_data_{size}.jsonl", mode="w") as file_jsonl:
+        for line in new_train_data:
+            file_jsonl.write(line)
 

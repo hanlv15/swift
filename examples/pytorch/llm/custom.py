@@ -151,7 +151,7 @@ register_template(
     Template(
         [],
         ['GPT4 Correct User: {{QUERY}}<|end_of_turn|>GPT4 Correct Assistant:'],
-        ['<|end_of_turn|>'], [None], None, ['{{SYSTEM}}<|end_of_turn|>']))
+        ['<|end_of_turn|>'], ['<|end_of_turn|>'], None, ['{{SYSTEM}}<|end_of_turn|>']))
 
 # 不支持多轮对话
 register_template(
@@ -174,7 +174,7 @@ register_template(
     Template( 
         [],
         ['### User:\n{{QUERY}}\n\n### Assistant:\n'],
-        ['\n\n'], [None], None, ['### System:\n{{SYSTEM}}\n\n']))
+        ['\n\n'], ['</s>'], None, ['### System:\n{{SYSTEM}}\n\n']))
 
 
 def _preprocess_stsb(dataset: HfDataset) -> HfDataset:
