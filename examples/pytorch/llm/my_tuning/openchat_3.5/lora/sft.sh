@@ -13,7 +13,7 @@ with_or_without_info=$3
 
 split_type=$(echo "10 - $test_size * 10" | bc | awk '{print int($1)}'):$(echo "$test_size * 10" | bc | awk '{print int($1)}')
 
-custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/subtrain_data/train_data_$train_ratio.jsonl
+custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/subtrain_data2/train_data_$train_ratio.jsonl
 if [ "$train_ratio" = "1" ] || [ -z "$train_ratio" ]; then
     train_ratio=1.0
     custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/train_data.jsonl
@@ -31,7 +31,7 @@ gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
 max_length=8192
 
 PYTHONPATH=../../.. \
-CUDA_VISIBLE_DEVICES=1,2 \
+CUDA_VISIBLE_DEVICES=0,1 \
 torchrun \
     --nproc_per_node=$nproc_per_node \
     --master_port 29500 \

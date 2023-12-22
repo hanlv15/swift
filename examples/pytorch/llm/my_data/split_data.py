@@ -20,7 +20,7 @@ def set_seed(seed=DEFAULT_SEED):
 data_dir = "./with_info/"
 
 dict_list = []
-with jsonlines.open(data_dir + "data1.jsonl", mode="r") as file_jsonl:
+with jsonlines.open(data_dir + "data2.jsonl", mode="r") as file_jsonl:
     for item in file_jsonl.iter():
         dict_list.append(item)
     set_seed()
@@ -35,14 +35,14 @@ if not os.path.exists(data_path):
     os.mkdir(data_path)
 
 with jsonlines.open(
-    data_path + "train_data.jsonl", 
+    data_path + "train_data2.jsonl", 
     mode="w"
 ) as file_jsonl:
     for line in train_list:
         file_jsonl.write(line)
 
 
-with jsonlines.open(data_path + "test_data.jsonl", mode="w") as file_jsonl:
+with jsonlines.open(data_path + "test_data2.jsonl", mode="w") as file_jsonl:
     for line in test_list:
         file_jsonl.write(line)
 
