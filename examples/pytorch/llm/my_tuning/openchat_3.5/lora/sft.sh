@@ -10,15 +10,15 @@ fi
 test_size=$1
 train_ratio=$2
 with_or_without_info=$3
-
+data_version="2.1"
 split_type=$(echo "10 - $test_size * 10" | bc | awk '{print int($1)}'):$(echo "$test_size * 10" | bc | awk '{print int($1)}')
 
-custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/subtrain_data2/train_data_$train_ratio.jsonl
+custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/subtrain_data$data_version/train_data_$train_ratio.jsonl
+output_name="$(date +"%Y%m%d-%H:%M:%S")-split_type=$split_type-train_ratio=$train_ratio"
 if [ "$train_ratio" = "1" ] || [ -z "$train_ratio" ]; then
     train_ratio=1.0
-    custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/train_data.jsonl
+    custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/train_data$data_version.jsonl
 fi
-output_name="$(date +"%Y%m%d-%H:%M:%S")-split_type=$split_type-train_ratio=$train_ratio"
 
 nproc_per_node=2
 # eval_times=15
@@ -31,7 +31,7 @@ gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
 max_length=8192
 
 PYTHONPATH=../../.. \
-CUDA_VISIBLE_DEVICES=0,1 \
+CUDA_VISIBLE_DEVICES=1,2 \
 torchrun \
     --nproc_per_node=$nproc_per_node \
     --master_port 29500 \
@@ -45,7 +45,7 @@ torchrun \
     --template_type openchat_3.5 \
     --dtype AUTO \
     --add_output_dir_suffix false \
-    --output_dir output/openchat_3.5/$with_or_without_info/"$output_name" \
+    --output_dir output/openchat_3.5/$with_or_without_info/data$data_version/"$output_name" \
     --ddp_backend nccl \
     --custom_train_dataset_path $custom_train_dataset_path \
     --dataset_test_ratio 0 \

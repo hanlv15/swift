@@ -8,7 +8,7 @@ import argparse
 import os
 
 parser = argparse.ArgumentParser(description='manual to this script')
-parser.add_argument("--test_size", type=float, default=0.1)
+parser.add_argument("--test_size", type=float, default=0.2)
 args = parser.parse_args()
 
 DEFAULT_SEED = 42
@@ -17,10 +17,10 @@ def set_seed(seed=DEFAULT_SEED):
     random.seed(seed)
 
 # data_dir = "/home/hanlv/workspace/code/research/infodemic/LLM/LoRA/swift_data/"
-data_dir = "./with_info/"
-
+data_dir = "./with_solar_info/"
+version = "2.1"
 dict_list = []
-with jsonlines.open(data_dir + "data2.jsonl", mode="r") as file_jsonl:
+with jsonlines.open(data_dir + f"data{version}.jsonl", mode="r") as file_jsonl:
     for item in file_jsonl.iter():
         dict_list.append(item)
     set_seed()
@@ -35,14 +35,14 @@ if not os.path.exists(data_path):
     os.mkdir(data_path)
 
 with jsonlines.open(
-    data_path + "train_data2.jsonl", 
+    data_path + f"train_data{version}.jsonl", 
     mode="w"
 ) as file_jsonl:
     for line in train_list:
         file_jsonl.write(line)
 
 
-with jsonlines.open(data_path + "test_data2.jsonl", mode="w") as file_jsonl:
+with jsonlines.open(data_path + f"test_data{version}.jsonl", mode="w") as file_jsonl:
     for line in test_list:
         file_jsonl.write(line)
 
