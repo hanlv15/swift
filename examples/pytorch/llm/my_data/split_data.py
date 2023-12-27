@@ -18,7 +18,7 @@ def set_seed(seed=DEFAULT_SEED):
 
 # data_dir = "/home/hanlv/workspace/code/research/infodemic/LLM/LoRA/swift_data/"
 data_dir = "./with_solar_info/"
-version = "2.1"
+version = "2.2"
 dict_list = []
 with jsonlines.open(data_dir + f"data{version}.jsonl", mode="r") as file_jsonl:
     for item in file_jsonl.iter():

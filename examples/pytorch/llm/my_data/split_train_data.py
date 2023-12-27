@@ -23,7 +23,7 @@ data_dir = "./with_solar_info/"
 data_path = data_dir + f"train_test_split/8:2/"
 
 train_data = []
-version = "2"
+version = "2.2"
 with jsonlines.open(
     data_path + f"train_data{version}.jsonl", 
     mode="r"

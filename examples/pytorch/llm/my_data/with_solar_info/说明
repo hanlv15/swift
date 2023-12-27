@@ -1,0 +1,4 @@
+data1：pre + prior knowledge + text
+data2：pre + text + prior knowledge
+data2.1：data2的基础上将text和information大写
+data2.2：data2的基础上改进prior knowledge
