@@ -14,3 +14,4 @@ python llm_infer.py \
     --repetition_penalty 1.05 \
     --do_sample true \
     --merge_lora_and_save false
+

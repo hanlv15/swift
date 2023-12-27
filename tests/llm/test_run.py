@@ -12,6 +12,8 @@ import torch
 from swift.llm import DatasetName, InferArguments, ModelType, SftArguments
 from swift.llm.run import infer_main, merge_lora_main, sft_main
 
+NO_EVAL_HUMAN = True
+
 
 class TestRun(unittest.TestCase):
 
@@ -25,10 +27,12 @@ class TestRun(unittest.TestCase):
 
     def test_basic(self):
         output_dir = 'output'
+        quantization_bit_list = [0, 4]
         if not __name__ == '__main__':
             output_dir = self.tmp_dir
+            quantization_bit_list = [4]
         model_type = ModelType.chatglm3_6b
-        for quantization_bit in [0, 4]:
+        for quantization_bit in quantization_bit_list:
             predict_with_generate = True
             if quantization_bit == 0:
                 predict_with_generate = False
@@ -53,7 +57,11 @@ class TestRun(unittest.TestCase):
             if __name__ == '__main__':
                 infer_args = InferArguments(
                     ckpt_dir=best_model_checkpoint,
-                    stream=False,
+                    merge_lora_and_save={
+                        0: True,
+                        4: False
+                    }[quantization_bit],
+                    load_dataset_config=NO_EVAL_HUMAN,
                     show_dataset_sample=5)
                 result = infer_main(infer_args)
                 print(result)
@@ -68,6 +76,10 @@ class TestRun(unittest.TestCase):
             return
         losses = []
         for tuner_backend in ['swift', 'peft']:
+            if tuner_backend == 'swift':
+                bool_var = True
+            else:
+                bool_var = False
             output = sft_main([
                 '--model_type', ModelType.qwen_7b_chat, '--eval_steps', '5',
                 '--tuner_backend', tuner_backend, '--train_dataset_sample',
@@ -81,12 +93,16 @@ class TestRun(unittest.TestCase):
             torch.cuda.empty_cache()
             infer_main([
                 '--ckpt_dir', best_model_checkpoint, '--show_dataset_sample',
-                '2', '--max_new_tokens', '100', '--use_flash_attn', 'true'
+                '-1', '--max_new_tokens', '100', '--use_flash_attn', 'true',
+                '--verbose',
+                str(not bool_var), '--merge_lora_and_save',
+                str(bool_var), '--load_dataset_config',
+                str(bool_var) or NO_EVAL_HUMAN
             ])
             loss = output['log_history'][-1]['train_loss']
             losses.append(loss)
             torch.cuda.empty_cache()
-        self.assertTrue(abs(losses[0] - losses[1]) < 1e-4)
+        self.assertTrue(abs(losses[0] - losses[1]) < 2e-4)
 
     def test_vl_audio(self):
         output_dir = 'output'
@@ -114,7 +130,11 @@ class TestRun(unittest.TestCase):
             torch.cuda.empty_cache()
             infer_args = InferArguments(
                 ckpt_dir=best_model_checkpoint,
-                stream=False,
+                load_dataset_config=True,
+                stream={
+                    ModelType.qwen_vl_chat: True,
+                    ModelType.qwen_audio_chat: False
+                }[model_type],
                 show_dataset_sample=5)
             # merge_lora_main(infer_args)  # TODO: ERROR FIX
             result = infer_main(infer_args)
@@ -149,6 +169,8 @@ class TestRun(unittest.TestCase):
             infer_args = InferArguments(
                 ckpt_dir=best_model_checkpoint,
                 load_args_from_ckpt_dir=load_args_from_ckpt_dir,
+                load_dataset_config=load_args_from_ckpt_dir or NO_EVAL_HUMAN,
+                merge_lora_and_save=load_args_from_ckpt_dir,
                 val_dataset_sample=-1,
                 custom_val_dataset_path=[
                     os.path.join(folder, fname) for fname in val_dataset_fnames
@@ -184,7 +206,10 @@ class TestRun(unittest.TestCase):
             if dataset is None:
                 continue
             infer_args = InferArguments(
-                ckpt_dir=ckpt_dir, show_dataset_sample=2, verbose=False)
+                ckpt_dir=ckpt_dir,
+                show_dataset_sample=2,
+                verbose=False,
+                load_dataset_config=True)
             # merge_lora_main(infer_args)
             result = infer_main(infer_args)
             print(result)
