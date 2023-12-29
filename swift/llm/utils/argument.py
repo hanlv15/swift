@@ -471,6 +471,16 @@ class InferArguments:
 
 
 @dataclass
+class DPOArguments(SftArguments):
+
+    ref_model_type: Optional[str] = field(
+        default=None,
+        metadata={'help': f'model_type choices: {list(MODEL_MAPPING.keys())}'})
+
+    max_prompt_length: int = 1024
+
+
+@dataclass
 class RomeArguments(InferArguments):
     rome_request_file: str = field(
         default=None,
@@ -587,7 +597,8 @@ def handle_compatibility(args: Union[SftArguments, InferArguments]) -> None:
 
 
 def set_model_type(args: Union[SftArguments, InferArguments]) -> None:
-    assert args.model_type is None or args.model_id_or_path is None
+    assert args.model_type is None or args.model_id_or_path is None, (
+        '`model_type` and `model_id_or_path` can only specify one of them.')
     if args.model_id_or_path is not None:
         model_mapping_reversed = {
             v['model_id_or_path'].lower(): k
