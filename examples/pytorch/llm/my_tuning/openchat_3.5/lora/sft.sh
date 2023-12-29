@@ -18,7 +18,7 @@ split_type=$(echo "10 - $test_size * 10" | bc | awk '{print int($1)}'):$(echo "$
 custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/subtrain_data$data_version/train_data_$train_ratio.jsonl
 custom_val_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/test_data$data_version.jsonl
 
-output_name="$(date +"%Y%m%d-%H:%M:%S")-num_epochs=$num_epochs-split_type=$split_type-train_ratio=$train_ratio"
+output_name="$(date +"%Y%m%d-%H:%M:%S")-split_type=$split_type-train_ratio=$train_ratio"
 if [ "$train_ratio" = "1" ] || [ -z "$train_ratio" ]; then
     train_ratio=1.0
     custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/train_data$data_version.jsonl
