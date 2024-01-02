@@ -1,24 +1,26 @@
 #!/bin/bash
 
 # 检查是否提供了足够的参数
-if [ "$#" -ne 4 ]; then
+if [ "$#" -ne 5 ]; then
     echo "错误：需要提供三个参数"
-    echo "用法: bash $0 <test_size> <train_ratio> <with_or_without_info> <data_version>"
+    echo "用法: bash $0 <test_size> <train_ratio> <learning_rate> <with_or_without_info> <data_version>"
     exit 1
 fi
 
 test_size=$1
 train_ratio=$2
-with_or_without_info=$3
-data_version=$4
+learning_rate=$3 # 1e-4
+with_or_without_info=$4
+data_version=$5
 
 num_epochs=1
+
 split_type=$(echo "10 - $test_size * 10" | bc | awk '{print int($1)}'):$(echo "$test_size * 10" | bc | awk '{print int($1)}')
 
 custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/subtrain_data$data_version/train_data_$train_ratio.jsonl
 custom_val_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/test_data$data_version.jsonl
 
-output_name="$(date +"%Y%m%d-%H:%M:%S")-split_type=$split_type-train_ratio=$train_ratio"
+output_name="split_type=$split_type-train_ratio=$train_ratio-$(date +"%Y%m%d-%H:%M:%S")"
 if [ "$train_ratio" = "1" ] || [ -z "$train_ratio" ]; then
     train_ratio=1.0
     custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/train_data$data_version.jsonl
@@ -49,7 +51,7 @@ torchrun \
     --template_type openchat_3.5 \
     --dtype AUTO \
     --add_output_dir_suffix false \
-    --output_dir output/openchat_3.5/eval_times=0/$with_or_without_info/data$data_version/"$output_name" \
+    --output_dir output/openchat_3.5/eval_times=0/$with_or_without_info/data$data_version/lr=$learning_rate/"$output_name" \
     --ddp_backend nccl \
     --custom_train_dataset_path $custom_train_dataset_path \
     --dataset_test_ratio 0 \
@@ -66,7 +68,7 @@ torchrun \
     --gradient_checkpointing true \
     --batch_size 1 \
     --weight_decay 0.01 \
-    --learning_rate 1e-4 \
+    --learning_rate $learning_rate \
     --gradient_accumulation_steps $gradient_accumulation_steps \
     --max_grad_norm 0.5 \
     --warmup_ratio 0.03 \
