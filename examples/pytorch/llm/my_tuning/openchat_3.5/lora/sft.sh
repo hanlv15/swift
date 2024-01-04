@@ -65,6 +65,7 @@ torchrun \
     --lora_alpha 32 \
     --lora_dropout_p 0.05 \
     --lora_target_modules ALL \
+    --lora_dtype AUTO \
     --gradient_checkpointing true \
     --batch_size 1 \
     --weight_decay 0.01 \

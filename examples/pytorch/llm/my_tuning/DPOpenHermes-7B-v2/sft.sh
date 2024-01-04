@@ -34,7 +34,7 @@ gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
 # eval_steps=$(expr $num_train_data \* num_epochs / $total_batch_size / $eval_times)
 
 
-max_length=8192
+max_length=4096
 
 PYTHONPATH=../../.. \
 CUDA_VISIBLE_DEVICES=1,2 \
@@ -42,16 +42,16 @@ torchrun \
     --nproc_per_node=$nproc_per_node \
     --master_port 29505 \
     llm_sft.py \
-    --model_type neural-chat-7b-v3 \
-    --model_cache_dir /home/css/models/neural-chat-7b-v3-3 \
+    --model_type mistral-7b-chat-v2 \
+    --model_cache_dir /home/css/models/Mistral-7B-Instruct-v0.2 \
     --check_model_is_latest false \
     --model_revision master \
     --sft_type lora \
     --tuner_backend peft \
-    --template_type neural \
+    --template_type chatml \
     --dtype fp16 \
     --add_output_dir_suffix false \
-    --output_dir output/neural-chat-7b-v3-3/$with_or_without_info/data$data_version/lr=$learning_rate/"$output_name" \
+    --output_dir output/Mistral-7B-Instruct-v0.2/$with_or_without_info/data$data_version/lr=$learning_rate/"$output_name" \
     --ddp_backend nccl \
     --custom_train_dataset_path $custom_train_dataset_path \
     --dataset_test_ratio 0 \
