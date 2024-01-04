@@ -23,8 +23,9 @@ class CustomModelType:
 
     orca2_7b = "orca-2-7b"
     openchat_35 = "openchat_3.5"
-    neural_chat_7b = "neural-chat-7b"
+    neural_chat_7b = "neural-chat-7b-v3"
     solar_10_7b = "solar-10.7b-instruct"
+    marcoroni_7b = "marcoroni-7B-v3"
 
 class CustomTemplateType:
     tigerbot = 'tigerbot'
@@ -33,6 +34,7 @@ class CustomTemplateType:
     openchat_35 = "openchat_3.5"
     neural = "neural"
     solar="solar"
+    marcoroni="marcoroni"
 
 class CustomDatasetName:
     stsb_en = 'stsb-en'
@@ -118,9 +120,51 @@ def get_orca2_model_tokenizer(model_dir: str,
             **model_kwargs)
     return model, tokenizer
 
+@register_model(CustomModelType.neural_chat_7b,
+                '/home/css/models/neural-chat-7b-v3-3-Slerp', LoRATM.llama2,
+                CustomTemplateType.neural)
+def get_solar_model_tokenizer(model_dir: str,
+                                 torch_dtype: Dtype,
+                                 model_kwargs: Dict[str, Any],
+                                 load_model: bool = True,
+                                 **kwargs):
+    model_config = AutoConfig.from_pretrained(model_dir)
+    model_config.torch_dtype = torch_dtype
+    logger.info(f'model_config: {model_config}')
+    tokenizer = AutoTokenizer.from_pretrained(model_dir)
+    model = None
+    if load_model:
+        model = AutoModelForCausalLM.from_pretrained(
+            model_dir,
+            config=model_config,
+            torch_dtype=torch_dtype,
+            **model_kwargs)
+    return model, tokenizer
+
 @register_model(CustomModelType.solar_10_7b,
                 '/home/css/models/SOLAR-10.7B-Instruct-v1.0', LoRATM.llama2,
                 CustomTemplateType.solar)
+def get_solar_model_tokenizer(model_dir: str,
+                                 torch_dtype: Dtype,
+                                 model_kwargs: Dict[str, Any],
+                                 load_model: bool = True,
+                                 **kwargs):
+    model_config = AutoConfig.from_pretrained(model_dir)
+    model_config.torch_dtype = torch_dtype
+    logger.info(f'model_config: {model_config}')
+    tokenizer = AutoTokenizer.from_pretrained(model_dir)
+    model = None
+    if load_model:
+        model = AutoModelForCausalLM.from_pretrained(
+            model_dir,
+            config=model_config,
+            torch_dtype=torch_dtype,
+            **model_kwargs)
+    return model, tokenizer
+
+@register_model(CustomModelType.marcoroni_7b,
+                '/home/css/models/Marcoroni-7B-v3', LoRATM.llama2,
+                CustomTemplateType.marcoroni)
 def get_solar_model_tokenizer(model_dir: str,
                                  torch_dtype: Dtype,
                                  model_kwargs: Dict[str, Any],
@@ -161,13 +205,13 @@ register_template(
         ['<|im_end|>\n'], [None], None,
         ['<|im_start|>system\n{{SYSTEM}}<|im_end|>\n']))
 
-# 待完善
+
 register_template(
     CustomTemplateType.neural,
     Template( 
         [],
         ['### User:\n{{QUERY}}\n### Assistant:\n'],
-        ['<|end_of_turn|>'], ['<|end_of_turn|>'], None, ['### System:\n{{SYSTEM}}\n']))
+        ['\n'], ['</s>'], 'You are a helpful assistant.', ['### System:\n{{SYSTEM}}\n']))
 
 register_template(
     CustomTemplateType.solar,
@@ -175,6 +219,13 @@ register_template(
         [],
         ['### User:\n{{QUERY}}\n\n### Assistant:\n'],
         ['\n\n'], ['</s>'], None, ['### System:\n{{SYSTEM}}\n\n']))
+
+register_template(
+    CustomTemplateType.marcoroni,
+    Template( 
+        [],
+        ['### Instruction:\n\n{{QUERY}}\n\n### Response:\n'],
+        ['\n\n'], ['</s>'], None, ['### System:\n\n{{SYSTEM}}\n\n']))
 
 
 def _preprocess_stsb(dataset: HfDataset) -> HfDataset:
