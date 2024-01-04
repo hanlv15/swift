@@ -9,8 +9,7 @@ from copy import deepcopy
 from functools import partial, wraps
 from queue import Empty, Queue
 from tempfile import TemporaryDirectory
-from typing import (Any, Callable, Dict, Iterator, List, Optional, Tuple,
-                    TypeVar, Union)
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
 
 import accelerate
 import multiprocess
@@ -267,7 +266,7 @@ def _map_mp(dataset: HfDataset, map_func: MapFunc,
 
 def dataset_map(dataset: HfDataset,
                 map_func: MapFunc,
-                num_proc: int = 1) -> LLMDataset:
+                num_proc: int = 1) -> Optional[LLMDataset]:
     single_map = partial(_single_map, map_func=map_func)
     if num_proc == 1:
         data = []
@@ -628,7 +627,8 @@ def inference(model: PreTrainedModel,
 
 
 def limit_history_length(template: Template, query: str,
-                         history: Optional[History], max_length: int) -> int:
+                         history: Optional[History],
+                         max_length: int) -> Tuple[History, History]:
     """binary search"""
     if history is None:
         history = []
@@ -689,17 +689,6 @@ def set_generation_config(model: Module,
             if k not in generation_config.__dict__:
                 setattr(generation_config, k, v)
     model.generation_config = generation_config
-
-
-def fix_fp16_trainable_bug(model: Module) -> None:
-    # fix peft==0.7 bug
-    is_logging = False
-    for p in model.parameters():
-        if p.requires_grad and p.dtype == torch.float16:
-            if not is_logging:
-                logger.info('Convert trainable parameters from fp16 to fp32.')
-                is_logging = True
-            p.data = p.data.to(dtype=torch.float32)
 
 
 def is_vllm_available():
