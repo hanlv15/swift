@@ -12,6 +12,9 @@ def random_uuid() -> str:
 @dataclass
 class Model:
     id: str  # model_type
+    object: str = 'model'
+    created: int = field(default_factory=lambda: int(time.time()))
+    owned_by: str = 'swift'
 
 
 @dataclass
@@ -21,7 +24,7 @@ class ModelList:
 
 
 @dataclass
-class XRequest:
+class XRequestConfig:
     """NOTE: The following behavior is inconsistent with the OpenAI API.
     Default values for OpenAI:
         temperature = 1.
@@ -29,8 +32,6 @@ class XRequest:
         top_p = 1.
         repetition_penalty = 1.
     """
-    model: str
-
     max_tokens: Optional[int] = None  # None: max_model_len - num_tokens
     temperature: Optional[float] = None  # None: use deploy_args
     top_p: Optional[float] = None
@@ -52,21 +53,23 @@ class XRequest:
 
 @dataclass
 class CompletionRequestMixin:
+    model: str
     prompt: str
 
 
 @dataclass
 class ChatCompletionRequestMixin:
+    model: str
     messages: List[Dict[str, str]]
 
 
 @dataclass
-class CompletionRequest(XRequest, CompletionRequestMixin):
+class CompletionRequest(XRequestConfig, CompletionRequestMixin):
     pass
 
 
 @dataclass
-class ChatCompletionRequest(XRequest, ChatCompletionRequestMixin):
+class ChatCompletionRequest(XRequestConfig, ChatCompletionRequestMixin):
     pass
 
 
@@ -127,7 +130,7 @@ class DeltaMessage:
 class ChatCompletionResponseStreamChoice:
     index: int
     delta: DeltaMessage
-    finish_reason: Literal['stop', 'length']
+    finish_reason: Literal['stop', 'length', None]
 
 
 @dataclass
@@ -144,7 +147,7 @@ class ChatCompletionStreamResponse:
 class CompletionResponseStreamChoice:
     index: int
     text: str
-    finish_reason: Literal['stop', 'length']
+    finish_reason: Literal['stop', 'length', None]
 
 
 @dataclass
