@@ -37,21 +37,21 @@ gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
 max_length=4096
 
 PYTHONPATH=../../.. \
-CUDA_VISIBLE_DEVICES=1,2 \
+CUDA_VISIBLE_DEVICES=0,1 \
 torchrun \
     --nproc_per_node=$nproc_per_node \
     --master_port 29505 \
     llm_sft.py \
-    --model_type mistral-7b-chat-v2 \
-    --model_cache_dir /home/css/models/Mistral-7B-Instruct-v0.2 \
+    --model_type dpopenHermes-7B-v2 \
+    --model_cache_dir /home/css/models/DPOpenHermes-7B-v2 \
     --check_model_is_latest false \
     --model_revision master \
     --sft_type lora \
     --tuner_backend peft \
-    --template_type chatml \
-    --dtype fp16 \
+    --template_type dpopenHermes \
+    --dtype AUTO \
     --add_output_dir_suffix false \
-    --output_dir output/Mistral-7B-Instruct-v0.2/$with_or_without_info/data$data_version/lr=$learning_rate/"$output_name" \
+    --output_dir output/DPOpenHermes-7B-v2/$with_or_without_info/data$data_version/lr=$learning_rate/"$output_name" \
     --ddp_backend nccl \
     --custom_train_dataset_path $custom_train_dataset_path \
     --dataset_test_ratio 0 \

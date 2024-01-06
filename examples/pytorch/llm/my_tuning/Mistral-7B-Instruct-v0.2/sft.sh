@@ -48,8 +48,8 @@ torchrun \
     --model_revision master \
     --sft_type lora \
     --tuner_backend peft \
-    --template_type llama \
-    --dtype fp16 \
+    --template_type mistral \
+    --dtype AUTO \
     --add_output_dir_suffix false \
     --output_dir output/Mistral-7B-Instruct-v0.2/$with_or_without_info/data$data_version/lr=$learning_rate/"$output_name" \
     --ddp_backend nccl \

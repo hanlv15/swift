@@ -43,8 +43,14 @@ lrs = ["2e-5", "3e-5", "4e-5", "5e-5", "6e-5", "7e-5", "8e-5", "9e-5", "1e-4", "
 #         subprocess.run(["bash", f"my_tuning/marcoroni-7b-v3/sft.sh", "0.2", f"{i}", lr, data_version])
 
 # Mistral-7B-Instruct-v0.2
+# for lr in lrs:
+#     data_version = "3.3"
+#     for i in [1.0]:
+#         subprocess.run(["bash", f"my_tuning/Mistral-7B-Instruct-v0.2/sft.sh", "0.2", f"{i}", lr, data_version])
+
+# DPOpenHermes-7B-v2
 for lr in lrs:
     data_version = "3.3"
     for i in [1.0]:
-        subprocess.run(["bash", f"my_tuning/Mistral-7B-Instruct-v0.2/sft.sh", "0.2", f"{i}", lr, data_version])
+        subprocess.run(["bash", f"my_tuning/DPOpenHermes-7B-v2/sft.sh", "0.2", f"{i}", lr, data_version])
 
