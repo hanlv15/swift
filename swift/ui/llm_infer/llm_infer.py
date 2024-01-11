@@ -1,6 +1,5 @@
 import os
 import re
-from dataclasses import fields
 from typing import Type
 
 import gradio as gr
@@ -78,10 +77,7 @@ class LLMInfer(BaseUI):
         },
     }
 
-    choice_dict = {}
-    for f in fields(InferArguments):
-        if 'choices' in f.metadata:
-            choice_dict[f.name] = f.metadata['choices']
+    choice_dict = BaseUI.get_choices_from_dataclass(InferArguments)
 
     @classmethod
     def do_build_ui(cls, base_tab: Type['BaseUI']):
@@ -141,13 +137,8 @@ class LLMInfer(BaseUI):
 
     @classmethod
     def prepare_checkpoint(cls, *args):
-        global model, tokenizer, template
         torch.cuda.empty_cache()
-        infer_args = fields(InferArguments)
-        infer_args = {
-            arg.name: getattr(InferArguments, arg.name)
-            for arg in infer_args
-        }
+        infer_args = cls.get_default_value_from_dataclass(InferArguments)
         kwargs = {}
         kwargs_is_list = {}
         other_kwargs = {}
@@ -208,6 +199,8 @@ class LLMInfer(BaseUI):
             gr.Warning(cls.locale('generate_alert', cls.lang)['value'])
             return '', None
         model, template = model_and_template
+        if os.environ.get('MODELSCOPE_ENVIRONMENT') == 'studio':
+            model.cuda()
         if not template_type.endswith('generation'):
             old_history, history = limit_history_length(
                 template, prompt, history, int(max_new_tokens))
@@ -218,3 +211,5 @@ class LLMInfer(BaseUI):
         for _, history in gen:
             total_history = old_history + history
             yield '', total_history
+        if os.environ.get('MODELSCOPE_ENVIRONMENT') == 'studio':
+            model.cpu()

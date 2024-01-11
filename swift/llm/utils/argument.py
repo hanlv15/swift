@@ -39,6 +39,7 @@ class SftArguments:
 
     sft_type: Literal['lora', 'full', 'longlora', 'qalora'] = 'lora'
     freeze_parameters: float = 0.  # 0 ~ 1
+    additional_trainable_parameters: List[str] = field(default_factory=list)
     tuner_backend: Literal['swift', 'peft'] = 'swift'
     template_type: str = field(
         default='AUTO',
@@ -89,7 +90,7 @@ class SftArguments:
     lora_alpha: int = 32
     lora_dropout_p: float = 0.05
     lora_bias_trainable: Literal['none', 'all'] = 'none'
-    # e.g. ['wte', 'ln1', 'ln_2', 'ln_f', 'lm_head']
+    # e.g. ['wte', 'ln_1', 'ln_2', 'ln_f', 'lm_head']
     lora_modules_to_save: List[str] = field(default_factory=list)
     lora_dtype: Literal['fp16', 'bf16', 'fp32', 'AUTO'] = 'fp32'
 
@@ -103,6 +104,8 @@ class SftArguments:
     # if max_steps >= 0, override num_train_epochs
     max_steps: int = -1
     optim: str = 'adamw_torch'
+    adam_beta1: float = 0.9
+    adam_beta2: float = 0.999
     learning_rate: Optional[float] = None
     weight_decay: float = 0.01
     gradient_accumulation_steps: Optional[int] = None
@@ -113,7 +116,7 @@ class SftArguments:
 
     eval_steps: int = 50
     save_steps: Optional[int] = None
-    only_save_model: Optional[bool] = None
+    save_only_model: Optional[bool] = None
     save_total_limit: int = 2  # save last and best. -1: all checkpoints
     logging_steps: int = 5
     dataloader_num_workers: int = 1
@@ -162,6 +165,8 @@ class SftArguments:
     top_p: float = 0.7
     repetition_penalty: float = 1.05
     num_beams: int = 1
+    # compatibility. (Deprecated)
+    only_save_model: Optional[bool] = None
 
     def __post_init__(self) -> None:
         handle_compatibility(self)
@@ -211,26 +216,33 @@ class SftArguments:
             assert self.freeze_parameters == 0., (
                 'lora does not support `freeze_parameters`, please set `--sft_type full`'
             )
+            assert len(self.additional_trainable_parameters) == 0, (
+                'lora does not support `additional_trainable_parameters`, please set `--sft_type full`'
+            )
             if 'int4' in self.model_type or 'int8' in self.model_type:
                 assert self.quantization_bit == 0, 'int4 and int8 models do not need to be quantized again.'
             if self.learning_rate is None:
                 self.learning_rate = 1e-4
-            if self.only_save_model is None:
+            if self.save_only_model is None:
                 if self.deepspeed_config_path is None:
-                    self.only_save_model = False
+                    self.save_only_model = False
                 else:
-                    self.only_save_model = True
+                    self.save_only_model = True
         elif self.sft_type == 'full':
-            assert 0 <= self.freeze_parameters < 1
+            assert 0 <= self.freeze_parameters <= 1
             assert self.quantization_bit == 0, 'Full parameter fine-tuning does not support quantization.'
             assert self.dtype != 'fp16', (
                 "Fine-tuning with dtype=='fp16' can lead to NaN issues. "
                 'Please use fp32+AMP or bf16 to perform full parameter fine-tuning.'
             )
+            if isinstance(self.additional_trainable_parameters, str):
+                self.additional_trainable_parameters = [
+                    self.additional_trainable_parameters
+                ]
             if self.learning_rate is None:
                 self.learning_rate = 2e-5
-            if self.only_save_model is None:
-                self.only_save_model = True
+            if self.save_only_model is None:
+                self.save_only_model = True
         else:
             raise ValueError(f'sft_type: {self.sft_type}')
 
@@ -367,7 +379,7 @@ class InferArguments:
     # vllm
     gpu_memory_utilization: float = 0.9
     tensor_parallel_size: int = 1
-    # compatibility. (Deprecated parameter.)
+    # compatibility. (Deprecated)
     show_dataset_sample: int = 10
     safe_serialization: Optional[bool] = None
 
@@ -600,6 +612,8 @@ def handle_compatibility(args: Union[SftArguments, InferArguments]) -> None:
     if isinstance(args,
                   InferArguments) and args.safe_serialization is not None:
         args.save_safetensors = args.safe_serialization
+    if isinstance(args, SftArguments) and args.only_save_model is not None:
+        args.save_only_model = args.only_save_model
 
 
 def set_model_type(args: Union[SftArguments, InferArguments]) -> None:
@@ -617,20 +631,22 @@ def set_model_type(args: Union[SftArguments, InferArguments]) -> None:
                           InferArguments) and 'checkpoint' in model_id_or_path:
                 error_msg = 'Please use `--ckpt_dir vx_xxx/checkpoint-xxx` to use the checkpoint.'
             else:
-                error_msg = f"`model_id_or_path`: '{model_id_or_path}' is not registered."
+                error_msg = f"model_id_or_path: '{model_id_or_path}' is not registered."
                 if os.path.exists(model_id_or_path):
                     error_msg += (
-                        ' Please use `--model_id_or_path <model_id> --model_cache_dir <local_path>` '
+                        ' Please use `--model_type <model_type> --model_cache_dir <local_path>` '
+                        'or `--model_id_or_path <model_id> --model_cache_dir <local_path>`'
                         'to specify the local cache path for the model.')
             raise ValueError(error_msg)
         args.model_type = model_mapping_reversed[model_id_or_path_lower]
 
+    error_msg = f'The model_type you can choose: {list(MODEL_MAPPING.keys())}'
     if args.model_type is None:
-        raise ValueError(
-            'please setting `--model_type <model_type>` or `--model_id_or_path <model_id>`'
-        )
+        raise ValueError('please setting `--model_type <model_type>`. '
+                         + error_msg)
     elif args.model_type not in MODEL_MAPPING:
-        raise ValueError(f'model_type: {args.model_type} is not registered.')
+        raise ValueError(f"model_type: '{args.model_type}' is not registered. "
+                         + error_msg)
     model_info = MODEL_MAPPING[args.model_type]
     if args.model_revision is None:
         args.model_revision = model_info['revision']

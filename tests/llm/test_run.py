@@ -42,6 +42,7 @@ class TestRun(unittest.TestCase):
                 quantization_bit=quantization_bit,
                 batch_size=2,
                 eval_steps=5,
+                adam_beta2=0.95,
                 check_dataset_strategy='warning',
                 train_dataset_sample=200,
                 predict_with_generate=predict_with_generate,
@@ -88,7 +89,7 @@ class TestRun(unittest.TestCase):
                 '--max_new_tokens', '100', '--use_flash_attn', 'true',
                 '--lora_target_modules', 'ALL', '--seed', '0',
                 '--lora_bias_trainable', 'all', '--lora_modules_to_save',
-                'wte', 'ln1', 'ln_2', 'ln_f', 'lm_head'
+                'wte', 'ln_1', 'ln_2', 'ln_f', 'lm_head'
             ])
             best_model_checkpoint = output['best_model_checkpoint']
             print(f'best_model_checkpoint: {best_model_checkpoint}')

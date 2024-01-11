@@ -9,7 +9,7 @@ import torch
 from modelscope import BitsAndBytesConfig, GenerationConfig
 
 from swift.trainers import (IntervalStrategy, Seq2SeqTrainer,
-                            Seq2SeqTrainingArguments, TrainerCallback)
+                            Seq2SeqTrainingArguments)
 from swift.utils import (check_json_format, compute_acc_metrics,
                          compute_nlg_metrics, get_dist_setting, get_logger,
                          get_main, get_model_info, is_ddp_plus_mp, is_dist,
@@ -72,7 +72,7 @@ def llm_sft(args: SftArguments) -> Dict[str, Union[str, Any]]:
     set_generation_config(model, generation_config)
 
     # Preparing LoRA
-    model = prepare_model(model, args)
+    model, callbacks = prepare_model(model, args)
 
     show_layers(model)
     model_info = get_model_info(model)
@@ -181,6 +181,8 @@ def llm_sft(args: SftArguments) -> Dict[str, Union[str, Any]]:
         greater_is_better=args.predict_with_generate,
         sortish_sampler=True,
         optim=args.optim,
+        adam_beta1=args.adam_beta1,
+        adam_beta2=args.adam_beta2,
         hub_model_id=args.hub_model_id,
         hub_private_repo=args.hub_private_repo,
         push_hub_strategy=args.push_hub_strategy,
@@ -192,7 +194,7 @@ def llm_sft(args: SftArguments) -> Dict[str, Union[str, Any]]:
         predict_with_generate=args.predict_with_generate,
         generation_config=generation_config,
         local_rank=local_rank,
-        only_save_model=args.only_save_model,
+        save_only_model=args.save_only_model,
         train_sampler_random=args.train_sampler_random,
         report_to=args.report_to,
         deepspeed=args.deepspeed,
@@ -200,7 +202,8 @@ def llm_sft(args: SftArguments) -> Dict[str, Union[str, Any]]:
         disable_tqdm=args.disable_tqdm,
         save_on_each_node=args.save_on_each_node,
         acc_strategy=args.acc_strategy,
-        save_safetensors=args.save_safetensors)
+        save_safetensors=args.save_safetensors,
+        logging_first_step=True)
 
     if args.gradient_checkpointing:
         model.config.use_cache = False  # fix transformers==4.36
@@ -231,13 +234,6 @@ def llm_sft(args: SftArguments) -> Dict[str, Union[str, Any]]:
     if args.check_model_is_latest is False:
         trainer_kwargs['check_model'] = False
 
-    class TrainerAdapterCallback(TrainerCallback):
-
-        def on_train_begin(*args, **kwargs):
-            if hasattr(model, 'set_active_adapters'):
-                model.set_active_adapters(
-                    model.adapters.keys(), offload='meta')
-
     trainer = Seq2SeqTrainer(
         model=model,
         args=training_args,
@@ -245,7 +241,7 @@ def llm_sft(args: SftArguments) -> Dict[str, Union[str, Any]]:
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
         tokenizer=tokenizer,
-        callbacks=[TrainerAdapterCallback()],
+        callbacks=callbacks,
         **trainer_kwargs)
     trainer.sft_args = args
     if is_master():
@@ -276,7 +272,7 @@ def llm_sft(args: SftArguments) -> Dict[str, Union[str, Any]]:
         tb_dir = os.path.join(args.output_dir, 'runs')
         plot_images(images_dir, tb_dir, ['train/loss'], 0.9)
         if args.push_to_hub:
-            trainer._add_patterns_to_gitignores(['images/'])
+            trainer._add_patterns_to_gitignore(['images/'])
             trainer.push_to_hub()
     return {
         'memory': trainer.perf['memory'],
