@@ -80,7 +80,7 @@ def get_tigerbot_model_tokenizer(model_dir: str,
     return model, tokenizer
 
 @register_model(CustomModelType.openchat_35,
-                '/home/css/models/openchat-3.5-1210', LoRATM.llama2,
+                '/home/css/models/openchat-3.5-0106', LoRATM.llama2,
                 CustomTemplateType.openchat_35)
 def get_openchat35_model_tokenizer(model_dir: str,
                                  torch_dtype: Dtype,

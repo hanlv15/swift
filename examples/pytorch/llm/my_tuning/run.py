@@ -6,8 +6,8 @@ lrs = ["2e-5", "3e-5", "4e-5", "5e-5", "6e-5", "7e-5", "8e-5", "9e-5", "1e-4", "
 
 # openchat 3.5
 for lr in lrs:
-    for j in ["with_solar_info"]:
-        data_version = "4.1"
+    for j in ["with_solar_info/brave"]:
+        data_version = "1"
 
         # if j == "without_info":
         #     for i in test_sizes:
