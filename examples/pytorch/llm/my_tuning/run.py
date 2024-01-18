@@ -2,10 +2,11 @@ import subprocess
 
 train_ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 test_sizes = [0.5, 0.4, 0.3, 0.2, 0.1]
-lrs = ["2e-5", "3e-5", "4e-5", "5e-5", "6e-5", "7e-5", "8e-5", "9e-5", "1e-4", "1.1e-4"]
-
+lrs1 = ["2e-5", "3e-5", "4e-5", "5e-5", "6e-5", "7e-5", "8e-5", "9e-5", "1e-4", "1.1e-4"]
+lrs2 = ["1.2e-4", "1.3e-4", "1.4e-4", "1.5e-4", "1.6e-4", "1.7e-4", "1.8e-4", "1.9e-4", "2e-4"]
+lrs3 = ["2.5e-4", "3e-4"]
 # openchat 3.5
-for lr in lrs:
+for lr in lrs3:
     for j in ["with_solar_info/brave"]:
         data_version = "1"
 

@@ -11,7 +11,7 @@ test_size=$1
 train_ratio=$2
 learning_rate=$3 # 1e-4
 data_version=$4
-with_or_without_info=with_solar_info
+with_or_without_info=with_solar_info/brave
 
 num_epochs=1
 
@@ -34,7 +34,7 @@ gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
 # eval_steps=$(expr $num_train_data \* num_epochs / $total_batch_size / $eval_times)
 
 
-max_length=8192
+max_length=32768
 
 PYTHONPATH=../../.. \
 CUDA_VISIBLE_DEVICES=1,2 \
@@ -73,6 +73,6 @@ torchrun \
     --gradient_accumulation_steps $gradient_accumulation_steps \
     --max_grad_norm 0.5 \
     --warmup_ratio 0.03 \
-    --save_total_limit 2 \
+    --save_total_limit 1 \
     --logging_steps 10 \
     --use_flash_attn false

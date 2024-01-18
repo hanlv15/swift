@@ -27,6 +27,7 @@ class CustomModelType:
     solar_10_7b = "solar-10.7b-instruct"
     marcoroni_7b = "marcoroni-7B-v3"
     dpopenHermes_7b = "dpopenHermes-7B-v2"
+    neuralbeagle14 = "neuralbeagle14-7B"
 
 class CustomTemplateType:
     tigerbot = 'tigerbot'
@@ -126,7 +127,7 @@ def get_orca2_model_tokenizer(model_dir: str,
 @register_model(CustomModelType.neural_chat_7b,
                 '/home/css/models/neural-chat-7b-v3-3-Slerp', LoRATM.llama2,
                 CustomTemplateType.neural)
-def get_solar_model_tokenizer(model_dir: str,
+def get_neural_model_tokenizer(model_dir: str,
                                  torch_dtype: Dtype,
                                  model_kwargs: Dict[str, Any],
                                  load_model: bool = True,
@@ -168,7 +169,7 @@ def get_solar_model_tokenizer(model_dir: str,
 @register_model(CustomModelType.marcoroni_7b,
                 '/home/css/models/Marcoroni-7B-v3', LoRATM.llama2,
                 CustomTemplateType.marcoroni)
-def get_solar_model_tokenizer(model_dir: str,
+def get_marcoroni_model_tokenizer(model_dir: str,
                                  torch_dtype: Dtype,
                                  model_kwargs: Dict[str, Any],
                                  load_model: bool = True,
@@ -189,7 +190,28 @@ def get_solar_model_tokenizer(model_dir: str,
 @register_model(CustomModelType.dpopenHermes_7b,
                 '/home/css/models/DPOpenHermes-7B-v2', LoRATM.llama2,
                 TemplateType.chatml)
-def get_solar_model_tokenizer(model_dir: str,
+def get_dpopenHermes_model_tokenizer(model_dir: str,
+                                 torch_dtype: Dtype,
+                                 model_kwargs: Dict[str, Any],
+                                 load_model: bool = True,
+                                 **kwargs):
+    model_config = AutoConfig.from_pretrained(model_dir)
+    model_config.torch_dtype = torch_dtype
+    logger.info(f'model_config: {model_config}')
+    tokenizer = AutoTokenizer.from_pretrained(model_dir)
+    model = None
+    if load_model:
+        model = AutoModelForCausalLM.from_pretrained(
+            model_dir,
+            config=model_config,
+            torch_dtype=torch_dtype,
+            **model_kwargs)
+    return model, tokenizer
+
+@register_model(CustomModelType.neuralbeagle14,
+                '/home/css/models/NeuralBeagle14-7B', LoRATM.llama2,
+                TemplateType.llama)
+def get_neuralbeagle14_model_tokenizer(model_dir: str,
                                  torch_dtype: Dtype,
                                  model_kwargs: Dict[str, Any],
                                  load_model: bool = True,

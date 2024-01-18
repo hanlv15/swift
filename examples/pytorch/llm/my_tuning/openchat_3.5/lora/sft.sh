@@ -2,7 +2,7 @@
 
 # 检查是否提供了足够的参数
 if [ "$#" -ne 5 ]; then
-    echo "错误：需要提供三个参数"
+    echo "错误：需要提供5个参数"
     echo "用法: bash $0 <test_size> <train_ratio> <learning_rate> <with_or_without_info> <data_version>"
     exit 1
 fi
@@ -26,7 +26,7 @@ if [ "$train_ratio" = "1" ] || [ -z "$train_ratio" ]; then
     custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/train_data$data_version.jsonl
 fi
 
-nproc_per_node=1
+nproc_per_node=2
 # eval_times=15
 gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
 # num_train_data=$(echo "scale=0; 12192 * (1 - $test_size) * $train_ratio / 1" | bc)
@@ -51,7 +51,7 @@ torchrun \
     --template_type openchat_3.5 \
     --dtype AUTO \
     --add_output_dir_suffix false \
-    --output_dir output/openchat_3.5/eval_times=0/$with_or_without_info/data$data_version/lr=$learning_rate/"$output_name" \
+    --output_dir output/openchat_3.5/$with_or_without_info/data$data_version/lr=$learning_rate/"$output_name" \
     --ddp_backend nccl \
     --custom_train_dataset_path $custom_train_dataset_path \
     --dataset_test_ratio 0 \
@@ -73,6 +73,7 @@ torchrun \
     --gradient_accumulation_steps $gradient_accumulation_steps \
     --max_grad_norm 0.5 \
     --warmup_ratio 0.03 \
-    --save_total_limit 2 \
+    --save_total_limit 1 \
     --logging_steps 10 \
     --use_flash_attn false
+
