@@ -78,6 +78,20 @@ class ModelType:
     yi_34b = 'yi-34b'
     yi_34b_200k = 'yi-34b-200k'
     yi_34b_chat = 'yi-34b-chat'
+    # internlm
+    internlm_7b = 'internlm-7b'
+    internlm_7b_chat = 'internlm-7b-chat'
+    internlm_7b_chat_8k = 'internlm-7b-chat-8k'
+    internlm_20b = 'internlm-20b'
+    internlm_20b_chat = 'internlm-20b-chat'
+    internlm2_7b_base = 'internlm2-7b-base'
+    internlm2_7b = 'internlm2-7b'
+    internlm2_7b_sft_chat = 'internlm2-7b-sft-chat'
+    internlm2_7b_chat = 'internlm2-7b-chat'
+    internlm2_20b_base = 'internlm2-20b-base'
+    internlm2_20b = 'internlm2-20b'
+    internlm2_20b_sft_chat = 'internlm2-20b-sft-chat'
+    internlm2_20b_chat = 'internlm2-20b-chat'
     # deepseek
     deepseek_7b = 'deepseek-7b'
     deepseek_7b_chat = 'deepseek-7b-chat'
@@ -108,12 +122,11 @@ class ModelType:
     baichuan2_13b = 'baichuan2-13b'
     baichuan2_13b_chat = 'baichuan2-13b-chat'
     baichuan2_13b_chat_int4 = 'baichuan2-13b-chat-int4'
-    # internlm
-    internlm_7b = 'internlm-7b'
-    internlm_7b_chat = 'internlm-7b-chat'
-    internlm_7b_chat_8k = 'internlm-7b-chat-8k'
-    internlm_20b = 'internlm-20b'
-    internlm_20b_chat = 'internlm-20b-chat'
+    # yuan
+    yuan2_2b_instruct = 'yuan2-2b-instruct'
+    yuan2_2b_janus_instruct = 'yuan2-2b-janus-instruct'
+    yuan2_51b_instruct = 'yuan2-51b-instruct'
+    yuan2_102b_instruct = 'yuan2-102b-instruct'
     # xverse
     xverse_7b = 'xverse-7b'
     xverse_7b_chat = 'xverse-7b-chat'
@@ -184,6 +197,7 @@ class LoRATM(NamedTuple):
         'key_value', 'dense'
     ]
     phi = ['Wqkv']
+    internlm2 = ['wqkv']
 
 
 GetModelTokenizerFunction = Callable[..., Tuple[Optional[PreTrainedModel],
@@ -200,7 +214,8 @@ def register_model(
     requires: Optional[List[str]] = None,
     torch_dtype: Optional[Dtype] = None,
     automodel_class: Type[_BaseAutoModelClass] = AutoModelForCausalLM,
-    revision: str = 'master',
+    use_hf: bool = False,
+    revision: Optional[str] = None,
     ignore_file_pattern: Optional[List[str]] = None,
     function_kwargs: Optional[Dict[str, Any]] = None,
     exists_ok: bool = False,
@@ -216,6 +231,8 @@ def register_model(
         requires = []
     if function_kwargs is None:
         function_kwargs = {}
+    if revision is None:
+        revision = 'main' if use_hf else 'master'
     model_info = {
         'model_id_or_path': model_id_or_path,
         'lora_target_modules': lora_target_modules,
@@ -224,6 +241,7 @@ def register_model(
         'torch_dtype': torch_dtype,
         'automodel_class': automodel_class,
         'ignore_file_pattern': ignore_file_pattern,
+        'use_hf': use_hf,
         'revision': revision,
         'eos_token': eos_token,
         **kwargs
@@ -389,7 +407,8 @@ def get_model_tokenizer_internlm_chat(model_dir: str,
     model, tokenizer = get_model_tokenizer_from_repo(model_dir, torch_dtype,
                                                      model_kwargs, load_model,
                                                      **kwargs)
-    del tokenizer.__class__.eos_token_id
+    if getattr(tokenizer.__class__.eos_token_id, 'fset', None) is None:
+        del tokenizer.__class__.eos_token_id
     tokenizer.eos_token = '<eoa>'
     return model, tokenizer
 
@@ -860,6 +879,87 @@ def get_model_tokenizer_with_flash_attn(model_dir: str,
         model_config._flash_attn_2_enabled = use_flash_attn
     return get_model_tokenizer_from_repo(model_dir, torch_dtype, model_kwargs,
                                          load_model, model_config, **kwargs)
+
+
+@register_model(
+    ModelType.internlm2_7b_sft_chat,
+    'Shanghai_AI_Laboratory/internlm2-chat-7b-sft',
+    LoRATM.internlm2,
+    TemplateType.internlm2,
+    eos_token='[UNUSED_TOKEN_145]',
+    support_flash_attn=True)
+@register_model(
+    ModelType.internlm2_7b_chat,
+    'Shanghai_AI_Laboratory/internlm2-chat-7b',
+    LoRATM.internlm2,
+    TemplateType.internlm2,
+    eos_token='[UNUSED_TOKEN_145]',
+    support_flash_attn=True)
+@register_model(
+    ModelType.internlm2_20b_sft_chat,
+    'Shanghai_AI_Laboratory/internlm2-chat-20b-sft',
+    LoRATM.internlm2,
+    TemplateType.internlm2,
+    eos_token='[UNUSED_TOKEN_145]',
+    support_flash_attn=True)
+@register_model(
+    ModelType.internlm2_20b_chat,
+    'Shanghai_AI_Laboratory/internlm2-chat-20b',
+    LoRATM.internlm2,
+    TemplateType.internlm2,
+    eos_token='[UNUSED_TOKEN_145]',
+    support_flash_attn=True)
+@register_model(
+    ModelType.internlm2_7b,
+    'Shanghai_AI_Laboratory/internlm2-7b',
+    LoRATM.internlm2,
+    TemplateType.default_generation_bos,
+    support_flash_attn=True)
+@register_model(
+    ModelType.internlm2_7b_base,
+    'Shanghai_AI_Laboratory/internlm2-base-7b',
+    LoRATM.internlm2,
+    TemplateType.default_generation_bos,
+    support_flash_attn=True)
+@register_model(
+    ModelType.internlm2_20b,
+    'Shanghai_AI_Laboratory/internlm2-20b',
+    LoRATM.internlm2,
+    TemplateType.default_generation_bos,
+    support_flash_attn=True)
+@register_model(
+    ModelType.internlm2_20b_base,
+    'Shanghai_AI_Laboratory/internlm2-base-20b',
+    LoRATM.internlm2,
+    TemplateType.default_generation_bos,
+    support_flash_attn=True)
+def get_model_tokenizer_internlm2(model_dir: str,
+                                  torch_dtype: Dtype,
+                                  model_kwargs: Dict[str, Any],
+                                  load_model: bool = True,
+                                  **kwargs):
+    model_config = AutoConfig.from_pretrained(
+        model_dir, trust_remote_code=True)
+    use_flash_attn = kwargs.pop('use_flash_attn', False)
+    if use_flash_attn:
+        model_config.attn_implementation = 'flash_attention_2'
+
+    eos_token = kwargs.pop('eos_token', None)
+    model, tokenizer = get_model_tokenizer_from_repo(
+        model_dir,
+        torch_dtype,
+        model_kwargs,
+        load_model,
+        model_config=model_config,
+        **kwargs)
+    if eos_token is not None:
+        if getattr(tokenizer.__class__.eos_token_id, 'fset', None) is None:
+            del tokenizer.__class__.eos_token_id
+        tokenizer.eos_token = eos_token
+    if model is not None and use_flash_attn:
+        # fix AttributeError: no attribute 'attention_dropout'
+        model.model.layers[0].attention.__class__.attention_dropout = 0.
+    return model, tokenizer
 
 
 @register_model(
@@ -1411,6 +1511,72 @@ def get_model_tokenizer_deepseek_moe(model_dir: str,
     return model, tokenizer
 
 
+@register_model(
+    ModelType.yuan2_2b_instruct,
+    'YuanLLM/Yuan2.0-2B-hf',
+    LoRATM.llama2,
+    TemplateType.yuan,
+    support_flash_attn=True)
+@register_model(
+    ModelType.yuan2_51b_instruct,
+    'YuanLLM/Yuan2.0-51B-hf',
+    LoRATM.llama2,
+    TemplateType.yuan,
+    support_flash_attn=True)
+@register_model(
+    ModelType.yuan2_102b_instruct,
+    'YuanLLM/Yuan2.0-102B-hf',
+    LoRATM.llama2,
+    TemplateType.yuan,
+    support_flash_attn=True)
+@register_model(
+    ModelType.yuan2_2b_janus_instruct,
+    'YuanLLM/Yuan2-2B-Janus-hf',
+    LoRATM.llama2,
+    TemplateType.yuan,
+    support_flash_attn=True)
+def get_model_tokenizer_yuan(model_dir: str,
+                             torch_dtype: Dtype,
+                             model_kwargs: Dict[str, Any],
+                             load_model: bool = True,
+                             **kwargs):
+    model_folder, model_name = os.path.split(model_dir)
+    need_rename = '.' in model_name
+    if need_rename:
+        model_name = model_name.replace('.', '_')  # fix transformers_modules
+        new_model_dir = os.path.join(model_folder, model_name)
+        logger.info(f'Using new_model_dir: {new_model_dir}')
+        os.rename(model_dir, new_model_dir)
+    model_config = AutoConfig.from_pretrained(
+        model_dir, trust_remote_code=True)
+    use_flash_attention = kwargs.get('use_flash_attn', False)
+    model_config.use_flash_attention = use_flash_attention
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_dir,
+        add_eos_token=False,
+        add_bos_token=False,
+        eos_token='<eod>',
+        legacy=True)
+    addi_tokens = [
+        '<sep>', '<pad>', '<mask>', '<predict>', '<FIM_SUFFIX>',
+        '<FIM_PREFIX>', '<FIM_MIDDLE>', '<commit_before>', '<commit_msg>',
+        '<commit_after>', '<jupyter_start>', '<jupyter_text>',
+        '<jupyter_code>', '<jupyter_output>', '<empty_output>'
+    ]
+    tokenizer.add_tokens(addi_tokens, special_tokens=True)
+    model, tokenizer = get_model_tokenizer_from_repo(
+        model_dir,
+        torch_dtype,
+        model_kwargs,
+        load_model,
+        model_config=model_config,
+        tokenizer=tokenizer,
+        **kwargs)
+    if need_rename:
+        os.rename(new_model_dir, model_dir)
+    return model, tokenizer
+
+
 def fix_transformers_upgrade(module: PreTrainedModel) -> None:
     # from 4.35, transformers changes its arguments of _set_gradient_checkpointing
     if version.parse(transformers.__version__) >= version.parse('4.35'):
@@ -1473,10 +1639,19 @@ def get_model_tokenizer(
         if model_id_or_path is not None and not os.path.exists(
                 model_id_or_path):
             revision = model_info['revision']
-            model_dir = snapshot_download(
-                model_id_or_path,
-                revision,
-                ignore_file_pattern=ignore_file_pattern)
+            use_hf = model_info['use_hf']
+            if use_hf:
+                from huggingface_hub import snapshot_download as hf_snapshot_download
+                model_dir = hf_snapshot_download(
+                    model_id_or_path,
+                    repo_type='model',
+                    revision=revision,
+                    ignore_patterns=ignore_file_pattern)
+            else:
+                model_dir = snapshot_download(
+                    model_id_or_path,
+                    revision,
+                    ignore_file_pattern=ignore_file_pattern)
         if is_dist() and is_local_master():
             dist.barrier()
     model_dir = os.path.expanduser(model_dir)

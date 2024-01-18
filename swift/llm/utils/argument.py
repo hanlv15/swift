@@ -94,7 +94,7 @@ class SftArguments:
     lora_modules_to_save: List[str] = field(default_factory=list)
     lora_dtype: Literal['fp16', 'bf16', 'fp32', 'AUTO'] = 'fp32'
 
-    neftune_alpha: float = 0.0
+    neftune_noise_alpha: Optional[float] = None  # e.g. 5, 10, 15
 
     gradient_checkpointing: Optional[bool] = None
     deepspeed_config_path: Optional[str] = None  # e.g. 'ds_config/zero2.json'
@@ -163,13 +163,14 @@ class SftArguments:
     temperature: float = 0.3
     top_k: int = 20
     top_p: float = 0.7
-    repetition_penalty: float = 1.05
+    repetition_penalty: float = 1.
     num_beams: int = 1
     # compatibility hf
     per_device_train_batch_size: Optional[int] = None
     per_device_eval_batch_size: Optional[int] = None
     # compatibility. (Deprecated)
     only_save_model: Optional[bool] = None
+    neftune_alpha: Optional[float] = None
 
     def __post_init__(self) -> None:
         handle_compatibility(self)
@@ -177,6 +178,7 @@ class SftArguments:
         set_model_type(self)
         register_custom_dataset(self)
         check_flash_attn(self)
+        handle_generation_config(self)
         if self.self_cognition_sample > 0:
             if self.model_name is None or self.model_author is None:
                 raise ValueError(
@@ -310,7 +312,7 @@ class SftArguments:
             'support_gradient_checkpointing', True)
         if self.gradient_checkpointing is None:
             self.gradient_checkpointing = support_gradient_checkpointing
-        elif not support_gradient_checkpointing and self.gradient_checkpointing is True:
+        elif not support_gradient_checkpointing and self.gradient_checkpointing:
             logger.warning(
                 f'{self.model_type} not support gradient_checkpointing.')
 
@@ -367,7 +369,7 @@ class InferArguments:
     temperature: float = 0.3
     top_k: int = 20
     top_p: float = 0.7
-    repetition_penalty: float = 1.05
+    repetition_penalty: float = 1.
     num_beams: int = 1
 
     # other
@@ -388,7 +390,7 @@ class InferArguments:
     def __post_init__(self) -> None:
         if self.ckpt_dir is not None and not self.check_ckpt_dir_correct(
                 self.ckpt_dir):
-            raise ValueError(
+            logger.warning(
                 f'The checkpoint dir {self.ckpt_dir} passed in is invalid, please make sure'
                 'the dir contains a `configuration.json` file.')
         handle_compatibility(self)
@@ -406,6 +408,7 @@ class InferArguments:
             set_model_type(self)
         register_custom_dataset(self)
         check_flash_attn(self)
+        handle_generation_config(self)
 
         self.torch_dtype, _, _ = select_dtype(self)
         if self.template_type == 'AUTO':
@@ -623,6 +626,8 @@ def handle_compatibility(args: Union[SftArguments, InferArguments]) -> None:
     if isinstance(args, SftArguments):
         if args.only_save_model is not None:
             args.save_only_model = args.only_save_model
+        if args.neftune_alpha is not None:
+            args.neftune_noise_alpha = args.neftune_alpha
         if args.per_device_train_batch_size is not None:
             args.batch_size = args.per_device_train_batch_size
         if args.per_device_eval_batch_size is not None:
@@ -778,3 +783,16 @@ def check_flash_attn(args: Union[SftArguments, InferArguments]) -> None:
     if args.use_flash_attn and not support_flash_attn:
         logger.warning(f'use_flash_attn: {args.use_flash_attn}, '
                        f'but support_flash_attn: {support_flash_attn}')
+
+
+def handle_generation_config(
+        args: Union[SftArguments, InferArguments]) -> None:
+    if args.do_sample is False:
+        # fix warning
+        args.temperature = 1.
+        args.top_p = 1.
+        args.top_k = 50
+        logger.info(
+            'Due to do_sample=False, the following settings are applied: args.temperature: '
+            f'{args.temperature}, args.top_p: {args.top_p}, args.top_k: {args.top_k}.'
+        )
