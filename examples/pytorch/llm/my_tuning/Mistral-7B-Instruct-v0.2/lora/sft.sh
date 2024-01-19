@@ -39,7 +39,7 @@ max_length=32768
 
 PYTHONPATH=../../.. \
 CUDA_VISIBLE_DEVICES=1,2 \
-PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:1530 \
+PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:1530 \ 
 torchrun \
     --nproc_per_node=$nproc_per_node \
     --master_port 29505 \
