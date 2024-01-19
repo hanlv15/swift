@@ -40,6 +40,7 @@ lrs2 = ["1.1e-4", "1.5e-4", "1.2e-4", "1.3e-4", "1.4e-4", "1.6e-4", "1.7e-4", "1
 #         subprocess.run(["bash", f"my_tuning/marcoroni-7b-v3/lora/sft.sh", "0.2", f"{i}", lr, data_version])
 
 # Mistral-7B-Instruct-v0.2
+lrs2.remove("1.1e-4")
 for lr in lrs2:
     data_version = "1"
     for i in [1.0]:
