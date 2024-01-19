@@ -28,18 +28,15 @@ if [ "$train_ratio" = "1" ] || [ -z "$train_ratio" ]; then
 fi
 
 nproc_per_node=2
-# eval_times=15
+
 gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
-# num_train_data=$(echo "scale=0; 12192 * (1 - $test_size) * $train_ratio / 1" | bc)
-# total_batch_size=$(expr $gradient_accumulation_steps \* $nproc_per_node)
-# eval_steps=$(expr $num_train_data \* num_epochs / $total_batch_size / $eval_times)
 
 
 max_length=32768
 
 PYTHONPATH=../../.. \
 CUDA_VISIBLE_DEVICES=1,2 \
-PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:1530 \ 
+PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:1530 \
 torchrun \
     --nproc_per_node=$nproc_per_node \
     --master_port 29505 \
