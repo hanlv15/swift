@@ -35,6 +35,7 @@ max_length=32768
 
 PYTHONPATH=../../.. \
 CUDA_VISIBLE_DEVICES=1,2 \
+PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:1024 \
 torchrun \
     --nproc_per_node=$nproc_per_node \
     --master_port 29505 \
@@ -42,7 +43,6 @@ torchrun \
     --model_type turdus \
     --model_cache_dir /home/css/models/Turdus \
     --check_model_is_latest false \
-    --model_revision master \
     --sft_type $sft_type \
     --tuner_backend peft \
     --template_type turdus \
@@ -72,5 +72,6 @@ torchrun \
     --warmup_ratio 0.03 \
     --save_total_limit 1 \
     --logging_steps 10 \
-    --use_flash_attn false
+    --use_flash_attn false \
+    --do_sample false
 
