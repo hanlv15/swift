@@ -47,7 +47,7 @@ torchrun \
     --model_revision master \
     --sft_type lora \
     --tuner_backend peft \
-    --template_type llama \
+    --template_type neuralbeagle14 \
     --dtype fp16 \
     --add_output_dir_suffix false \
     --output_dir output/NeuralBeagle14-7B/$with_or_without_info/data$data_version/lr=$learning_rate/"$output_name" \

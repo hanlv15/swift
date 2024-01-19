@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # 检查是否提供了足够的参数
-if [ "$#" -ne 6 ]; then
+if [ "$#" -ne 5 ]; then
     echo "错误：需要提供5个参数"
-    echo "用法: bash $0 <test_size> <train_ratio> <sft_type> <learning_rate> <with_or_without_info> <data_version>"
+    echo "用法: bash $0 <test_size> <train_ratio> <sft_type> <learning_rate> <data_version>"
     exit 1
 fi
 
@@ -11,8 +11,8 @@ test_size=$1
 train_ratio=$2
 sft_type=$3
 learning_rate=$4 # 1e-4
-with_or_without_info=$5
-data_version=$6
+with_or_without_info=with_solar_info/brave
+data_version=$5
 
 num_epochs=1
 
@@ -27,32 +27,29 @@ if [ "$train_ratio" = "1" ] || [ -z "$train_ratio" ]; then
     custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/train_data$data_version.jsonl
 fi
 
-nproc_per_node=1
-# eval_times=15
+nproc_per_node=2
+
 gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
-# num_train_data=$(echo "scale=0; 12192 * (1 - $test_size) * $train_ratio / 1" | bc)
-# total_batch_size=$(expr $gradient_accumulation_steps \* $nproc_per_node)
-# eval_steps=$(expr $num_train_data \* num_epochs / $total_batch_size / $eval_times)
 
 
-max_length=8192
+max_length=32768
 
 PYTHONPATH=../../.. \
-CUDA_VISIBLE_DEVICES=1 \
+CUDA_VISIBLE_DEVICES=1,2 \
 torchrun \
     --nproc_per_node=$nproc_per_node \
     --master_port 29505 \
     llm_sft.py \
-    --model_type openchat_3.5 \
-    --model_cache_dir /home/css/models/openchat-3.5-0106 \
+    --model_type turdus \
+    --model_cache_dir /home/css/models/Turdus \
     --check_model_is_latest false \ 
     --model_revision master \
     --sft_type $sft_type \
     --tuner_backend peft \
-    --template_type openchat_3.5 \
+    --template_type turdus \
     --dtype AUTO \
     --add_output_dir_suffix false \
-    --output_dir output/openchat_3.5/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/"$output_name" \
+    --output_dir output/Turdus/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/"$output_name" \
     --ddp_backend nccl \
     --custom_train_dataset_path $custom_train_dataset_path \
     --dataset_test_ratio 0 \

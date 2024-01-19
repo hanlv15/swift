@@ -53,9 +53,5 @@ lrs2 = ["1.1e-4", "1.5e-4", "1.2e-4", "1.3e-4", "1.4e-4", "1.6e-4", "1.7e-4", "1
 #     for i in [1.0]:
 #         subprocess.run(["bash", f"my_tuning/DPOpenHermes-7B-v2/lora/sft.sh", "0.2", f"{i}", lr, data_version])
 
-# NeuralBeagle14-7B
-for lr in lrs2:
-    data_version = "1"
-    for i in [1.0]:
-        subprocess.run(["bash", f"my_tuning/NeuralBeagle14-7B/lora/sft.sh", "0.2", f"{i}", lr, data_version])
+
 

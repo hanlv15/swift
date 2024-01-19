@@ -14,7 +14,7 @@ from swift.llm import (LoRATM, Template, TemplateType, dataset_map,
 from swift.utils import get_logger
 
 logger = get_logger()
-
+DEFAULT_SYSTEM = 'You are a helpful assistant.'
 
 class CustomModelType:
     tigerbot_7b = 'tigerbot-7b'
@@ -28,6 +28,7 @@ class CustomModelType:
     marcoroni_7b = "marcoroni-7B-v3"
     dpopenHermes_7b = "dpopenHermes-7B-v2"
     neuralbeagle14 = "neuralbeagle14-7B"
+    turdus = "turdus"
 
 class CustomTemplateType:
     tigerbot = 'tigerbot'
@@ -39,6 +40,8 @@ class CustomTemplateType:
     marcoroni = "marcoroni"
     mistral = "mistral"
     dpopenHermes = "dpopenHermes"
+    neuralbeagle14 = "neuralbeagle14"
+    turdus = "turdus"
 
 class CustomDatasetName:
     stsb_en = 'stsb-en'
@@ -210,8 +213,29 @@ def get_dpopenHermes_model_tokenizer(model_dir: str,
 
 @register_model(CustomModelType.neuralbeagle14,
                 '/home/css/models/NeuralBeagle14-7B', LoRATM.llama2,
-                TemplateType.llama)
+                CustomTemplateType.neuralbeagle14)
 def get_neuralbeagle14_model_tokenizer(model_dir: str,
+                                 torch_dtype: Dtype,
+                                 model_kwargs: Dict[str, Any],
+                                 load_model: bool = True,
+                                 **kwargs):
+    model_config = AutoConfig.from_pretrained(model_dir)
+    model_config.torch_dtype = torch_dtype
+    logger.info(f'model_config: {model_config}')
+    tokenizer = AutoTokenizer.from_pretrained(model_dir)
+    model = None
+    if load_model:
+        model = AutoModelForCausalLM.from_pretrained(
+            model_dir,
+            config=model_config,
+            torch_dtype=torch_dtype,
+            **model_kwargs)
+    return model, tokenizer
+
+@register_model(CustomModelType.turdus,
+                '/home/css/models/Turdus', LoRATM.llama2,
+                CustomTemplateType.turdus)
+def get_turdus_model_tokenizer(model_dir: str,
                                  torch_dtype: Dtype,
                                  model_kwargs: Dict[str, Any],
                                  load_model: bool = True,
@@ -251,13 +275,12 @@ register_template(
         ['<|im_end|>\n'], [None], None,
         ['<|im_start|>system\n{{SYSTEM}}<|im_end|>\n']))
 
-
 register_template(
     CustomTemplateType.neural,
     Template( 
         [],
         ['### User:\n{{QUERY}}\n### Assistant:\n'],
-        ['\n'], ['</s>'], 'You are a helpful assistant.', ['### System:\n{{SYSTEM}}\n']))
+        ['\n'], ['</s>'], DEFAULT_SYSTEM, ['### System:\n{{SYSTEM}}\n']))
 
 register_template(
     CustomTemplateType.solar,
@@ -282,6 +305,25 @@ register_template(
 
 register_template(
     CustomTemplateType.dpopenHermes,
+    Template(
+        [], ['<|im_start|>user\n{{QUERY}}<|im_end|>\n<|im_start|>assistant\n'],
+        ['<|im_end|>\n'], ['<|im_end|>'], None,
+        ['<|im_start|>system\n{{SYSTEM}}<|im_end|>\n']))
+
+# 无限回答的问题
+register_template(
+    CustomTemplateType.neuralbeagle14,
+    # Template(['<s>[INST] '], ['{{QUERY}} [/INST] '], ['</s><s>[INST] '],
+    #          ['</s>'], None,
+    #          ['<s>[INST] <<SYS>>\n{{SYSTEM}}\n<</SYS>>\n\n'])
+    Template(
+        [], ['<|im_start|>user\n{{QUERY}}<|im_end|>\n<|im_start|>assistant\n'],
+        ['<|im_end|>\n'], ['<|im_end|>'], None,
+        ['<|im_start|>system\n{{SYSTEM}}<|im_end|>\n'])
+)
+
+register_template(
+    CustomTemplateType.turdus,
     Template(
         [], ['<|im_start|>user\n{{QUERY}}<|im_end|>\n<|im_start|>assistant\n'],
         ['<|im_end|>\n'], ['<|im_end|>'], None,
