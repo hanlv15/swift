@@ -299,9 +299,9 @@ register_template(
 register_template(
     CustomTemplateType.mistral,
     Template(
-        ['<s>[INST] '], 
-        ['{{QUERY}} [/INST]'], 
-        ['</s><s>[INST] '], ['</s>'], None, ['<s>[INST] {{SYSTEM}}\n']))
+        ['<s>[INST] '], ['{{QUERY}} [/INST]'], ['</s><s>[INST] '], 
+        ['</s>'], None, 
+        ['<s>[INST] {{SYSTEM}}\n']))
 
 register_template(
     CustomTemplateType.dpopenHermes,
@@ -313,21 +313,27 @@ register_template(
 # 无限回答的问题
 register_template(
     CustomTemplateType.neuralbeagle14,
-    # Template(['<s>[INST] '], ['{{QUERY}} [/INST] '], ['</s><s>[INST] '],
-    #          ['</s>'], None,
-    #          ['<s>[INST] <<SYS>>\n{{SYSTEM}}\n<</SYS>>\n\n'])
     Template(
-        [], ['<|im_start|>user\n{{QUERY}}<|im_end|>\n<|im_start|>assistant\n'],
-        ['<|im_end|>\n'], ['<|im_end|>'], None,
-        ['<|im_start|>system\n{{SYSTEM}}<|im_end|>\n'])
+        ['<s>[INST] '], ['{{QUERY}} [/INST]'], ['</s><s>[INST] '], 
+        ['</s>'], None,
+        ['<s>[INST] <<SYS>>\n{{SYSTEM}}\n<</SYS>>\n\n'])
+    # Template(
+    #     [], ['<|im_start|>user\n{{QUERY}}<|im_end|>\n<|im_start|>assistant\n'],
+    #     ['<|im_end|>\n'], ['<|im_end|>'], None,
+    #     ['<|im_start|>system\n{{SYSTEM}}<|im_end|>\n'])
 )
 
 register_template(
     CustomTemplateType.turdus,
     Template(
-        [], ['<|im_start|>user\n{{QUERY}}<|im_end|>\n<|im_start|>assistant\n'],
-        ['<|im_end|>\n'], ['<|im_end|>'], None,
-        ['<|im_start|>system\n{{SYSTEM}}<|im_end|>\n']))
+        ['<s>[INST] '], ['{{QUERY}} [/INST]'], ['</s><s>[INST] '],
+        ['</s>'], None,
+        ['<s>[INST] <<SYS>>\n{{SYSTEM}}\n<</SYS>>\n\n'])
+    # Template(
+    #     [], ['<|im_start|>user\n{{QUERY}}<|im_end|>\n<|im_start|>assistant\n'],
+    #     ['<|im_end|>\n'], ['<|im_end|>'], None,
+    #     ['<|im_start|>system\n{{SYSTEM}}<|im_end|>\n'])
+)
 
 def _preprocess_stsb(dataset: HfDataset) -> HfDataset:
     prompt = """Task: Based on the given two sentences, provide a similarity score between 0.0 and 5.0.

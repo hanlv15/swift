@@ -33,7 +33,6 @@ gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
 # total_batch_size=$(expr $gradient_accumulation_steps \* $nproc_per_node)
 # eval_steps=$(expr $num_train_data \* num_epochs / $total_batch_size / $eval_times)
 
-
 max_length=32768
 
 PYTHONPATH=../../.. \

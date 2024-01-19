@@ -31,7 +31,6 @@ nproc_per_node=2
 
 gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
 
-
 max_length=32768
 
 PYTHONPATH=../../.. \
@@ -42,7 +41,7 @@ torchrun \
     llm_sft.py \
     --model_type turdus \
     --model_cache_dir /home/css/models/Turdus \
-    --check_model_is_latest false \ 
+    --check_model_is_latest false \
     --model_revision master \
     --sft_type $sft_type \
     --tuner_backend peft \

@@ -31,12 +31,11 @@ nproc_per_node=2
 
 gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
 
-
 max_length=32768
 
 PYTHONPATH=../../.. \
 CUDA_VISIBLE_DEVICES=1,2 \
-PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:1530 \
+PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:1024 \
 torchrun \
     --nproc_per_node=$nproc_per_node \
     --master_port 29505 \
@@ -44,6 +43,7 @@ torchrun \
     --model_type mistral-7b-instruct-v2 \
     --model_cache_dir /home/css/models/Mistral-7B-Instruct-v0.2 \
     --check_model_is_latest false \
+    --resume_from_checkpoint /home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Mistral-7B-Instruct-v0.2/with_solar_info/brave/data1-split=8:2-ratio=1.0/lr=1.5e-4-20240119-18:49:47/checkpoint-350 \
     --model_revision master \
     --sft_type lora \
     --tuner_backend peft \
