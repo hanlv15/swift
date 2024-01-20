@@ -2,8 +2,9 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 import jsonlines, json
 import os
 from IPython import display
+from tqdm import tqdm
 
-def cal_metric_single_llm(sft_args, get_response, save=True):
+def cal_metric_single_llm(sft_args, get_response, save=True, use_tqdm=False):
     cnt = {}
     cnt[0] = cnt[2] = cnt[-2] = cnt["wrong"] = 0
     
@@ -98,10 +99,11 @@ def cal_metric_single_llm(sft_args, get_response, save=True):
     def get_model_name(model_cache_dir: str):
         return model_cache_dir[model_cache_dir.rfind('/') + 1:]
 
-    def get_label(prompt):
+    def get_label(prompt, use_tqdm=False):
         # 0:false, 2:true
         response = get_response(prompt)[0].strip()
-        print(f"\nPrompt:\n{prompt}\nAnswer:\n{response}\n")
+        if not use_tqdm:
+            print(f"\nPrompt:\n{prompt}\nAnswer:\n{response}\n")
 
         if response == "TRUE.":
             return 2
@@ -138,15 +140,16 @@ test_data{data_version}.jsonl", 'r') as f:
         for item in f.iter():
             data.append(item)
         
-    for i, item in enumerate(data):
-        display.clear_output(wait=True)
-        
-        print(f"{i + 1} / {len(data)}")
-        print(cnt)
-        if i > 0:
-            print_metrics(labels, preds)
+    data_iter = enumerate(data) if not use_tqdm else tqdm(enumerate(data), total=len(data))
+    for i, item in data_iter:
+        if not use_tqdm:
+            display.clear_output(wait=True)
+            print(f"{i + 1} / {len(data)}")
+            print(cnt)
+            if i > 0:
+                print_metrics(labels, preds)
 
-        pred = get_label(item["query"])
+        pred = get_label(item["query"], use_tqdm=use_tqdm)
 
         if item["response"] == "FALSE.":
             label = 0
@@ -162,8 +165,9 @@ test_data{data_version}.jsonl", 'r') as f:
             wrong_ans.append(item["query"])
             cnt["wrong"] += 1
         cnt[pred] += 1
-        
-    print_metrics(labels, preds)
+    
+    if not use_tqdm:
+        print_metrics(labels, preds)
 
     # ratio为1.0
     if train_ratio == "1.0":

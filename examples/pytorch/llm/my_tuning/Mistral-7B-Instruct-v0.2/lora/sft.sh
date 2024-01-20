@@ -14,8 +14,6 @@ learning_rate=$4 # 1e-4
 data_version=$5
 with_or_without_info=with_solar_info/brave
 
-num_epochs=1
-
 split_type=$(echo "10 - $test_size * 10" | bc | awk '{print int($1)}'):$(echo "$test_size * 10" | bc | awk '{print int($1)}')
 
 custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/subtrain_data$data_version/train_data_$train_ratio.jsonl
@@ -28,9 +26,7 @@ if [ "$train_ratio" = "1" ] || [ -z "$train_ratio" ]; then
 fi
 
 nproc_per_node=2
-
 gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
-
 max_length=32768
 
 PYTHONPATH=../../.. \
@@ -43,20 +39,18 @@ torchrun \
     --model_type mistral-7b-instruct-v2 \
     --model_cache_dir /home/css/models/Mistral-7B-Instruct-v0.2 \
     --check_model_is_latest false \
-    --resume_from_checkpoint /home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Mistral-7B-Instruct-v0.2/with_solar_info/brave/data1-split=8:2-ratio=1.0/lr=1.5e-4-20240119-18:49:47/checkpoint-350 \
-    --model_revision master \
-    --sft_type lora \
+    --sft_type $sft_type \
     --tuner_backend peft \
     --template_type mistral \
     --dtype AUTO \
     --add_output_dir_suffix false \
-    --output_dir output/Mistral-7B-Instruct-v0.2/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/"$output_name" \
+    --output_dir output/Mistral-7B-Instruct-v0.2/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/$sft_type/"$output_name" \
     --ddp_backend nccl \
     --custom_train_dataset_path $custom_train_dataset_path \
     --dataset_test_ratio 0 \
     --train_dataset_sample -1 \
     --val_dataset_sample -1 \
-    --num_train_epochs $num_epochs \
+    --num_train_epochs 1 \
     --max_length $max_length \
     --max_new_tokens $max_length \
     --check_dataset_strategy warning \
@@ -74,4 +68,5 @@ torchrun \
     --warmup_ratio 0.03 \
     --save_total_limit 1 \
     --logging_steps 10 \
-    --use_flash_attn false
+    --use_flash_attn false \
+    --do_sample false

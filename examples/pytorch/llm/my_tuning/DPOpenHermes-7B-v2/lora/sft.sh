@@ -41,7 +41,7 @@ torchrun \
     --nproc_per_node=$nproc_per_node \
     --master_port 29505 \
     llm_sft.py \
-    --model_type dpopenHermes-7B-v2 \
+    --model_type dpopenHermes-7b-v2 \
     --model_cache_dir /home/css/models/DPOpenHermes-7B-v2 \
     --check_model_is_latest false \
     --model_revision master \

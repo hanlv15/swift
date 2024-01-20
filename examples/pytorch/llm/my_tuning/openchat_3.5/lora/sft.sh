@@ -2,7 +2,7 @@
 
 # 检查是否提供了足够的参数
 if [ "$#" -ne 6 ]; then
-    echo "错误：需要提供5个参数"
+    echo "错误：需要提供6个参数"
     echo "用法: bash $0 <test_size> <train_ratio> <sft_type> <learning_rate> <with_or_without_info> <data_version>"
     exit 1
 fi
@@ -52,7 +52,7 @@ torchrun \
     --template_type openchat_3.5 \
     --dtype AUTO \
     --add_output_dir_suffix false \
-    --output_dir output/openchat_3.5/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/"$output_name" \
+    --output_dir output/openchat_3.5/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/$sft_type/"$output_name" \
     --ddp_backend nccl \
     --custom_train_dataset_path $custom_train_dataset_path \
     --dataset_test_ratio 0 \
@@ -76,5 +76,6 @@ torchrun \
     --warmup_ratio 0.03 \
     --save_total_limit 1 \
     --logging_steps 10 \
-    --use_flash_attn false
+    --use_flash_attn false \
+    --do_sample false
 

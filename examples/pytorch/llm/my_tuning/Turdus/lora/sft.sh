@@ -11,10 +11,8 @@ test_size=$1
 train_ratio=$2
 sft_type=$3
 learning_rate=$4 # 1e-4
-with_or_without_info=with_solar_info/brave
 data_version=$5
-
-num_epochs=1
+with_or_without_info=with_solar_info/brave
 
 split_type=$(echo "10 - $test_size * 10" | bc | awk '{print int($1)}'):$(echo "$test_size * 10" | bc | awk '{print int($1)}')
 
@@ -28,9 +26,7 @@ if [ "$train_ratio" = "1" ] || [ -z "$train_ratio" ]; then
 fi
 
 nproc_per_node=2
-
 gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
-
 max_length=32768
 
 PYTHONPATH=../../.. \
@@ -48,13 +44,13 @@ torchrun \
     --template_type turdus \
     --dtype AUTO \
     --add_output_dir_suffix false \
-    --output_dir output/Turdus/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/"$output_name" \
+    --output_dir output/Turdus/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/$sft_type/"$output_name" \
     --ddp_backend nccl \
     --custom_train_dataset_path $custom_train_dataset_path \
     --dataset_test_ratio 0 \
     --train_dataset_sample -1 \
     --val_dataset_sample -1 \
-    --num_train_epochs $num_epochs \
+    --num_train_epochs 1 \
     --max_length $max_length \
     --max_new_tokens $max_length \
     --check_dataset_strategy warning \
@@ -74,4 +70,3 @@ torchrun \
     --logging_steps 10 \
     --use_flash_attn false \
     --do_sample false
-

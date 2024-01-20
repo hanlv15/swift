@@ -42,7 +42,7 @@ torchrun \
     --nproc_per_node=$nproc_per_node \
     --master_port 29505 \
     llm_sft.py \
-    --model_type marcoroni-7B-v3 \
+    --model_type marcoroni-7b-v3 \
     --model_cache_dir /home/css/models/Marcoroni-7B-v3 \
     --check_model_is_latest false \
     --model_revision master \

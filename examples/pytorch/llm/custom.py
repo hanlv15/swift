@@ -14,7 +14,7 @@ from swift.llm import (LoRATM, Template, TemplateType, dataset_map,
 from swift.utils import get_logger
 
 logger = get_logger()
-DEFAULT_SYSTEM = 'You are a helpful assistant.'
+# DEFAULT_SYSTEM = 'You are a helpful assistant.'
 
 class CustomModelType:
     tigerbot_7b = 'tigerbot-7b'
@@ -25,10 +25,12 @@ class CustomModelType:
     openchat_35 = "openchat_3.5"
     neural_chat_7b = "neural-chat-7b-v3"
     solar_10_7b = "solar-10.7b-instruct"
-    marcoroni_7b = "marcoroni-7B-v3"
-    dpopenHermes_7b = "dpopenHermes-7B-v2"
-    neuralbeagle14 = "neuralbeagle14-7B"
+    marcoroni_7b = "marcoroni-7b-v3"
+    dpopenHermes_7b = "dpopenHermes-7b-v2"
+    # neuralbeagle14 = "neuralbeagle14-7B"
     turdus = "turdus"
+    darebeagle_7b = "darebeagle-7b-v2"
+    una_thebeagle_7b = "una-thebeagle-7b-v1"
 
 class CustomTemplateType:
     tigerbot = 'tigerbot'
@@ -39,9 +41,13 @@ class CustomTemplateType:
     solar = "solar"
     marcoroni = "marcoroni"
     mistral = "mistral"
-    dpopenHermes = "dpopenHermes"
-    neuralbeagle14 = "neuralbeagle14"
-    turdus = "turdus"
+    # dpopenHermes = "dpopenHermes"
+    # neuralbeagle14 = "neuralbeagle14"
+    # turdus = "turdus"
+    # darebeagle = "darebeagle"
+    # una_thebeagle = "una-thebeagle"
+    chatml = "_chatml"
+    llama = "_llama"
 
 class CustomDatasetName:
     stsb_en = 'stsb-en'
@@ -83,27 +89,6 @@ def get_tigerbot_model_tokenizer(model_dir: str,
             **model_kwargs)
     return model, tokenizer
 
-@register_model(CustomModelType.openchat_35,
-                '/home/css/models/openchat-3.5-0106', LoRATM.llama2,
-                CustomTemplateType.openchat_35)
-def get_openchat35_model_tokenizer(model_dir: str,
-                                 torch_dtype: Dtype,
-                                 model_kwargs: Dict[str, Any],
-                                 load_model: bool = True,
-                                 **kwargs):
-    model_config = AutoConfig.from_pretrained(model_dir)
-    # model_config.pretraining_tp = 1
-    model_config.torch_dtype = torch_dtype
-    logger.info(f'model_config: {model_config}')
-    tokenizer = AutoTokenizer.from_pretrained(model_dir)
-    model = None
-    if load_model:
-        model = AutoModelForCausalLM.from_pretrained(
-            model_dir,
-            config=model_config,
-            torch_dtype=torch_dtype,
-            **model_kwargs)
-    return model, tokenizer
 
 @register_model(CustomModelType.orca2_7b,
                 '/home/css/models/Orca-2-7b', LoRATM.llama2,
@@ -127,119 +112,38 @@ def get_orca2_model_tokenizer(model_dir: str,
             **model_kwargs)
     return model, tokenizer
 
+@register_model(CustomModelType.openchat_35,
+                '/home/css/models/openchat-3.5-0106', LoRATM.llama2,
+                CustomTemplateType.openchat_35)
 @register_model(CustomModelType.neural_chat_7b,
                 '/home/css/models/neural-chat-7b-v3-3-Slerp', LoRATM.llama2,
                 CustomTemplateType.neural)
-def get_neural_model_tokenizer(model_dir: str,
-                                 torch_dtype: Dtype,
-                                 model_kwargs: Dict[str, Any],
-                                 load_model: bool = True,
-                                 **kwargs):
-    model_config = AutoConfig.from_pretrained(model_dir)
-    model_config.torch_dtype = torch_dtype
-    logger.info(f'model_config: {model_config}')
-    tokenizer = AutoTokenizer.from_pretrained(model_dir)
-    model = None
-    if load_model:
-        model = AutoModelForCausalLM.from_pretrained(
-            model_dir,
-            config=model_config,
-            torch_dtype=torch_dtype,
-            **model_kwargs)
-    return model, tokenizer
-
 @register_model(CustomModelType.solar_10_7b,
                 '/home/css/models/SOLAR-10.7B-Instruct-v1.0', LoRATM.llama2,
                 CustomTemplateType.solar)
-def get_solar_model_tokenizer(model_dir: str,
-                                 torch_dtype: Dtype,
-                                 model_kwargs: Dict[str, Any],
-                                 load_model: bool = True,
-                                 **kwargs):
-    model_config = AutoConfig.from_pretrained(model_dir)
-    model_config.torch_dtype = torch_dtype
-    logger.info(f'model_config: {model_config}')
-    tokenizer = AutoTokenizer.from_pretrained(model_dir)
-    model = None
-    if load_model:
-        model = AutoModelForCausalLM.from_pretrained(
-            model_dir,
-            config=model_config,
-            torch_dtype=torch_dtype,
-            **model_kwargs)
-    return model, tokenizer
-
 @register_model(CustomModelType.marcoroni_7b,
                 '/home/css/models/Marcoroni-7B-v3', LoRATM.llama2,
                 CustomTemplateType.marcoroni)
-def get_marcoroni_model_tokenizer(model_dir: str,
-                                 torch_dtype: Dtype,
-                                 model_kwargs: Dict[str, Any],
-                                 load_model: bool = True,
-                                 **kwargs):
-    model_config = AutoConfig.from_pretrained(model_dir)
-    model_config.torch_dtype = torch_dtype
-    logger.info(f'model_config: {model_config}')
-    tokenizer = AutoTokenizer.from_pretrained(model_dir)
-    model = None
-    if load_model:
-        model = AutoModelForCausalLM.from_pretrained(
-            model_dir,
-            config=model_config,
-            torch_dtype=torch_dtype,
-            **model_kwargs)
-    return model, tokenizer
-
 @register_model(CustomModelType.dpopenHermes_7b,
                 '/home/css/models/DPOpenHermes-7B-v2', LoRATM.llama2,
-                TemplateType.chatml)
-def get_dpopenHermes_model_tokenizer(model_dir: str,
-                                 torch_dtype: Dtype,
-                                 model_kwargs: Dict[str, Any],
-                                 load_model: bool = True,
-                                 **kwargs):
-    model_config = AutoConfig.from_pretrained(model_dir)
-    model_config.torch_dtype = torch_dtype
-    logger.info(f'model_config: {model_config}')
-    tokenizer = AutoTokenizer.from_pretrained(model_dir)
-    model = None
-    if load_model:
-        model = AutoModelForCausalLM.from_pretrained(
-            model_dir,
-            config=model_config,
-            torch_dtype=torch_dtype,
-            **model_kwargs)
-    return model, tokenizer
-
-@register_model(CustomModelType.neuralbeagle14,
-                '/home/css/models/NeuralBeagle14-7B', LoRATM.llama2,
-                CustomTemplateType.neuralbeagle14)
-def get_neuralbeagle14_model_tokenizer(model_dir: str,
-                                 torch_dtype: Dtype,
-                                 model_kwargs: Dict[str, Any],
-                                 load_model: bool = True,
-                                 **kwargs):
-    model_config = AutoConfig.from_pretrained(model_dir)
-    model_config.torch_dtype = torch_dtype
-    logger.info(f'model_config: {model_config}')
-    tokenizer = AutoTokenizer.from_pretrained(model_dir)
-    model = None
-    if load_model:
-        model = AutoModelForCausalLM.from_pretrained(
-            model_dir,
-            config=model_config,
-            torch_dtype=torch_dtype,
-            **model_kwargs)
-    return model, tokenizer
-
+                CustomTemplateType.chatml)
+@register_model(CustomModelType.una_thebeagle_7b,
+                '/home/css/models/UNA-TheBeagle-7b-v1', LoRATM.llama2,
+                CustomTemplateType.neural)
 @register_model(CustomModelType.turdus,
                 '/home/css/models/Turdus', LoRATM.llama2,
-                CustomTemplateType.turdus)
-def get_turdus_model_tokenizer(model_dir: str,
-                                 torch_dtype: Dtype,
-                                 model_kwargs: Dict[str, Any],
-                                 load_model: bool = True,
-                                 **kwargs):
+                CustomTemplateType.llama # neural 也可以
+)
+@register_model(CustomModelType.darebeagle_7b,
+                '/home/css/models/DareBeagle-7B-v2', LoRATM.llama2,
+                CustomTemplateType.neural)
+def get_model_tokenizer(
+    model_dir: str,
+    torch_dtype: Dtype, 
+    model_kwargs: Dict[str, Any], 
+    load_model: bool = True,
+    **kwargs
+):
     model_config = AutoConfig.from_pretrained(model_dir)
     model_config.torch_dtype = torch_dtype
     logger.info(f'model_config: {model_config}')
@@ -280,7 +184,7 @@ register_template(
     Template( 
         [],
         ['### User:\n{{QUERY}}\n### Assistant:\n'],
-        ['\n'], ['</s>'], DEFAULT_SYSTEM, ['### System:\n{{SYSTEM}}\n']))
+        ['\n'], ['</s>'], None, ['### System:\n{{SYSTEM}}\n']))
 
 register_template(
     CustomTemplateType.solar,
@@ -304,35 +208,31 @@ register_template(
         ['<s>[INST] {{SYSTEM}}\n']))
 
 register_template(
-    CustomTemplateType.dpopenHermes,
+    CustomTemplateType.chatml,
     Template(
         [], ['<|im_start|>user\n{{QUERY}}<|im_end|>\n<|im_start|>assistant\n'],
         ['<|im_end|>\n'], ['<|im_end|>'], None,
         ['<|im_start|>system\n{{SYSTEM}}<|im_end|>\n']))
 
 # 无限回答的问题
-register_template(
-    CustomTemplateType.neuralbeagle14,
-    Template(
-        ['<s>[INST] '], ['{{QUERY}} [/INST]'], ['</s><s>[INST] '], 
-        ['</s>'], None,
-        ['<s>[INST] <<SYS>>\n{{SYSTEM}}\n<</SYS>>\n\n'])
-    # Template(
-    #     [], ['<|im_start|>user\n{{QUERY}}<|im_end|>\n<|im_start|>assistant\n'],
-    #     ['<|im_end|>\n'], ['<|im_end|>'], None,
-    #     ['<|im_start|>system\n{{SYSTEM}}<|im_end|>\n'])
-)
+# register_template(
+#     CustomTemplateType.neuralbeagle14,
+#     # Template(
+#     #     ['<s>[INST] '], ['{{QUERY}} [/INST]'], ['</s><s>[INST] '], 
+#     #     ['</s>'], None,
+#     #     ['<s>[INST] <<SYS>>\n{{SYSTEM}}\n<</SYS>>\n\n'])
+#     Template(
+#         [], ['<|im_start|>user\n{{QUERY}}<|im_end|>\n<|im_start|>assistant\n'],
+#         ['<|im_end|>\n'], ['<|im_end|>'], None,
+#         ['<|im_start|>system\n{{SYSTEM}}<|im_end|>\n'])
+# )
 
 register_template(
-    CustomTemplateType.turdus,
+    CustomTemplateType.llama,
     Template(
         ['<s>[INST] '], ['{{QUERY}} [/INST]'], ['</s><s>[INST] '],
         ['</s>'], None,
         ['<s>[INST] <<SYS>>\n{{SYSTEM}}\n<</SYS>>\n\n'])
-    # Template(
-    #     [], ['<|im_start|>user\n{{QUERY}}<|im_end|>\n<|im_start|>assistant\n'],
-    #     ['<|im_end|>\n'], ['<|im_end|>'], None,
-    #     ['<|im_start|>system\n{{SYSTEM}}<|im_end|>\n'])
 )
 
 def _preprocess_stsb(dataset: HfDataset) -> HfDataset:

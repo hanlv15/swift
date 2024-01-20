@@ -3,7 +3,7 @@ import subprocess
 train_ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 test_sizes = [0.5, 0.4, 0.3, 0.2, 0.1]
 lrs1 = ["2e-5", "3e-5", "4e-5", "5e-5", "6e-5", "7e-5", "8e-5", "9e-5", "1e-4"]
-lrs2 = ["1.1e-4", "1.5e-4", "1.2e-4", "1.3e-4", "1.4e-4", "1.6e-4", "1.7e-4", "1.8e-4", "1.9e-4", "2e-4"]
+lrs2 = ["1.1e-4", "1.5e-4", "2e-4", "1.2e-4", "1.3e-4", "1.4e-4", "1.6e-4", "1.7e-4", "1.8e-4", "1.9e-4"]
 
 # openchat 3.5
 # for lr in lrs2:
@@ -41,6 +41,8 @@ lrs2 = ["1.1e-4", "1.5e-4", "1.2e-4", "1.3e-4", "1.4e-4", "1.6e-4", "1.7e-4", "1
 
 # Mistral-7B-Instruct-v0.2
 # lrs2.remove("1.1e-4")
+# lrs2.remove("1.2e-4")
+# lrs2.remove("1.5e-4")
 # for lr in lrs2:
 #     data_version = "1"
 #     for i in [1.0]:
@@ -52,14 +54,14 @@ lrs2 = ["1.1e-4", "1.5e-4", "1.2e-4", "1.3e-4", "1.4e-4", "1.6e-4", "1.7e-4", "1
 #     for i in [1.0]:
 #         subprocess.run(["bash", f"my_tuning/DPOpenHermes-7B-v2/lora/sft.sh", "0.2", f"{i}", lr, data_version])
 
-# NeuralBeagle14-7B
-# for lr in lrs2:
-#     data_version = "1"
-#     for i in [1.0]:
-#         subprocess.run(["bash", f"my_tuning/NeuralBeagle14-7B/lora/sft.sh", "0.2", f"{i}", lr, data_version])
-
-# Turdus
+# DareBeagle-7B-v2
 for lr in lrs2:
     data_version = "1"
     for i in [1.0]:
-        subprocess.run(["bash", f"my_tuning/Turdus/lora/sft.sh", "0.2", f"{i}", "lora", lr, data_version])
+        subprocess.run(["bash", f"my_tuning/DareBeagle-7B-v2/lora/sft.sh", "0.2", f"{i}", "lora", lr, data_version])
+
+# Turdus
+# for lr in lrs2:
+#     data_version = "1"
+#     for i in [1.0]:
+#         subprocess.run(["bash", f"my_tuning/Turdus/lora/sft.sh", "0.2", f"{i}", "lora", lr, data_version])
