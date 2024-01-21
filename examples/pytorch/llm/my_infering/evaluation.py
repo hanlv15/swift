@@ -25,9 +25,9 @@ def cal_metric_single_llm(sft_args, get_response, save=True, use_tqdm=False):
         item["Precision"] = precision_score(labels, preds, average='macro')
         item["Recall"] = recall_score(labels, preds, average='macro')
 
-    def load_metrics(file_dir, model_name):
+    def load_metrics(file_dir, model_name, template_type):
         os.makedirs(file_dir, exist_ok=True)
-        file_path = file_dir + '/' + f"{model_name}.json"
+        file_path = file_dir + '/' + f"{model_name}({template_type}).json"
 
         if not os.path.exists(file_path):
             with open(file_path, "w") as f:
@@ -36,9 +36,9 @@ def cal_metric_single_llm(sft_args, get_response, save=True, use_tqdm=False):
             metrics:list = json.load(f)
         return metrics
     
-    def save_metrics(file_dir, model_name, metrics, save):
+    def save_metrics(file_dir, model_name, template_type, metrics, save):
         if save:
-            file_path = file_dir + '/' + f"{model_name}.json"
+            file_path = file_dir + '/' + f"{model_name}({template_type}).json"
             with open(file_path, "w") as f:
                 json.dump(metrics, f, indent=4) 
 
@@ -129,6 +129,7 @@ def cal_metric_single_llm(sft_args, get_response, save=True, use_tqdm=False):
     train_ratio = get_train_ratio(sft_args["custom_train_dataset_path"][0])
     data_version = get_data_version(sft_args["custom_train_dataset_path"][0])
     model_name = get_model_name(sft_args["model_cache_dir"])
+    template_type = sft_args["template_type"]
     sft_type = sft_args["sft_type"]
 
     lr = get_lr(sft_args["output_dir"])
@@ -173,7 +174,7 @@ test_data{data_version}.jsonl", 'r') as f:
     if train_ratio == "1.0":
         file_dir = f"test_metric_single_llm/{with_or_without_info}/\
 data{data_version}-split={split_type}-ratio={train_ratio}/{sft_type}"
-        metrics = load_metrics(file_dir, model_name)
+        metrics = load_metrics(file_dir, model_name, template_type)
 
         exist = False
         for item in metrics:
@@ -186,12 +187,12 @@ data{data_version}-split={split_type}-ratio={train_ratio}/{sft_type}"
         if not exist:
             update_metrics(metrics, model_name, split_type, train_ratio, lr)
         metrics.sort(key=lambda x: (x["train_test_split"], x["train_ratio"], float(x["lr"])))
-        save_metrics(file_dir, model_name, metrics, save=save)
+        save_metrics(file_dir, model_name, template_type, metrics, save=save)
     else:
         # 不同的ratio
         file_dir = f"test_metric_single_llm/{with_or_without_info}/\
 data{data_version}-split={split_type}-sft={sft_type}-lr={lr}"
-        metrics = load_metrics(file_dir, model_name)
+        metrics = load_metrics(file_dir, model_name, template_type)
 
         exist = False
         for item in metrics:
@@ -204,5 +205,5 @@ data{data_version}-split={split_type}-sft={sft_type}-lr={lr}"
         if not exist:
             update_metrics(metrics, model_name, split_type, train_ratio)
         metrics.sort(key=lambda x: (x["train_test_split"], x["train_ratio"]))
-        save_metrics(file_dir, model_name, metrics, save=save)
+        save_metrics(file_dir, model_name, template_type, metrics, save=save)
     return wrong_ans

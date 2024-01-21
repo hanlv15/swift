@@ -14,7 +14,6 @@ from swift.llm import (LoRATM, Template, TemplateType, dataset_map,
 from swift.utils import get_logger
 
 logger = get_logger()
-# DEFAULT_SYSTEM = 'You are a helpful assistant.'
 
 class CustomModelType:
     tigerbot_7b = 'tigerbot-7b'
@@ -41,13 +40,8 @@ class CustomTemplateType:
     solar = "solar"
     marcoroni = "marcoroni"
     mistral = "mistral"
-    # dpopenHermes = "dpopenHermes"
-    # neuralbeagle14 = "neuralbeagle14"
-    # turdus = "turdus"
-    # darebeagle = "darebeagle"
-    # una_thebeagle = "una-thebeagle"
-    chatml = "_chatml"
-    llama = "_llama"
+    chatml = "_chatml" # 无system message的chatml
+    llama = "_llama" # 无system message的llama
 
 class CustomDatasetName:
     stsb_en = 'stsb-en'

@@ -1,0 +1,52 @@
+[
+    {
+        "model": "DareBeagle-7B-v2",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "lr": "1.1e-4",
+        "ACC": 0.994259942599426,
+        "F1": 0.98985643465531,
+        "Precision": 0.98985643465531,
+        "Recall": 0.98985643465531
+    },
+    {
+        "model": "DareBeagle-7B-v2",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "lr": "1.2e-4",
+        "ACC": 0.994259942599426,
+        "F1": 0.9898370160483833,
+        "Precision": 0.9907783145464305,
+        "Recall": 0.988901669264991
+    },
+    {
+        "model": "DareBeagle-7B-v2",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "lr": "1.3e-4",
+        "ACC": 0.995079950799508,
+        "F1": 0.9912888708986143,
+        "Precision": 0.9922329575952764,
+        "Recall": 0.9903507500285182
+    },
+    {
+        "model": "DareBeagle-7B-v2",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "lr": "1.5e-4",
+        "ACC": 0.994669946699467,
+        "F1": 0.9905538933349938,
+        "Precision": 0.9919723975724779,
+        "Recall": 0.9891488269515951
+    },
+    {
+        "model": "DareBeagle-7B-v2",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "lr": "2e-4",
+        "ACC": 0.995079950799508,
+        "F1": 0.9912888708986143,
+        "Precision": 0.9922329575952764,
+        "Recall": 0.9903507500285182
+    }
+]

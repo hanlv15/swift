@@ -55,6 +55,11 @@ lrs2 = ["1.1e-4", "1.5e-4", "2e-4", "1.2e-4", "1.3e-4", "1.4e-4", "1.6e-4", "1.7
 #         subprocess.run(["bash", f"my_tuning/DPOpenHermes-7B-v2/lora/sft.sh", "0.2", f"{i}", lr, data_version])
 
 # DareBeagle-7B-v2
+lrs2.remove("1.1e-4")
+lrs2.remove("1.2e-4")
+lrs2.remove("1.3e-4")
+lrs2.remove("2e-4")
+lrs2.remove("1.5e-4")
 for lr in lrs2:
     data_version = "1"
     for i in [1.0]:

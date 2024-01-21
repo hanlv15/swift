@@ -1,0 +1,22 @@
+[
+    {
+        "model": "Mistral-7B-Instruct-v0.2",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "lr": "1.1e-4",
+        "ACC": 0.992209922099221,
+        "F1": 0.9862730141991555,
+        "Precision": 0.98489331033342,
+        "Recall": 0.9876658808319707
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.2",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "lr": "1.2e-4",
+        "ACC": 0.993439934399344,
+        "F1": 0.9883628556092324,
+        "Precision": 0.9902517470459477,
+        "Recall": 0.986497823111145
+    }
+]
