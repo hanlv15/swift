@@ -34,7 +34,7 @@ CUDA_VISIBLE_DEVICES=1,2 \
 PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:1024 \
 torchrun \
     --nproc_per_node=$nproc_per_node \
-    --master_port 29505 \
+    --master_port 29506 \
     llm_sft.py \
     --model_type mistral-7b-instruct-v2 \
     --model_cache_dir /home/css/models/Mistral-7B-Instruct-v0.2 \

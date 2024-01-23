@@ -134,6 +134,33 @@ def cal_metric_single_llm(sft_args, get_response, save=True, use_tqdm=False):
 
     lr = get_lr(sft_args["output_dir"])
 
+    # 判断metric是否已经存在，那么不用再计算
+    exist = False
+    if train_ratio == "1.0":
+        file_dir = f"test_metric_single_llm/{with_or_without_info}/\
+data{data_version}-split={split_type}-ratio={train_ratio}/{sft_type}"
+        metrics = load_metrics(file_dir, model_name, template_type)
+        for item in metrics:
+            if item["train_test_split"] == split_type and \
+                item["train_ratio"] == train_ratio and item["lr"] == lr:
+
+                # update_item_metric(item)
+                exist = True
+                break
+    else:
+        file_dir = f"test_metric_single_llm/{with_or_without_info}/\
+data{data_version}-split={split_type}-sft={sft_type}-lr={lr}"
+        metrics = load_metrics(file_dir, model_name, template_type)
+        for item in metrics:
+            if item["train_test_split"] == split_type and \
+                item["train_ratio"] == train_ratio:
+
+                # update_item_metric(item)
+                exist = True
+                break
+    if exist:
+        return wrong_ans
+
     with jsonlines.open(
         f"../my_data/{with_or_without_info}/train_test_split/{split_type}/\
 test_data{data_version}.jsonl", 'r') as f:
@@ -141,7 +168,8 @@ test_data{data_version}.jsonl", 'r') as f:
         for item in f.iter():
             data.append(item)
         
-    data_iter = enumerate(data) if not use_tqdm else tqdm(enumerate(data), total=len(data))
+    data_iter = enumerate(data) if not use_tqdm else tqdm(
+        enumerate(data), desc=f'{model_name} lr={lr}', total=len(data))
     for i, item in data_iter:
         if not use_tqdm:
             display.clear_output(wait=True)
@@ -172,38 +200,12 @@ test_data{data_version}.jsonl", 'r') as f:
 
     # ratio为1.0
     if train_ratio == "1.0":
-        file_dir = f"test_metric_single_llm/{with_or_without_info}/\
-data{data_version}-split={split_type}-ratio={train_ratio}/{sft_type}"
-        metrics = load_metrics(file_dir, model_name, template_type)
-
-        exist = False
-        for item in metrics:
-            if item["train_test_split"] == split_type and \
-                item["train_ratio"] == train_ratio and item["lr"] == lr:
-
-                update_item_metric(item)
-                exist = True
-                break
-        if not exist:
-            update_metrics(metrics, model_name, split_type, train_ratio, lr)
+        update_metrics(metrics, model_name, split_type, train_ratio, lr)
         metrics.sort(key=lambda x: (x["train_test_split"], x["train_ratio"], float(x["lr"])))
         save_metrics(file_dir, model_name, template_type, metrics, save=save)
     else:
         # 不同的ratio
-        file_dir = f"test_metric_single_llm/{with_or_without_info}/\
-data{data_version}-split={split_type}-sft={sft_type}-lr={lr}"
-        metrics = load_metrics(file_dir, model_name, template_type)
-
-        exist = False
-        for item in metrics:
-            if item["train_test_split"] == split_type and \
-                item["train_ratio"] == train_ratio:
-
-                update_item_metric(item)
-                exist = True
-                break
-        if not exist:
-            update_metrics(metrics, model_name, split_type, train_ratio)
+        update_metrics(metrics, model_name, split_type, train_ratio)
         metrics.sort(key=lambda x: (x["train_test_split"], x["train_ratio"]))
         save_metrics(file_dir, model_name, template_type, metrics, save=save)
     return wrong_ans

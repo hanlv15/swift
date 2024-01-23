@@ -4,7 +4,6 @@ parser = argparse.ArgumentParser(description='manual to this script')
 parser.add_argument("--ckpt_dir", type=str)
 args = parser.parse_args()
 ckpt_dir = args.ckpt_dir
-import logging
 
 import os
 import sys
