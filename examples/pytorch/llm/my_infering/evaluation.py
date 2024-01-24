@@ -4,7 +4,7 @@ import os
 from IPython import display
 from tqdm import tqdm
 
-def cal_metric_single_llm(sft_args, get_response, save=True, use_tqdm=False):
+def cal_metric_single_llm(get_model_template, inference, sft_args, save=True, use_tqdm=False):
     cnt = {}
     cnt[0] = cnt[2] = cnt[-2] = cnt["wrong"] = 0
     
@@ -161,6 +161,9 @@ data{data_version}-split={split_type}-sft={sft_type}-lr={lr}"
     if exist:
         return wrong_ans
 
+    model, template = get_model_template()
+    get_response = lambda prompt : inference(model, template, prompt)
+    
     with jsonlines.open(
         f"../my_data/{with_or_without_info}/train_test_split/{split_type}/\
 test_data{data_version}.jsonl", 'r') as f:
@@ -168,15 +171,20 @@ test_data{data_version}.jsonl", 'r') as f:
         for item in f.iter():
             data.append(item)
         
-    data_iter = enumerate(data) if not use_tqdm else tqdm(
-        enumerate(data), desc=f'{model_name} lr={lr}', total=len(data))
+    data_iter = enumerate(data)
+    progress_bar = tqdm(enumerate(data), desc=f'{model_name} lr={lr}', total=len(data))
+
     for i, item in data_iter:
+
         if not use_tqdm:
             display.clear_output(wait=True)
             print(f"{i + 1} / {len(data)}")
             print(cnt)
             if i > 0:
                 print_metrics(labels, preds)
+        else:
+            progress_bar.set_description(f'{model_name} lr={lr} wrong={cnt["wrong"]}')
+            progress_bar.update(1)  # Increment the progress bar
 
         pred = get_label(item["query"], use_tqdm=use_tqdm)
 
@@ -194,6 +202,8 @@ test_data{data_version}.jsonl", 'r') as f:
             wrong_ans.append(item["query"])
             cnt["wrong"] += 1
         cnt[pred] += 1
+
+    progress_bar.close()
     
     if not use_tqdm:
         print_metrics(labels, preds)

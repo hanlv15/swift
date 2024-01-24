@@ -40,7 +40,7 @@ torchrun \
     --check_model_is_latest false \
     --sft_type $sft_type \
     --tuner_backend peft \
-    --template_type _chatml \
+    --template_type neural \
     --dtype fp16 \
     --add_output_dir_suffix false \
     --output_dir output/DareBeagle-7B-v2/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/$sft_type/"$output_name" \

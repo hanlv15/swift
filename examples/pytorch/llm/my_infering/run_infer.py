@@ -22,3 +22,4 @@ if len(path) > 0:
 # 使用subprocess运行Python文件
 for ckpt in ckpt_list:
     subprocess.run(["python", "infer_tuned.py", "--ckpt", ckpt])
+

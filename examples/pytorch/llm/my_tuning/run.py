@@ -40,7 +40,7 @@ lrs2 = ["1.1e-4", "1.5e-4", "2e-4", "1.2e-4", "1.3e-4", "1.4e-4", "1.6e-4", "1.7
 #         subprocess.run(["bash", f"my_tuning/marcoroni-7b-v3/lora/sft.sh", "0.2", f"{i}", lr, data_version])
 
 # Mistral-7B-Instruct-v0.2
-for lr in lrs1:
+for lr in ["6e-5", "7e-5", "8e-5", "9e-5", "1e-4"]:
     data_version = "1"
     for i in [1.0]:
         subprocess.run(["bash", f"my_tuning/Mistral-7B-Instruct-v0.2/lora/sft.sh", "0.2", f"{i}", "lora", lr, data_version])
@@ -58,7 +58,7 @@ for lr in lrs1:
 #         subprocess.run(["bash", f"my_tuning/DareBeagle-7B-v2/lora/sft.sh", "0.2", f"{i}", "lora", lr, data_version])
 
 # Turdus
-# for lr in lrs2:
-#     data_version = "1"
-#     for i in [1.0]:
-#         subprocess.run(["bash", f"my_tuning/Turdus/lora/sft.sh", "0.2", f"{i}", "lora", lr, data_version])
+for lr in lrs1:
+    data_version = "1"
+    for i in [1.0]:
+        subprocess.run(["bash", f"my_tuning/Turdus/lora/sft.sh", "0.2", f"{i}", "lora", lr, data_version])

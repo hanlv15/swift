@@ -25,18 +25,18 @@ import evaluation
 with open(f"{ckpt_dir}/sft_args.json", "r") as f:
     sft_args = json.load(f)
 
-model_type, template_type = sft_args["model_type"], sft_args["template_type"]
-model, tokenizer = get_model_tokenizer(
-    model_type, model_kwargs={'device_map': 'auto'},
-    model_dir=sft_args["model_cache_dir"]
-)
-model = Swift.from_pretrained(model, ckpt_dir, inference_mode=True)
-model.generation_config.max_new_tokens = 512
-model.generation_config.do_sample = False
+def get_model_template():
+    model_type, template_type = sft_args["model_type"], sft_args["template_type"]
+    model, tokenizer = get_model_tokenizer(
+        model_type, model_kwargs={'device_map': 'auto'},
+        model_dir=sft_args["model_cache_dir"]
+    )
+    model = Swift.from_pretrained(model, ckpt_dir, inference_mode=True)
+    model.generation_config.max_new_tokens = 512
+    model.generation_config.do_sample = False
 
-template = get_template(template_type, tokenizer)
+    template = get_template(template_type, tokenizer)
 
-get_response = lambda prompt : inference(model, template, prompt)
+    return model, template
 
-
-wrong_ans = evaluation.cal_metric_single_llm(sft_args, get_response, save=True, use_tqdm=True)
+wrong_ans = evaluation.cal_metric_single_llm(get_model_template, inference, sft_args, save=True, use_tqdm=True)

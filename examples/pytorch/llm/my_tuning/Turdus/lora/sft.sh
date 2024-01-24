@@ -34,14 +34,14 @@ CUDA_VISIBLE_DEVICES=1,2 \
 PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:1024 \
 torchrun \
     --nproc_per_node=$nproc_per_node \
-    --master_port 29505 \
+    --master_port 29507 \
     llm_sft.py \
     --model_type turdus \
     --model_cache_dir /home/css/models/Turdus \
     --check_model_is_latest false \
     --sft_type $sft_type \
     --tuner_backend peft \
-    --template_type turdus \
+    --template_type _llama \
     --dtype AUTO \
     --add_output_dir_suffix false \
     --output_dir output/Turdus/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/$sft_type/"$output_name" \
