@@ -20,13 +20,15 @@ class CustomModelType:
     tigerbot_13b = 'tigerbot-13b'
     tigerbot_13b_chat = 'tigerbot-13b-chat'
 
-    orca2_7b = "orca-2-7b"
+    orca2_7b = "orca-2-13b"
     openchat_35 = "openchat_3.5"
     neural_chat_7b = "neural-chat-7b-v3"
-    solar_10_7b = "solar-10.7b-instruct"
+    solar_instruct_10_7b = "solar-10.7b-instruct"
+    solar_instruct_10_7b_128k = "solar-10.7b-instruct-128k"
+    sauerkrautlm_solar_instruct = "sauerkrautlm-solar-instruct"
     marcoroni_7b = "marcoroni-7b-v3"
     dpopenHermes_7b = "dpopenHermes-7b-v2"
-    # neuralbeagle14 = "neuralbeagle14-7B"
+    neuralbeagle14 = "neuralbeagle14-7B"
     turdus = "turdus"
     darebeagle_7b = "darebeagle-7b-v2"
     una_thebeagle_7b = "una-thebeagle-7b-v1"
@@ -85,7 +87,7 @@ def get_tigerbot_model_tokenizer(model_dir: str,
 
 
 @register_model(CustomModelType.orca2_7b,
-                '/home/css/models/Orca-2-7b', LoRATM.llama2,
+                '/home/css/models/Orca-2-13b', LoRATM.llama2,
                 CustomTemplateType.orca2)
 def get_orca2_model_tokenizer(model_dir: str,
                                  torch_dtype: Dtype,
@@ -110,10 +112,13 @@ def get_orca2_model_tokenizer(model_dir: str,
                 '/home/css/models/openchat-3.5-0106', LoRATM.llama2,
                 CustomTemplateType.openchat_35)
 @register_model(CustomModelType.neural_chat_7b,
-                '/home/css/models/neural-chat-7b-v3-3-Slerp', LoRATM.llama2,
+                '/home/css/models/neural-chat-7b-v3-3', LoRATM.llama2,
                 CustomTemplateType.neural)
-@register_model(CustomModelType.solar_10_7b,
+@register_model(CustomModelType.solar_instruct_10_7b,
                 '/home/css/models/SOLAR-10.7B-Instruct-v1.0', LoRATM.llama2,
+                CustomTemplateType.solar)
+@register_model(CustomModelType.sauerkrautlm_solar_instruct,
+                '/home/css/models/SauerkrautLM-SOLAR-Instruct', LoRATM.llama2,
                 CustomTemplateType.solar)
 @register_model(CustomModelType.marcoroni_7b,
                 '/home/css/models/Marcoroni-7B-v3', LoRATM.llama2,
@@ -131,6 +136,9 @@ def get_orca2_model_tokenizer(model_dir: str,
 @register_model(CustomModelType.darebeagle_7b,
                 '/home/css/models/DareBeagle-7B-v2', LoRATM.llama2,
                 CustomTemplateType.neural)
+@register_model(CustomModelType.neuralbeagle14,
+                '/home/css/models/NeuralBeagle14-7B', LoRATM.llama2,
+                CustomTemplateType.neural)
 def get_model_tokenizer(
     model_dir: str,
     torch_dtype: Dtype, 
@@ -138,7 +146,7 @@ def get_model_tokenizer(
     load_model: bool = True,
     **kwargs
 ):
-    model_config = AutoConfig.from_pretrained(model_dir)
+    model_config = AutoConfig.from_pretrained(model_dir, trust_remote_code=True)
     model_config.torch_dtype = torch_dtype
     logger.info(f'model_config: {model_config}')
     tokenizer = AutoTokenizer.from_pretrained(model_dir)
@@ -148,6 +156,32 @@ def get_model_tokenizer(
             model_dir,
             config=model_config,
             torch_dtype=torch_dtype,
+            **model_kwargs)
+    return model, tokenizer
+
+@register_model(CustomModelType.solar_instruct_10_7b_128k,
+                '/home/css/models/SOLAR-10B-Instruct-v1-128k', LoRATM.llama2,
+                CustomTemplateType.solar)
+def get_yarn_model_tokenizer(
+    model_dir: str,
+    torch_dtype: Dtype, 
+    model_kwargs: Dict[str, Any], 
+    load_model: bool = True,
+    **kwargs
+):
+    # model_config = AutoConfig.from_pretrained(model_dir, trust_remote_code=True)
+    # model_config.torch_dtype = torch_dtype
+    # logger.info(f'model_config: {model_config}')
+    tokenizer = AutoTokenizer.from_pretrained(model_dir)
+    model = None
+    
+    if load_model:
+        model = AutoModelForCausalLM.from_pretrained(
+            model_dir,
+            attn_implementation="flash_attention_2",
+            # config=model_config,
+            torch_dtype=torch_dtype,
+            trust_remote_code=True,
             **model_kwargs)
     return model, tokenizer
 
@@ -170,7 +204,7 @@ register_template(
     CustomTemplateType.orca2,
     Template(
         [], ['<|im_start|>user\n{{QUERY}}<|im_end|>\n<|im_start|>assistant\n'],
-        ['<|im_end|>\n'], [None], None,
+        ['<|im_end|>\n'], ['<|im_end|>'], None,
         ['<|im_start|>system\n{{SYSTEM}}<|im_end|>\n']))
 
 register_template(

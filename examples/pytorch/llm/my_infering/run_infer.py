@@ -1,7 +1,7 @@
 ckpt_list = [
 
 ]
-path = "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Mistral-7B-Instruct-v0.2/with_solar_info/brave/data1-split=8:2-ratio=1.0/lora"
+path = "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/neural-chat-7b-v3-3/with_solar_info/brave/data1-split=8:2-ratio=1.0/lora"
 
 import subprocess
 import os
@@ -10,8 +10,8 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 if len(ckpt_list) == 0 and len(path) == 0:
     raise Exception()
-if len(ckpt_list) > 0 and len(path) > 0:
-    raise Exception()
+# if len(ckpt_list) > 0 and len(path) > 0:
+#     raise Exception()
 
 if len(path) > 0:
     for file in os.listdir(path):
