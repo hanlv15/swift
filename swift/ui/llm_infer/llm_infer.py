@@ -7,6 +7,7 @@ import json
 import torch
 from gradio import Accordion, Tab
 
+from swift import snapshot_download
 from swift.llm import (InferArguments, inference_stream, limit_history_length,
                        prepare_model_template)
 from swift.ui.base import BaseUI
@@ -18,9 +19,6 @@ class LLMInfer(BaseUI):
     group = 'llm_infer'
 
     sub_ui = [Model]
-
-    int_regex = r'^[-+]?[0-9]+$'
-    float_regex = r'[-+]?(?:\d*\.*\d+)'
 
     locale_dict = {
         'generate_alert': {
@@ -116,7 +114,8 @@ class LLMInfer(BaseUI):
                     inputs=[
                         model_and_template,
                         cls.element('template_type'), prompt, chatbot,
-                        cls.element('max_new_tokens')
+                        cls.element('max_new_tokens'),
+                        cls.element('system')
                     ],
                     outputs=[prompt, chatbot],
                     queue=True)
@@ -137,7 +136,6 @@ class LLMInfer(BaseUI):
 
     @classmethod
     def reset_load_button(cls):
-        gr.Info(cls.locale('loaded_alert', cls.lang)['value'])
         return gr.update(
             value=cls.locale('load_checkpoint', cls.lang)['value'])
 
@@ -184,7 +182,10 @@ class LLMInfer(BaseUI):
 
         kwargs.update(more_params)
         if kwargs['model_type'] == cls.locale('checkpoint', cls.lang)['value']:
-            kwargs['ckpt_dir'] = kwargs.pop('model_id_or_path')
+            model_dir = kwargs.pop('model_id_or_path')
+            if not os.path.exists(model_dir):
+                model_dir = snapshot_download(model_dir)
+            kwargs['ckpt_dir'] = model_dir
         if 'ckpt_dir' in kwargs or 'model_id_or_path' in kwargs:
             kwargs.pop('model_type', None)
 
@@ -194,8 +195,9 @@ class LLMInfer(BaseUI):
         gpus = ','.join(devices)
         if gpus != 'cpu':
             os.environ['CUDA_VISIBLE_DEVICES'] = gpus
-        inter_args = InferArguments(**kwargs)
-        model, template = prepare_model_template(inter_args)
+        infer_args = InferArguments(**kwargs)
+        model, template = prepare_model_template(infer_args)
+        gr.Info(cls.locale('loaded_alert', cls.lang)['value'])
         return [model, template]
 
     @classmethod
@@ -208,7 +210,7 @@ class LLMInfer(BaseUI):
 
     @classmethod
     def generate_chat(cls, model_and_template, template_type, prompt: str,
-                      history, max_new_tokens):
+                      history, max_new_tokens, system):
         if not model_and_template:
             gr.Warning(cls.locale('generate_alert', cls.lang)['value'])
             return '', None
@@ -221,7 +223,13 @@ class LLMInfer(BaseUI):
         else:
             old_history = []
             history = []
-        gen = inference_stream(model, template, prompt, history)
+        gen = inference_stream(
+            model,
+            template,
+            prompt,
+            history,
+            system=system,
+            stop_words=['Observation:'])
         for _, history in gen:
             total_history = old_history + history
             yield '', total_history

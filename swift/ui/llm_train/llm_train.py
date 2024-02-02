@@ -1,5 +1,6 @@
 import collections
 import os
+import re
 import sys
 import time
 from subprocess import PIPE, STDOUT, Popen
@@ -142,14 +143,26 @@ class LLMTrain(BaseUI):
                 'en': 'Use Distributed Data Parallel to train'
             }
         },
+        'ddp_num': {
+            'label': {
+                'zh': 'DDP分片数量',
+                'en': 'Number of DDP sharding'
+            },
+            'info': {
+                'zh': '启用多少进程的数据并行',
+                'en': 'The data parallel size of DDP'
+            }
+        },
         'neftune_noise_alpha': {
             'label': {
                 'zh': 'neftune_noise_alpha',
                 'en': 'neftune_noise_alpha'
             },
             'info': {
-                'zh': '使用neftune提升训练效果',
-                'en': 'Use neftune to improve performance'
+                'zh':
+                '使用neftune提升训练效果, 一般设置为5或者10',
+                'en':
+                'Use neftune to improve performance, normally the value should be 5 or 10'
             }
         }
     }
@@ -174,11 +187,12 @@ class LLMTrain(BaseUI):
                     gr.Textbox(elem_id='seed', scale=4)
                     gr.Dropdown(elem_id='dtype', scale=4)
                     gr.Checkbox(elem_id='use_ddp', value=False, scale=4)
+                    gr.Textbox(elem_id='ddp_num', value='2', scale=4)
                     gr.Slider(
                         elem_id='neftune_noise_alpha',
                         minimum=0.0,
-                        maximum=1.0,
-                        step=0.05,
+                        maximum=10.0,
+                        step=0.5,
                         scale=4)
                 with gr.Row():
                     gr.Dropdown(
@@ -187,8 +201,7 @@ class LLMTrain(BaseUI):
                         choices=[str(i) for i in range(gpu_count)] + ['cpu'],
                         value=default_device,
                         scale=8)
-                    gr.Textbox(
-                        elem_id='gpu_memory_fraction', value='1.0', scale=4)
+                    gr.Textbox(elem_id='gpu_memory_fraction', scale=4)
                     gr.Checkbox(elem_id='dry_run', value=False, scale=4)
                     submit = gr.Button(
                         elem_id='submit', scale=4, variant='primary')
@@ -243,6 +256,13 @@ class LLMTrain(BaseUI):
                 compare_value, (list, dict)) else compare_value
             compare_value_ui = str(value) if not isinstance(
                 value, (list, dict)) else value
+
+            if isinstance(value, str) and re.fullmatch(cls.int_regex, value):
+                value = int(value)
+            elif isinstance(value, str) and re.fullmatch(
+                    cls.float_regex, value):
+                value = float(value)
+
             if key not in ignore_elements and key in sft_args and compare_value_ui != compare_value_arg and value:
                 kwargs[key] = value if not isinstance(
                     value, list) else ' '.join(value)
@@ -277,7 +297,8 @@ class LLMTrain(BaseUI):
         devices = other_kwargs['gpu_id']
         devices = [d for d in devices if d]
         if other_kwargs['use_ddp']:
-            ddp_param = f'NPROC_PER_NODE={len(devices)}'
+            assert int(other_kwargs['ddp_num']) > 0
+            ddp_param = f'NPROC_PER_NODE={int(other_kwargs["ddp_num"])}'
         assert (len(devices) == 1 or 'cpu' not in devices)
         gpus = ','.join(devices)
         cuda_param = ''

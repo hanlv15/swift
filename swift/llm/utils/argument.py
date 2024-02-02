@@ -2,19 +2,22 @@
 import math
 import os
 from dataclasses import dataclass, field
-from typing import List, Literal, Optional, Set, Tuple, Union
+from typing import Dict, List, Literal, Optional, Set, Tuple, Union
 
 import json
+import numpy as np
 import torch
 import torch.distributed as dist
+from datasets import concatenate_datasets
 from torch import dtype as Dtype
 from transformers.utils.versions import require_version
 
 from swift import get_logger
 from swift.hub import HubApi, ModelScopeConfig
 from swift.utils import (add_version_to_work_dir, broadcast_string,
-                         get_dist_setting, is_dist, is_master)
-from .dataset import DATASET_MAPPING, get_custom_dataset, register_dataset
+                         get_dist_setting, is_dist, is_master, is_mp)
+from .dataset import (DATASET_MAPPING, get_custom_dataset, get_dataset,
+                      register_dataset)
 from .model import (MODEL_MAPPING, dtype_mapping,
                     get_default_lora_target_modules, get_default_template_type)
 from .template import TEMPLATE_MAPPING, TemplateType
@@ -23,8 +26,8 @@ from .utils import is_vllm_available
 logger = get_logger()
 
 
-def is_lora(sft_type: str) -> bool:
-    return sft_type in {'lora', 'longlora', 'qalora'}
+def is_adapter(sft_type: str) -> bool:
+    return sft_type in {'lora', 'longlora', 'qalora', 'adalora', 'ia3'}
 
 
 @dataclass
@@ -37,7 +40,8 @@ class SftArguments:
     model_revision: Optional[str] = None
     model_cache_dir: Optional[str] = None
 
-    sft_type: Literal['lora', 'full', 'longlora', 'qalora'] = 'lora'
+    sft_type: Literal['lora', 'full', 'longlora', 'qalora', 'adalora',
+                      'ia3'] = 'lora'
     freeze_parameters: float = 0.  # 0 ~ 1
     additional_trainable_parameters: List[str] = field(default_factory=list)
     tuner_backend: Literal['swift', 'peft'] = 'swift'
@@ -61,6 +65,9 @@ class SftArguments:
     dataset_seed: int = 42
     dataset_test_ratio: float = 0.01
     train_dataset_sample: int = 20000  # -1: all dataset
+    train_dataset_mix_ratio: float = None
+    train_dataset_mix_ds: List[str] = field(
+        default_factory=lambda: ['ms-bench'])
     val_dataset_sample: Optional[int] = None  # -1: all dataset
     system: Optional[str] = None
     max_length: int = 2048  # -1: no limit
@@ -90,9 +97,28 @@ class SftArguments:
     lora_alpha: int = 32
     lora_dropout_p: float = 0.05
     lora_bias_trainable: Literal['none', 'all'] = 'none'
+    use_rslora: bool = False
+    lora_layers_to_transform: List[int] = None
+    lora_layers_pattern: List[str] = None
+    lora_rank_pattern: Dict = field(default_factory=dict)
+    lora_alpha_pattern: Dict = field(default_factory=dict)
+    lora_loftq_config: str = field(default_factory=dict)
     # e.g. ['wte', 'ln_1', 'ln_2', 'ln_f', 'lm_head']
     lora_modules_to_save: List[str] = field(default_factory=list)
+    modules_to_save: List[str] = field(default_factory=list)
     lora_dtype: Literal['fp16', 'bf16', 'fp32', 'AUTO'] = 'fp32'
+
+    adalora_target_r: int = 8
+    adalora_init_r: int = 12
+    adalora_tinit: int = 0
+    adalora_tfinal: int = 0
+    adalora_deltaT: int = 1
+    adalora_beta1: float = 0.85
+    adalora_beta2: float = 0.85
+    adalora_orth_reg_weight: float = 0.5
+
+    ia3_target_modules: List[str] = field(default_factory=lambda: ['DEFAULT'])
+    ia3_feedforward_modules: List[str] = None
 
     neftune_noise_alpha: Optional[float] = None  # e.g. 5, 10, 15
 
@@ -120,6 +146,7 @@ class SftArguments:
     save_total_limit: int = 2  # save last and best. -1: all checkpoints
     logging_steps: int = 5
     dataloader_num_workers: int = 1
+    dataloader_pin_memory: bool = True
 
     push_to_hub: bool = False
     # 'user_name/repo_name' or 'repo_name'
@@ -144,7 +171,7 @@ class SftArguments:
             'enabling faster detection of OOM (Out of Memory) errors.'
         })
     disable_tqdm: bool = False
-    lazy_tokenize: bool = False
+    lazy_tokenize: Optional[bool] = None
     preprocess_num_proc: int = 1
     use_flash_attn: Optional[bool] = None
     ignore_args_error: bool = False  # True: notebook compatibility
@@ -154,6 +181,7 @@ class SftArguments:
     report_to: List[str] = field(default_factory=lambda: ['all'])
     acc_strategy: Literal['token', 'sentence'] = 'token'
     save_on_each_node: bool = True
+    evaluation_strategy: Literal['steps', 'no'] = 'steps'
     save_strategy: Literal['steps', 'no'] = 'steps'
     save_safetensors: bool = True
 
@@ -172,13 +200,40 @@ class SftArguments:
     only_save_model: Optional[bool] = None
     neftune_alpha: Optional[float] = None
 
+    gpu_memory_fraction: Optional[float] = None
+
+    def prepare_target_modules(self, target_modules):
+        if not target_modules:
+            return target_modules
+        if isinstance(target_modules, str):
+            target_modules = [target_modules]
+        if len(target_modules) == 1:
+            if ',' in target_modules[0]:
+                target_modules = target_modules.split(',')
+        return target_modules
+
     def __post_init__(self) -> None:
         handle_compatibility(self)
+        ds_config_folder = os.path.join(__file__, '..', '..', 'ds_config')
+        if self.deepspeed_config_path == 'default-zero2':
+            self.deepspeed_config_path = os.path.abspath(
+                os.path.join(ds_config_folder, 'zero2.json'))
+        elif self.deepspeed_config_path == 'default-zero3':
+            self.deepspeed_config_path = os.path.abspath(
+                os.path.join(ds_config_folder, 'zero3.json'))
         handle_path(self)
         set_model_type(self)
+        if isinstance(self.dataset, str):
+            self.dataset = [self.dataset]
         register_custom_dataset(self)
         check_flash_attn(self)
         handle_generation_config(self)
+        self.lora_target_modules = self.prepare_target_modules(
+            self.lora_target_modules)
+        self.ia3_target_modules = self.prepare_target_modules(
+            self.ia3_target_modules)
+        self.ia3_feedforward_modules = self.prepare_target_modules(
+            self.ia3_feedforward_modules)
         if self.self_cognition_sample > 0:
             if self.model_name is None or self.model_author is None:
                 raise ValueError(
@@ -199,6 +254,9 @@ class SftArguments:
                     'If you have already added LoRA on MLP, please ignore this warning.'
                 )
 
+        if not self.modules_to_save:
+            self.modules_to_save = self.lora_modules_to_save
+
         self.torch_dtype, self.fp16, self.bf16 = select_dtype(self)
         world_size = 1
         if is_dist():
@@ -217,7 +275,7 @@ class SftArguments:
             self.output_dir = add_version_to_work_dir(self.output_dir)
             logger.info(f'output_dir: {self.output_dir}')
 
-        if is_lora(self.sft_type):
+        if is_adapter(self.sft_type):
             assert self.freeze_parameters == 0., (
                 'lora does not support `freeze_parameters`, please set `--sft_type full`'
             )
@@ -245,7 +303,7 @@ class SftArguments:
                     self.additional_trainable_parameters
                 ]
             if self.learning_rate is None:
-                self.learning_rate = 2e-5
+                self.learning_rate = 1e-5
             if self.save_only_model is None:
                 self.save_only_model = True
         else:
@@ -254,8 +312,6 @@ class SftArguments:
         if self.template_type == 'AUTO':
             self.template_type = get_default_template_type(self.model_type)
             logger.info(f'Setting template_type: {self.template_type}')
-        if isinstance(self.dataset, str):
-            self.dataset = [self.dataset]
         if len(self.dataset) == 0 and (len(self.custom_train_dataset_path) == 0
                                        and len(
                                            self.custom_val_dataset_path) == 0
@@ -266,11 +322,13 @@ class SftArguments:
 
         if self.save_steps is None:
             self.save_steps = self.eval_steps
-        if isinstance(self.lora_target_modules, str):
-            self.lora_target_modules = [self.lora_target_modules]
         if 'DEFAULT' in self.lora_target_modules or 'AUTO' in self.lora_target_modules:
             assert len(self.lora_target_modules) == 1
             self.lora_target_modules = get_default_lora_target_modules(
+                self.model_type)
+        if 'DEFAULT' in self.ia3_target_modules or 'AUTO' in self.ia3_target_modules:
+            assert len(self.ia3_target_modules) == 1
+            self.ia3_target_modules = get_default_lora_target_modules(
                 self.model_type)
         self.bnb_4bit_compute_dtype, self.load_in_4bit, self.load_in_8bit = select_bnb(
             self)
@@ -289,6 +347,7 @@ class SftArguments:
 
         self.deepspeed = None
         if self.deepspeed_config_path is not None:
+            assert not is_mp(), 'DeepSpeed is not compatible with MP.'
             require_version('deepspeed')
             with open(self.deepspeed_config_path, 'r', encoding='utf-8') as f:
                 self.deepspeed = json.load(f)
@@ -298,17 +357,23 @@ class SftArguments:
         if self.gradient_accumulation_steps is None:
             self.gradient_accumulation_steps = math.ceil(16 / self.batch_size
                                                          / world_size)
-        if self.preprocess_num_proc > 1 and 'qwen-audio' in self.model_type:
-            logger.warning(
-                'qwen-audio does not support multi-process preprocess, '
-                'because qwen-audio\'s preprocessing functions use torch\'s multi-processing, '
-                'which causes compatibility issues. '
-                'You can use `--lazy_tokenize true` to avoid long preprocessing times.'
-            )
-            self.preprocess_num_proc = 1
+        template_info = TEMPLATE_MAPPING[self.template_type]
+        if self.lazy_tokenize is None:
+            self.lazy_tokenize = template_info.get('lazy_tokenize', False)
+            logger.info(f'Setting args.lazy_tokenize: {self.lazy_tokenize}')
+        if 'dataloader_num_workers' in template_info:
+            self.dataloader_num_workers = template_info[
+                'dataloader_num_workers']
             logger.info(
-                f'Setting self.preprocess_num_proc: {self.preprocess_num_proc}'
+                f'Setting args.dataloader_num_workers: {self.dataloader_num_workers}'
             )
+        if 'dataloader_pin_memory' in template_info:
+            self.dataloader_pin_memory = template_info['dataloader_pin_memory']
+            logger.info(
+                f'Setting args.dataloader_pin_memory: {self.dataloader_pin_memory}'
+            )
+        if 'qwen-audio' in self.model_type:
+            assert self.preprocess_num_proc == 1 or self.lazy_tokenize, 'not support'
         model_info = MODEL_MAPPING[self.model_type]
         support_gradient_checkpointing = model_info.get(
             'support_gradient_checkpointing', True)
@@ -449,13 +514,12 @@ class InferArguments:
         model_info = MODEL_MAPPING[self.model_type]
         support_vllm = model_info.get('support_vllm', False)
         if self.infer_backend == 'AUTO':
+            self.infer_backend = 'pt'
             if is_vllm_available() and support_vllm:
                 if (self.sft_type == 'full'
                         or self.sft_type == 'lora' and self.merge_lora_and_save
                         and self.quantization_bit == 0):
                     self.infer_backend = 'vllm'
-                else:
-                    self.infer_backend = 'pt'
         if self.infer_backend == 'vllm':
             assert self.quantization_bit == 0, 'VLLM does not support bnb.'
             assert support_vllm, f'vllm not support `{self.model_type}`'
@@ -463,9 +527,12 @@ class InferArguments:
                 assert self.merge_lora_and_save is True, (
                     'To use VLLM, you need to provide the complete weight parameters. '
                     'Please set --merge_lora_and_save true.')
-        if self.num_beams != 1:
+        template_info = TEMPLATE_MAPPING[self.template_type]
+        support_stream = template_info.get('support_stream', True)
+        if self.num_beams != 1 or not support_stream:
             self.stream = False
             logger.info('Setting self.stream: False')
+        self.infer_media_type = template_info.get('infer_media_type', 'none')
 
     @staticmethod
     def check_ckpt_dir_correct(ckpt_dir) -> bool:
@@ -510,6 +577,10 @@ class DPOArguments(SftArguments):
         metadata={'help': f'model_type choices: {list(MODEL_MAPPING.keys())}'})
 
     max_prompt_length: int = 1024
+    beta: float = 0.1
+    label_smoothing: float = 0.0
+    loss_type: Literal['sigmoid', 'hinge', 'ipo', 'kto_pair'] = 'sigmoid'
+    sft_beta: float = 0.1
 
 
 @dataclass
@@ -672,6 +743,7 @@ def set_model_type(args: Union[SftArguments, InferArguments]) -> None:
         args.model_revision = model_info['revision']
     else:
         model_info['revision'] = args.model_revision
+        logger.info(f"Setting model_info['revision']: {args.model_revision}")
     args.model_id_or_path = model_info['model_id_or_path']
     requires = model_info['requires']
     for require in requires:
@@ -777,6 +849,12 @@ def load_from_ckpt_dir(args: InferArguments) -> None:
         } and len(getattr(args, key)) > 0):
             continue
         setattr(args, key, sft_args.get(key))
+    sft_model_cache_dir = sft_args.get('model_cache_dir')
+    if args.model_cache_dir is None and sft_model_cache_dir is not None:
+        logger.warning(
+            f'The model_cache_dir for the sft stage is detected as `{sft_model_cache_dir}`, '
+            'but the model_cache_dir for the infer stage is `None`. '
+            'Please check if this item has been omitted.')
 
 
 def check_flash_attn(args: Union[SftArguments, InferArguments]) -> None:
@@ -798,3 +876,33 @@ def handle_generation_config(
             'Due to do_sample=False, the following settings are applied: args.temperature: '
             f'{args.temperature}, args.top_p: {args.top_p}, args.top_k: {args.top_k}.'
         )
+
+
+def handle_dataset_mixture(args: SftArguments, train_dataset,
+                           mix_dataset_sample) -> None:
+    if train_dataset is None:
+        return train_dataset
+    train_length = len(train_dataset)
+    random_state = np.random.RandomState(args.dataset_seed)
+    if mix_dataset_sample:
+        assert args.train_dataset_mix_ds is not None
+        train_dataset_mix_ds = [args.train_dataset_mix_ds] if isinstance(
+            args.train_dataset_mix_ds, str) else args.train_dataset_mix_ds
+        mixed_dataset = get_dataset(
+            train_dataset_mix_ds,
+            0.0,
+            random_state,
+            check_dataset_strategy=args.check_dataset_strategy)[0]
+        if len(mixed_dataset) < mix_dataset_sample:
+            logger.warn(
+                f'The length of dataset used for mixin: {train_dataset_mix_ds} are '
+                'lesser than the ratio required by the `train_dataset_mix_ratio` '
+                f'argument:{args.train_dataset_mix_ratio}'
+                f'the actual ratio is : {len(mixed_dataset)/float(train_length)}'
+            )
+        else:
+            train_idxs = random_state.permutation(mix_dataset_sample)
+            mixed_dataset = mixed_dataset.select(train_idxs)
+        return concatenate_datasets([train_dataset, mixed_dataset])
+    else:
+        return train_dataset

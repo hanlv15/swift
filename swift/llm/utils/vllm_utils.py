@@ -77,7 +77,13 @@ def get_vllm_engine(model_type: str,
         destroy_model_parallel()
     except ImportError:
         pass
-    llm_engine = llm_engine_cls.from_engine_args(engine_args)
+    try:
+        llm_engine = llm_engine_cls.from_engine_args(engine_args)
+    except ValueError:
+        logger.warning(
+            f'The current version of VLLM does not support {model_type}. '
+            'Please upgrade VLLM or specify `--infer_backend pt`.')
+        raise
     llm_engine.engine_args = engine_args
     llm_engine.model_dir = model_dir
     llm_engine.model_type = model_type
@@ -133,7 +139,8 @@ class VllmGenerationConfig(SamplingParams):
         kwargs['top_p'] = top_p
         kwargs['repetition_penalty'] = repetition_penalty
         if num_beams > 1:
-            assert 'use_beam_search' not in kwargs and 'best_of' not in kwargs
+            best_of = kwargs.get('best_of')
+            assert 'use_beam_search' not in kwargs and best_of is None
             kwargs['use_beam_search'] = True
             kwargs['best_of'] = num_beams
         kwargs['n'] = n
@@ -146,11 +153,18 @@ class VllmGenerationConfig(SamplingParams):
                     f'The VLLM version is too old and does not support the parameter: {k}.'
                 )
                 kwargs.pop(k)
+        self._temperature = temperature
         super().__init__(**kwargs)
 
     def __setattr__(self, key: str, value: str) -> None:
         if key == 'max_new_tokens':
             self.max_tokens = value
+        elif key == 'do_sample':
+            assert value in {True, False}
+            if value:
+                self.temperature = self._temperature
+            else:
+                self.temperature = 0.
         elif key == 'max_length':
             raise ValueError(
                 '`max_length` is not supported, please use `max_new_tokens` for setting.'
@@ -188,7 +202,7 @@ def inference_stream_vllm(
         if history is None:
             history = []
         request['history'] = history
-        inputs = template.encode(request)
+        inputs = template.encode(request)[0]
         input_ids = inputs['input_ids']
         tokenizer = template.tokenizer
         if tokenizer.eos_token is not None and tokenizer.eos_token not in generation_config.stop:
@@ -253,7 +267,7 @@ def inference_vllm(llm_engine: LLMEngine,
         if history is None:
             history = []
         request['history'] = history
-        inputs = template.encode(request)
+        inputs = template.encode(request)[0]
         input_ids = inputs['input_ids']
         tokenizer = template.tokenizer
         if tokenizer.eos_token is not None and tokenizer.eos_token not in generation_config.stop:
