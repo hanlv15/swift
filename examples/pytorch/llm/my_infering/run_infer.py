@@ -1,11 +1,11 @@
 ckpt_list = [
-    "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/openchat_3.5/with_solar_info/brave/data1-split=8:2-ratio=1.0/lora/fp32/lr=1.1e-4-20240203-03:02:48/checkpoint-609"
+    "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/openchat_3.5/with_solar_info/brave/data1-split=8:2-ratio=1.0/adalora/lr=3e-4-20240203-21:53:21/checkpoint-609"
 ]
 path = ""
 
 import subprocess
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 # 要运行的Python文件的路径
     
 if len(ckpt_list) == 0 and len(path) == 0:

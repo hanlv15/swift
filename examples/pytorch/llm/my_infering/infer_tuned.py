@@ -32,9 +32,9 @@ def get_model_template():
         model_dir=sft_args["model_cache_dir"]
     )
     model = Swift.from_pretrained(model, ckpt_dir, inference_mode=True)
+    if sft_args["sft_type"] == 'adalora':
+        model = model.to(model.dtype)
     model.generation_config.max_new_tokens = 512
-    for param_tuple in model.named_parameters():
-        name, param = param_tuple
     model.generation_config.do_sample = False
 
     template = get_template(template_type, tokenizer)
