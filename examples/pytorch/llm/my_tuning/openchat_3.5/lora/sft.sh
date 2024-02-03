@@ -27,7 +27,7 @@ if [ "$train_ratio" = "1" ] || [ -z "$train_ratio" ]; then
     custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/train_data$data_version.jsonl
 fi
 
-nproc_per_node=1
+nproc_per_node=2
 # eval_times=15
 gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
 # num_train_data=$(echo "scale=0; 12192 * (1 - $test_size) * $train_ratio / 1" | bc)
@@ -38,7 +38,8 @@ gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
 max_length=8192
 
 PYTHONPATH=../../.. \
-CUDA_VISIBLE_DEVICES=1 \
+CUDA_VISIBLE_DEVICES=1,2 \
+PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:1024 \
 torchrun \
     --nproc_per_node=$nproc_per_node \
     --master_port 29505 \
@@ -52,7 +53,7 @@ torchrun \
     --template_type openchat_3.5 \
     --dtype AUTO \
     --add_output_dir_suffix false \
-    --output_dir output/openchat_3.5/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/$sft_type/"$output_name" \
+    --output_dir output/openchat_3.5/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/$sft_type/fp32/"$output_name" \
     --ddp_backend nccl \
     --custom_train_dataset_path $custom_train_dataset_path \
     --dataset_test_ratio 0 \
@@ -66,7 +67,7 @@ torchrun \
     --lora_alpha 16 \
     --lora_dropout_p 0.05 \
     --lora_target_modules ALL \
-    --lora_dtype AUTO \
+    --lora_dtype fp32 \
     --gradient_checkpointing true \
     --batch_size 1 \
     --weight_decay 0.01 \
