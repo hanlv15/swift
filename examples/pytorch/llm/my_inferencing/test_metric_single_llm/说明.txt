@@ -1,0 +1,9 @@
+最优结果：
+
+with solar info：
+
+lora：
+Turdus(_llama): lr=1.3e-4
+DareBeagle-7B-v2(neural): lr=1.3e-4
+Mistral-7B-Instruct-v0.2(mistral): lr=1.2e-4
+openchat-3.5-0106(openchat_3.5): 1.5e-4

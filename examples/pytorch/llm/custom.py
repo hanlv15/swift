@@ -32,6 +32,7 @@ class CustomModelType:
     turdus = "turdus"
     darebeagle_7b = "darebeagle-7b-v2"
     una_thebeagle_7b = "una-thebeagle-7b-v1"
+    mixtral_moe_7b_instruct_gptq_int4 = "mixtral-8x7B-instruct-v0.1-gptq-int4"
 
 class CustomTemplateType:
     tigerbot = 'tigerbot'
@@ -139,6 +140,9 @@ def get_orca2_model_tokenizer(model_dir: str,
 @register_model(CustomModelType.neuralbeagle14,
                 '/home/css/models/NeuralBeagle14-7B', LoRATM.llama2,
                 CustomTemplateType.neural)
+@register_model(CustomModelType.mixtral_moe_7b_instruct_gptq_int4,
+                '/home/css/models/Mixtral-8x7B-Instruct-v0.1-GPTQ-int4', LoRATM.llama2,
+                CustomTemplateType.mistral)
 def get_model_tokenizer(
     model_dir: str,
     torch_dtype: Dtype, 

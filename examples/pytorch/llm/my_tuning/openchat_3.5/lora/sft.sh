@@ -38,7 +38,7 @@ gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
 max_length=8192
 
 PYTHONPATH=../../.. \
-CUDA_VISIBLE_DEVICES=1,2 \
+CUDA_VISIBLE_DEVICES=0,1 \
 PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:1024 \
 torchrun \
     --nproc_per_node=$nproc_per_node \

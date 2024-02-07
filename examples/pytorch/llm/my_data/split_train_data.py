@@ -19,7 +19,7 @@ def set_seed(seed=DEFAULT_SEED):
 # data_dir = "/home/hanlv/workspace/code/research/infodemic/LLM/LoRA/swift_data/"
 search_engine = "brave"
 data_dir = f"./with_solar_info/{search_engine}/"
-version = "1"
+version = "2"
 
 data_path = data_dir + f"train_test_split/8:2/"
 train_data = []
