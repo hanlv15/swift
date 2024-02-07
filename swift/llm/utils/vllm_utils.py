@@ -8,6 +8,7 @@ import torch
 from modelscope import GenerationConfig, snapshot_download
 from torch import dtype as Dtype
 from tqdm import tqdm
+from transformers import PreTrainedTokenizerBase
 from vllm import (AsyncEngineArgs, AsyncLLMEngine, EngineArgs, LLMEngine,
                   SamplingParams)
 
@@ -25,6 +26,7 @@ def get_vllm_engine(model_type: str,
                     *,
                     gpu_memory_utilization: float = 0.9,
                     tensor_parallel_size: int = 1,
+                    max_model_len: Optional[int] = None,
                     engine_kwargs: Optional[Dict[str, Any]] = None,
                     use_async: bool = False,
                     **kwargs) -> LLMEngine:
@@ -47,7 +49,7 @@ def get_vllm_engine(model_type: str,
                 revision,
                 ignore_file_pattern=ignore_file_pattern)
     model_dir = os.path.expanduser(model_dir)
-    assert os.path.isdir(model_dir)
+    assert os.path.isdir(model_dir), f'model_dir: {model_dir}'
 
     dtype_mapping = {
         torch.float16: 'float16',
@@ -70,6 +72,7 @@ def get_vllm_engine(model_type: str,
         dtype=dtype_mapping[torch_dtype],
         gpu_memory_utilization=gpu_memory_utilization,
         tensor_parallel_size=tensor_parallel_size,
+        max_model_len=max_model_len,
         disable_log_stats=disable_log_stats,
         **engine_kwargs)
     try:
@@ -77,6 +80,8 @@ def get_vllm_engine(model_type: str,
         destroy_model_parallel()
     except ImportError:
         pass
+    # fix HTTPError bug (use model_dir)
+    os.environ.pop('VLLM_USE_MODELSCOPE', None)
     try:
         llm_engine = llm_engine_cls.from_engine_args(engine_args)
     except ValueError:
@@ -87,7 +92,11 @@ def get_vllm_engine(model_type: str,
     llm_engine.engine_args = engine_args
     llm_engine.model_dir = model_dir
     llm_engine.model_type = model_type
-    llm_engine.tokenizer = tokenizer
+    # compatible with vllm==0.3.*
+    if hasattr(llm_engine, 'tokenizer') and not isinstance(
+            llm_engine.tokenizer, PreTrainedTokenizerBase):
+        llm_engine.tokenizer.tokenizer = tokenizer
+    llm_engine.hf_tokenizer = tokenizer
     generation_config_path = os.path.join(model_dir, 'generation_config.json')
     if os.path.isfile(generation_config_path):
         generation_config = GenerationConfig.from_pretrained(model_dir)
@@ -197,6 +206,14 @@ def inference_stream_vllm(
     if generation_config.use_beam_search is True:
         error_msg = 'Streaming generation does not support beam search.'
         raise ValueError(error_msg)
+
+    tokenizer = template.tokenizer
+    if tokenizer.eos_token is not None and tokenizer.eos_token not in generation_config.stop:
+        generation_config.stop.append(tokenizer.eos_token)
+    if isinstance(template.suffix[-1],
+                  str) and template.suffix[-1] not in generation_config.stop:
+        generation_config.stop.append(template.suffix[-1])
+
     for i, request in enumerate(request_list):
         history = request.get('history', None)
         if history is None:
@@ -204,9 +221,6 @@ def inference_stream_vllm(
         request['history'] = history
         inputs = template.encode(request)[0]
         input_ids = inputs['input_ids']
-        tokenizer = template.tokenizer
-        if tokenizer.eos_token is not None and tokenizer.eos_token not in generation_config.stop:
-            generation_config.stop.append(tokenizer.eos_token)
         llm_engine.add_request(str(i), None, generation_config, input_ids)
 
     batch_size = len(request_list)
@@ -262,6 +276,14 @@ def inference_vllm(llm_engine: LLMEngine,
     assert isinstance(generation_config, VllmGenerationConfig)
     request_list = deepcopy(request_list)
     generation_config = deepcopy(generation_config)
+
+    tokenizer = template.tokenizer
+    if tokenizer.eos_token is not None and tokenizer.eos_token not in generation_config.stop:
+        generation_config.stop.append(tokenizer.eos_token)
+    if isinstance(template.suffix[-1],
+                  str) and template.suffix[-1] not in generation_config.stop:
+        generation_config.stop.append(template.suffix[-1])
+
     for i, request in enumerate(request_list):
         history = request.get('history', None)
         if history is None:
@@ -269,9 +291,6 @@ def inference_vllm(llm_engine: LLMEngine,
         request['history'] = history
         inputs = template.encode(request)[0]
         input_ids = inputs['input_ids']
-        tokenizer = template.tokenizer
-        if tokenizer.eos_token is not None and tokenizer.eos_token not in generation_config.stop:
-            generation_config.stop.append(tokenizer.eos_token)
         llm_engine.add_request(str(i), None, generation_config, input_ids)
 
     batch_size = len(request_list)
@@ -318,16 +337,15 @@ def prepare_vllm_engine_template(
         kwargs['model_dir'] = args.ckpt_dir
     elif args.model_cache_dir is not None:
         kwargs['model_dir'] = args.model_cache_dir
-    os.environ.pop('VLLM_USE_MODELSCOPE',
-                   None)  # fix HTTPError bug (use model_dir)
     llm_engine = get_vllm_engine(
         args.model_type,
         args.torch_dtype,
         gpu_memory_utilization=args.gpu_memory_utilization,
         tensor_parallel_size=args.tensor_parallel_size,
+        max_model_len=args.max_model_len,
         use_async=use_async,
         **kwargs)
-    tokenizer = llm_engine.tokenizer
+    tokenizer = llm_engine.hf_tokenizer
     if use_async:
         model_config = asyncio.run(llm_engine.get_model_config())
         llm_engine.model_config = model_config
@@ -342,8 +360,7 @@ def prepare_vllm_engine_template(
         top_k=args.top_k,
         top_p=args.top_p,
         repetition_penalty=args.repetition_penalty,
-        num_beams=args.num_beams,
-        stop=[tokenizer.eos_token])
+        num_beams=args.num_beams)
     logger.info(f'generation_config: {generation_config}')
     llm_engine.generation_config = generation_config
     template: Template = get_template(args.template_type, tokenizer,

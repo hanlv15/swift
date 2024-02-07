@@ -56,7 +56,9 @@ def split_agent_parts_by(text: str, delimiters: List[str]):
     return text_list
 
 
-def calculate_loss_scale(response: str) -> Tuple[List[str], List[float]]:
+def calculate_loss_scale(response: str,
+                         use_loss_scale=False
+                         ) -> Tuple[List[str], List[float]]:
     """Calculate the loss scale by splitting the agent response.
 
     This algorithm comes from paper: https://arxiv.org/pdf/2309.00986.pdf
@@ -76,17 +78,17 @@ def calculate_loss_scale(response: str) -> Tuple[List[str], List[float]]:
 
     Args:
         response: The response text
+        use_loss_scale: Use weighted loss. With this, some part of the loss will be enhanced to improve performance.
 
     Returns:
         A tuple of agent response parts and their weights.
     """
-    if 'Action:' in response and 'Thought:' in response:
+    if 'Action:' in response and 'Observation:' in response and use_loss_scale:
         agent_keyword = [
             'Action:', 'Action Input:', 'Thought:', 'Final Answer:',
             'Observation:'
         ]
         agent_parts = split_agent_parts_by(response, agent_keyword)
-        assert all([c['key'] for c in agent_parts])
         weights = []
         agent_content = []
         for c in agent_parts:

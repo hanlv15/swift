@@ -1,21 +1,17 @@
 # Experimental environment: A100
-# 24GB GPU memory
+# 30GB GPU memory
 PYTHONPATH=../../.. \
 CUDA_VISIBLE_DEVICES=0 \
 python llm_sft.py \
-    --model_id_or_path qwen/Qwen-7B-Chat \
-    --model_revision master \
+    --model_type qwen1half-7b-chat \
     --sft_type lora \
     --tuner_backend swift \
-    --template_type qwen \
     --dtype AUTO \
     --output_dir output \
-    --dataset ms-agent \
-    --use_loss_scale true \
-    --train_dataset_mix_ratio 2.0 \
-    --train_dataset_sample -1 \
+    --dataset ms-bench \
+    --train_dataset_sample 5000 \
     --num_train_epochs 2 \
-    --max_length 2048 \
+    --max_length 1024 \
     --check_dataset_strategy warning \
     --lora_rank 8 \
     --lora_alpha 32 \
@@ -33,10 +29,10 @@ python llm_sft.py \
     --save_total_limit 2 \
     --logging_steps 10 \
     --use_flash_attn false \
-    --self_cognition_sample 3000 \
+    --self_cognition_sample 1000 \
     --model_name 卡卡罗特 \
     --model_author 陶白白 \
     --push_to_hub false \
-    --hub_model_id qwen-7b-chat-lora \
+    --hub_model_id qwen1half-7b-chat-lora \
     --hub_private_repo true \
     --hub_token 'your-sdk-token' \

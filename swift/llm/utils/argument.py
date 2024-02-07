@@ -15,7 +15,8 @@ from transformers.utils.versions import require_version
 from swift import get_logger
 from swift.hub import HubApi, ModelScopeConfig
 from swift.utils import (add_version_to_work_dir, broadcast_string,
-                         get_dist_setting, is_dist, is_master, is_mp)
+                         get_dist_setting, get_pai_tensorboard_dir, is_dist,
+                         is_master, is_mp, is_pai_training_job)
 from .dataset import (DATASET_MAPPING, get_custom_dataset, get_dataset,
                       register_dataset)
 from .model import (MODEL_MAPPING, dtype_mapping,
@@ -52,7 +53,7 @@ class SftArguments:
             f"template_type choices: {list(TEMPLATE_MAPPING.keys()) + ['AUTO']}"
         })
     output_dir: str = 'output'
-    add_output_dir_suffix: bool = True
+    add_output_dir_suffix: Optional[bool] = None
     ddp_backend: Literal['nccl', 'gloo', 'mpi', 'ccl'] = 'nccl'
 
     seed: int = 42
@@ -65,10 +66,11 @@ class SftArguments:
     dataset_seed: int = 42
     dataset_test_ratio: float = 0.01
     train_dataset_sample: int = 20000  # -1: all dataset
-    train_dataset_mix_ratio: float = None
+    train_dataset_mix_ratio: Optional[float] = None
     train_dataset_mix_ds: List[str] = field(
         default_factory=lambda: ['ms-bench'])
     val_dataset_sample: Optional[int] = None  # -1: all dataset
+    use_loss_scale: bool = False
     system: Optional[str] = None
     max_length: int = 2048  # -1: no limit
     truncation_strategy: Literal['delete', 'truncation_left'] = 'delete'
@@ -97,17 +99,17 @@ class SftArguments:
     lora_alpha: int = 32
     lora_dropout_p: float = 0.05
     lora_bias_trainable: Literal['none', 'all'] = 'none'
-    use_rslora: bool = False
-    lora_layers_to_transform: List[int] = None
-    lora_layers_pattern: List[str] = None
-    lora_rank_pattern: Dict = field(default_factory=dict)
-    lora_alpha_pattern: Dict = field(default_factory=dict)
-    lora_loftq_config: str = field(default_factory=dict)
     # e.g. ['wte', 'ln_1', 'ln_2', 'ln_f', 'lm_head']
     lora_modules_to_save: List[str] = field(default_factory=list)
-    modules_to_save: List[str] = field(default_factory=list)
     lora_dtype: Literal['fp16', 'bf16', 'fp32', 'AUTO'] = 'fp32'
 
+    use_rslora: bool = False
+    lora_layers_to_transform: Optional[List[int]] = None
+    lora_layers_pattern: Optional[List[str]] = None
+    lora_rank_pattern: Dict = field(default_factory=dict)
+    lora_alpha_pattern: Dict = field(default_factory=dict)
+    lora_loftq_config: Dict = field(default_factory=dict)
+    # adalora
     adalora_target_r: int = 8
     adalora_init_r: int = 12
     adalora_tinit: int = 0
@@ -116,14 +118,15 @@ class SftArguments:
     adalora_beta1: float = 0.85
     adalora_beta2: float = 0.85
     adalora_orth_reg_weight: float = 0.5
-
+    # ia3
     ia3_target_modules: List[str] = field(default_factory=lambda: ['DEFAULT'])
-    ia3_feedforward_modules: List[str] = None
+    ia3_feedforward_modules: List[str] = field(default_factory=list)
+    ia3_modules_to_save: List[str] = field(default_factory=list)
 
     neftune_noise_alpha: Optional[float] = None  # e.g. 5, 10, 15
-
     gradient_checkpointing: Optional[bool] = None
-    deepspeed_config_path: Optional[str] = None  # e.g. 'ds_config/zero2.json'
+    # e.g. 'default-zero3', 'default-zero2', 'ds_config/zero2.json'
+    deepspeed: Optional[str] = None
     batch_size: int = 1
     eval_batch_size: Optional[int] = None
     num_train_epochs: int = 1
@@ -178,12 +181,13 @@ class SftArguments:
     check_model_is_latest: bool = True
 
     logging_dir: Optional[str] = None
-    report_to: List[str] = field(default_factory=lambda: ['all'])
+    report_to: List[str] = field(default_factory=lambda: ['tensorboard'])
     acc_strategy: Literal['token', 'sentence'] = 'token'
     save_on_each_node: bool = True
     evaluation_strategy: Literal['steps', 'no'] = 'steps'
     save_strategy: Literal['steps', 'no'] = 'steps'
     save_safetensors: bool = True
+    gpu_memory_fraction: Optional[float] = None
 
     # generation config
     max_new_tokens: int = 2048
@@ -199,27 +203,40 @@ class SftArguments:
     # compatibility. (Deprecated)
     only_save_model: Optional[bool] = None
     neftune_alpha: Optional[float] = None
+    deepspeed_config_path: Optional[str] = None
 
-    gpu_memory_fraction: Optional[float] = None
-
-    def prepare_target_modules(self, target_modules):
-        if not target_modules:
-            return target_modules
+    def _prepare_target_modules(self, target_modules):
         if isinstance(target_modules, str):
             target_modules = [target_modules]
-        if len(target_modules) == 1:
+        if len(target_modules) == 0:
+            return target_modules
+        elif len(target_modules) == 1:
             if ',' in target_modules[0]:
                 target_modules = target_modules.split(',')
+        if 'AUTO' in target_modules:
+            target_modules.remove('AUTO')
+            target_modules.append('DEFAULT')
+        if 'DEFAULT' in target_modules:
+            target_modules.remove('DEFAULT')
+            target_modules += get_default_lora_target_modules(self.model_type)
+        if 'EMBEDDING' in target_modules:
+            target_modules.remove('EMBEDDING')
+            self.lora_use_embedding = True
+        if 'ALL' in target_modules:
+            target_modules.remove('ALL')
+            self.lora_use_all = True
         return target_modules
 
     def __post_init__(self) -> None:
         handle_compatibility(self)
+        if is_pai_training_job():
+            handle_pai_compat(self)
         ds_config_folder = os.path.join(__file__, '..', '..', 'ds_config')
-        if self.deepspeed_config_path == 'default-zero2':
-            self.deepspeed_config_path = os.path.abspath(
+        if self.deepspeed == 'default-zero2':
+            self.deepspeed = os.path.abspath(
                 os.path.join(ds_config_folder, 'zero2.json'))
-        elif self.deepspeed_config_path == 'default-zero3':
-            self.deepspeed_config_path = os.path.abspath(
+        elif self.deepspeed == 'default-zero3':
+            self.deepspeed = os.path.abspath(
                 os.path.join(ds_config_folder, 'zero3.json'))
         handle_path(self)
         set_model_type(self)
@@ -228,12 +245,22 @@ class SftArguments:
         register_custom_dataset(self)
         check_flash_attn(self)
         handle_generation_config(self)
-        self.lora_target_modules = self.prepare_target_modules(
-            self.lora_target_modules)
-        self.ia3_target_modules = self.prepare_target_modules(
-            self.ia3_target_modules)
-        self.ia3_feedforward_modules = self.prepare_target_modules(
-            self.ia3_feedforward_modules)
+
+        self.lora_use_embedding = False
+        self.lora_use_all = False
+        if self.sft_type == 'ia3':
+            self.ia3_feedforward_modules = self._prepare_target_modules(
+                self.ia3_feedforward_modules)
+            self.ia3_target_modules = self._prepare_target_modules(
+                self.ia3_target_modules)
+        else:
+            self.lora_target_modules = self._prepare_target_modules(
+                self.lora_target_modules)
+        if self.sft_type in {'adalora', 'ia3'} and self.lora_use_embedding:
+            raise ValueError(
+                '`adalora` and `ia3` do not support setting embedding as target_modules.'
+            )
+
         if self.self_cognition_sample > 0:
             if self.model_name is None or self.model_author is None:
                 raise ValueError(
@@ -247,15 +274,12 @@ class SftArguments:
                     v = v[0]
                 if isinstance(v, str):
                     setattr(self, k, [v, v])
-            if self.sft_type == 'lora' and 'ALL' not in self.lora_target_modules:
+            if self.sft_type == 'lora' and not self.lora_use_all:
                 logger.warning(
                     'Due to knowledge editing involved, it is recommended to add LoRA on MLP. '
                     'For example: `--lora_target_modules ALL`. '
                     'If you have already added LoRA on MLP, please ignore this warning.'
                 )
-
-        if not self.modules_to_save:
-            self.modules_to_save = self.lora_modules_to_save
 
         self.torch_dtype, self.fp16, self.bf16 = select_dtype(self)
         world_size = 1
@@ -270,6 +294,8 @@ class SftArguments:
             if not dist.is_initialized():
                 dist.init_process_group(backend=self.ddp_backend)
 
+        if self.add_output_dir_suffix is None:
+            self.add_output_dir_suffix = True
         if self.add_output_dir_suffix:
             self.output_dir = os.path.join(self.output_dir, self.model_type)
             self.output_dir = add_version_to_work_dir(self.output_dir)
@@ -287,7 +313,7 @@ class SftArguments:
             if self.learning_rate is None:
                 self.learning_rate = 1e-4
             if self.save_only_model is None:
-                if self.deepspeed_config_path is None:
+                if self.deepspeed is None:
                     self.save_only_model = False
                 else:
                     self.save_only_model = True
@@ -322,14 +348,6 @@ class SftArguments:
 
         if self.save_steps is None:
             self.save_steps = self.eval_steps
-        if 'DEFAULT' in self.lora_target_modules or 'AUTO' in self.lora_target_modules:
-            assert len(self.lora_target_modules) == 1
-            self.lora_target_modules = get_default_lora_target_modules(
-                self.model_type)
-        if 'DEFAULT' in self.ia3_target_modules or 'AUTO' in self.ia3_target_modules:
-            assert len(self.ia3_target_modules) == 1
-            self.ia3_target_modules = get_default_lora_target_modules(
-                self.model_type)
         self.bnb_4bit_compute_dtype, self.load_in_4bit, self.load_in_8bit = select_bnb(
             self)
 
@@ -345,12 +363,13 @@ class SftArguments:
         if self.max_length == -1:
             self.max_length = None
 
-        self.deepspeed = None
-        if self.deepspeed_config_path is not None:
+        if self.deepspeed is not None:
             assert not is_mp(), 'DeepSpeed is not compatible with MP.'
             require_version('deepspeed')
-            with open(self.deepspeed_config_path, 'r', encoding='utf-8') as f:
-                self.deepspeed = json.load(f)
+            if self.deepspeed.endswith('.json') or os.path.isfile(
+                    self.deepspeed):
+                with open(self.deepspeed, 'r', encoding='utf-8') as f:
+                    self.deepspeed = json.load(f)
             logger.info(f'Using deepspeed: {self.deepspeed}')
         if self.logging_dir is None:
             self.logging_dir = f'{self.output_dir}/runs'
@@ -450,6 +469,7 @@ class InferArguments:
     # vllm
     gpu_memory_utilization: float = 0.9
     tensor_parallel_size: int = 1
+    max_model_len: Optional[int] = None
     # compatibility. (Deprecated)
     show_dataset_sample: int = 10
     safe_serialization: Optional[bool] = None
@@ -706,6 +726,8 @@ def handle_compatibility(args: Union[SftArguments, InferArguments]) -> None:
             args.batch_size = args.per_device_train_batch_size
         if args.per_device_eval_batch_size is not None:
             args.eval_batch_size = args.per_device_eval_batch_size
+        if args.deepspeed_config_path is not None:
+            args.deepspeed = args.deepspeed_config_path
 
 
 def set_model_type(args: Union[SftArguments, InferArguments]) -> None:
@@ -786,8 +808,7 @@ def _check_path(
 def handle_path(args: Union[SftArguments, InferArguments]) -> None:
     check_exist_path = [
         'model_cache_dir', 'ckpt_dir', 'resume_from_checkpoint',
-        'deepspeed_config_path', 'custom_train_dataset_path',
-        'custom_val_dataset_path'
+        'custom_train_dataset_path', 'custom_val_dataset_path'
     ]
     if args.model_id_or_path is not None and (
             args.model_id_or_path.startswith('~')
@@ -907,3 +928,17 @@ def handle_dataset_mixture(args: SftArguments, train_dataset,
         return concatenate_datasets([train_dataset, mixed_dataset])
     else:
         return train_dataset
+
+
+def handle_pai_compat(args: SftArguments) -> None:
+    assert is_pai_training_job() is True
+    logger.info('Handle pai compat...')
+    pai_tensorboard_dir = get_pai_tensorboard_dir()
+    if args.logging_dir is None and pai_tensorboard_dir is not None:
+        args.logging_dir = pai_tensorboard_dir
+        logger.info(f'Setting args.logging_dir: {args.logging_dir}')
+    if args.add_output_dir_suffix is None:
+        args.add_output_dir_suffix = False
+        logger.info(
+            f'Setting args.add_output_dir_suffix: {args.add_output_dir_suffix}'
+        )

@@ -50,7 +50,7 @@ class TestRun(unittest.TestCase):
             sft_args = SftArguments(
                 model_type=model_type,
                 template_type='AUTO',
-                lora_target_modules='ALL',
+                lora_target_modules=['AUTO', 'EMBEDDING'],
                 quantization_bit=quantization_bit,
                 batch_size=2,
                 eval_steps=5,
@@ -115,7 +115,7 @@ class TestRun(unittest.TestCase):
             infer_main([
                 '--ckpt_dir', best_model_checkpoint, '--show_dataset_sample',
                 str(show_dataset_sample), '--max_new_tokens', '100',
-                '--use_flash_attn', 'true', '--verbose',
+                '--use_flash_attn', 'false', '--verbose',
                 str(not bool_var), '--merge_lora_and_save',
                 str(bool_var), '--load_dataset_config',
                 str(load_dataset_config)
@@ -208,19 +208,19 @@ class TestRun(unittest.TestCase):
             return
         for dataset in [[], [DatasetName.alpaca_zh, DatasetName.alpaca_en]]:
             sft_args = SftArguments(
-                model_type=ModelType.qwen_7b_chat,
+                model_type=ModelType.qwen1half_1_8b_chat_int4,
                 dataset=dataset,  # no dataset
                 train_dataset_sample=100,
                 dtype='fp16',
                 eval_steps=5,
                 output_dir='output',
-                lora_target_modules='ALL',
+                lora_target_modules=['ALL', 'EMBEDDING'],
                 lazy_tokenize=True,
                 max_length=512,
                 self_cognition_sample=100,
                 model_name=['小黄', 'Xiao Huang'],
                 model_author=['魔搭', 'ModelScope'],
-                use_flash_attn=False)
+                use_flash_attn=True)
             torch.cuda.empty_cache()
             output = sft_main(sft_args)
             last_model_checkpoint = output['last_model_checkpoint']
@@ -325,6 +325,48 @@ class TestRun(unittest.TestCase):
                 ckpt_dir=best_model_checkpoint,
                 load_dataset_config=True,
                 val_dataset_sample=2))
+
+    def test_pai_compat(self):
+        if not __name__ == '__main__':
+            # ignore citest error in github
+            return
+        from swift.llm import sft_main, infer_main
+        os.environ['PAI_TRAINING_JOB_ID'] = '123456'
+        folder = os.path.join(os.path.dirname(__file__), 'config')
+        tensorboard_dir = os.path.join('output/pai_test', 'pai_tensorboard')
+        os.environ['PAI_OUTPUT_TENSORBOARD'] = tensorboard_dir
+        sft_json = os.path.join(folder, 'sft.json')
+        infer_json = os.path.join(folder, 'infer.json')
+        output = sft_main([sft_json])
+        print()
+        infer_args = {
+            'ckpt_dir': output['best_model_checkpoint'],
+            'val_dataset_sample': 2,
+            'load_dataset_config': True,
+        }
+        import json
+        with open(infer_json, 'w') as f:
+            json.dump(infer_args, f, ensure_ascii=False, indent=4)
+        infer_main([infer_json])
+        os.environ.pop('PAI_TRAINING_JOB_ID')
+
+    # def test_baichuan2_chat_int4(self):
+    #     if not __name__ == '__main__':
+    #         # ignore citest error in github
+    #         return
+    #     from swift.llm import sft_main, infer_main, SftArguments, InferArguments, ModelType, DatasetName
+    #     output = sft_main(
+    #         SftArguments(
+    #             model_type=ModelType.baichuan2_7b_chat_int4,
+    #             dataset=['alpaca-zh'],
+    #             lora_target_modules=['DEFAULT', 'EMBEDDING'],
+    #             train_dataset_sample=20))
+    #     best_model_checkpoint = output['best_model_checkpoint']
+    #     infer_main(
+    #         InferArguments(
+    #             ckpt_dir=best_model_checkpoint,
+    #             load_dataset_config=True,
+    #             val_dataset_sample=1))
 
 
 def data_collate_fn(batch: List[Dict[str, Any]],

@@ -110,6 +110,7 @@ def _replace_system(prefix: Prompt) -> Prompt:
         if '{{SYSTEM}}' in p:
             p = p.replace('{{SYSTEM}}', '')
         res.append(p)
+    return res
 
 
 class Template:
@@ -121,13 +122,13 @@ class Template:
                  suffix: Prompt,
                  default_system: Optional[str] = None,
                  prefix_has_system: Optional[Prompt] = None) -> None:
-        self.prefix = prefix
         if default_system == '':
             default_system = None
         if _has_system(prefix):
             assert prefix_has_system is None, 'The prefix already contains {{SYSTEM}}.'
             prefix_has_system = prefix
             prefix = _replace_system(prefix)
+        self.prefix = prefix
         self.prefix_has_system = prefix_has_system
         if self.prefix_has_system is None:
             assert default_system is None, 'The template does not support `system`.'
@@ -176,6 +177,7 @@ class Template:
         self.max_length = max_length
         self.truncation_strategy = truncation_strategy
         self.model = kwargs.get('model', None)
+        self.use_loss_scale = kwargs.get('use_loss_scale', False)
         for key in [
                 'prefix', 'prompt', 'chat_sep', 'suffix', 'prefix_has_system'
         ]:
@@ -206,6 +208,8 @@ class Template:
             system = None
         else:
             assert self.prefix_has_system is not None, 'The template does not support `system`.'
+        if query is None:
+            query = ''
         inputs, tokenizer_kwargs = self._encode(query, response, history,
                                                 system,
                                                 self.truncation_strategy)
@@ -232,7 +236,8 @@ class Template:
             if isinstance(context, str):
                 if '{{RESPONSE}}' == context:
                     assert response is not None
-                    content_part, weight_part = calculate_loss_scale(response)
+                    content_part, weight_part = calculate_loss_scale(
+                        response, self.use_loss_scale)
                     res_context_list.extend(content_part)
                     compute_loss_idx.extend(weight_part)
                     continue
@@ -329,7 +334,7 @@ class Template:
                 # last response
                 context_list.append('{{RESPONSE}}')
                 context_list += self.suffix
-            if q is not None:
+            if q or r:
                 self._concat_context_list(
                     context_list,
                     res_context_list,
@@ -358,8 +363,9 @@ class Template:
         inputs = {
             'input_ids': input_ids,
             'labels': labels,
-            'loss_scale': loss_scale
         }
+        if self.use_loss_scale:
+            inputs['loss_scale'] = loss_scale
         return inputs, tokenizer_kwargs
 
     def get_tokenizer_kwargs(self, context: str) -> Dict[str, Any]:
@@ -456,7 +462,7 @@ register_template(
 class DefaultGenerationTemplate(Template):
 
     def __init__(self):
-        return super().__init__([], ['{{QUERY}}'], None, [['eos_token_id']])
+        super().__init__([], ['{{QUERY}}'], None, [['eos_token_id']])
 
 
 register_template(TemplateType.default_generation, DefaultGenerationTemplate())
@@ -545,7 +551,8 @@ yi_vl_default_system = (
     '仔细阅读所有的图像，并对人类的问题做出信息丰富、有帮助、详细的和礼貌的回答。')
 
 
-def _read_from_path(img_path: Union[str, 'Image.Image']) -> 'PIL.Image':
+def _read_from_path(
+        img_path: Union[str, 'PIL.Image.Image']) -> 'PIL.Image.Image':
     from PIL import Image
     if isinstance(img_path, str):
         img_path = img_path.strip()

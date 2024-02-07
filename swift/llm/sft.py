@@ -134,6 +134,7 @@ def llm_sft(args: SftArguments) -> Dict[str, Union[str, Any]]:
     use_model = template_info.get('use_model', False)
     if use_model:
         template_kwargs['model'] = model
+    template_kwargs['use_loss_scale'] = args.use_loss_scale
     template: Template = get_template(args.template_type, tokenizer,
                                       args.system, args.max_length,
                                       args.truncation_strategy,
@@ -304,8 +305,7 @@ def llm_sft(args: SftArguments) -> Dict[str, Union[str, Any]]:
     if is_master():
         images_dir = os.path.join(args.output_dir, 'images')
         logger.info(f'images_dir: {images_dir}')
-        tb_dir = os.path.join(args.output_dir, 'runs')
-        plot_images(images_dir, tb_dir, ['train/loss'], 0.9)
+        plot_images(images_dir, args.logging_dir, ['train/loss'], 0.9)
         if args.push_to_hub:
             trainer._add_patterns_to_gitignore(['images/'])
             trainer.push_to_hub()
