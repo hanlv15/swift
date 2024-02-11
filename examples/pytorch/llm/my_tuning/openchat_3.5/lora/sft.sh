@@ -27,7 +27,7 @@ if [ "$train_ratio" = "1" ] || [ -z "$train_ratio" ]; then
     custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/train_data$data_version.jsonl
 fi
 
-nproc_per_node=1
+nproc_per_node=2
 # eval_times=15
 gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
 # num_train_data=$(echo "scale=0; 12192 * (1 - $test_size) * $train_ratio / 1" | bc)
@@ -38,7 +38,7 @@ gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
 max_length=8192
 
 PYTHONPATH=../../.. \
-CUDA_VISIBLE_DEVICES=0 \
+CUDA_VISIBLE_DEVICES=1,2 \
 PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:1024 \
 torchrun \
     --nproc_per_node=$nproc_per_node \
@@ -68,8 +68,6 @@ torchrun \
     --lora_dropout_p 0.05 \
     --lora_target_modules ALL \
     --lora_dtype AUTO \
-    --ia3_target_modules ALL \
-    --ia3_feedforward_modules mlp.down_proj,mlp.gate_proj,mlp.up_proj \
     --gradient_checkpointing true \
     --batch_size 1 \
     --weight_decay 0.01 \
