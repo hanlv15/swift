@@ -12,7 +12,7 @@ lrs = [value for value in lrs2 if value not in lr_del]
 
 # openchat 3.5
 for sft_type in ["adalora"]:
-    for lr in ["2.4e-4"]:
+    for lr in ["2.5e-4", "3e-4", "3.5e-4",]:
         for j in ["with_solar_info/brave"]:
             data_version = "1"
 
