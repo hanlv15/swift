@@ -32,8 +32,8 @@ def get_model_template():
         model_dir=sft_args["model_cache_dir"]
     )
     model = Swift.from_pretrained(model, ckpt_dir, inference_mode=True)
-    if sft_args["sft_type"] == 'adalora':
-        model = model.to(model.dtype)
+    # if sft_args["sft_type"] == 'adalora':
+    #     model = model.to(model.dtype)
     model.generation_config.max_new_tokens = 512
     model.generation_config.do_sample = False
 
@@ -41,4 +41,4 @@ def get_model_template():
 
     return model, template
 
-wrong_ans = evaluation.cal_metric_single_llm(get_model_template, inference, sft_args, save=True, use_tqdm=True)
+evaluation.cal_metric_single_llm(get_model_template, inference, sft_args, save=True, use_tqdm=True)

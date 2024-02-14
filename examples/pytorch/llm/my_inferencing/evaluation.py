@@ -218,4 +218,8 @@ test_data{data_version}.jsonl", 'r') as f:
         update_metrics(metrics, model_name, split_type, train_ratio)
         metrics.sort(key=lambda x: (x["train_test_split"], x["train_ratio"]))
         save_metrics(file_dir, model_name, template_type, metrics, save=save)
-    return wrong_ans
+    
+    with open("wrong_ans.txt", "a") as f:
+        title = f'{model_name}, sft_type={sft_type}, lr={lr}, wrong={cnt["wrong"]}'
+        f.writelines('\n'.join([title] + wrong_ans) + '\n\n')
+
