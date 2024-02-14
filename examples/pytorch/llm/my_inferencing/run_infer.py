@@ -5,7 +5,7 @@ path = "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch
 
 import subprocess
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:1024'
 
 # 要运行的Python文件的路径
