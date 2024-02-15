@@ -64,20 +64,21 @@ torchrun \
     --max_new_tokens $max_length \
     --check_dataset_strategy warning \
     --lora_rank 8 \
-    --lora_alpha 16 \
+    --lora_alpha 32 \
     --lora_dropout_p 0.05 \
     --lora_target_modules ALL \
     --lora_dtype AUTO \
-    --adalora_init_r 10 \
+    --adalora_target_r 8 \
+    --adalora_init_r 12 \
     --gradient_checkpointing true \
     --batch_size 1 \
     --weight_decay 0.01 \
     --learning_rate $learning_rate \
     --gradient_accumulation_steps $gradient_accumulation_steps \
     --max_grad_norm 0.5 \
-    --warmup_ratio 0.03 \
+    --warmup_ratio 0.05 \
     --save_total_limit 1 \
-    --logging_steps 10 \
+    --logging_steps 5 \
     --use_flash_attn false \
     --do_sample false
 

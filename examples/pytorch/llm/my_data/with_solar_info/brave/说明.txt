@@ -1,2 +1,2 @@
-data1：pre  + text + prior knowledge（不按时间排序）
-data2：pre  + text + prior knowledge（随机选取）
+data1：pre  + text + prior knowledge（不按时间排序） 
+data2：pre  + text + prior knowledge（随机选取）未修改label！！！
