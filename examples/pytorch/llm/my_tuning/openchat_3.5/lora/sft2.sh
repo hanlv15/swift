@@ -38,8 +38,8 @@ gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
 max_length=8192
 
 PYTHONPATH=../../.. \
-CUDA_VISIBLE_DEVICES=0,1 \
-PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:1024 \
+CUDA_VISIBLE_DEVICES=1,2 \
+PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512 \
 torchrun \
     --nproc_per_node=$nproc_per_node \
     --master_port 29506 \
@@ -47,13 +47,12 @@ torchrun \
     --model_type openchat_3.5 \
     --model_cache_dir /home/css/models/openchat-3.5-0106 \
     --check_model_is_latest false \
-    --model_revision master \
     --sft_type $sft_type \
     --tuner_backend peft \
     --template_type openchat_3.5 \
     --dtype AUTO \
     --add_output_dir_suffix false \
-    --output_dir output/openchat_3.5/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/$sft_type/"$output_name" \
+    --output_dir output/openchat_3.5/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/$sft_type-r=4_8-drop=0.1/"$output_name" \
     --ddp_backend nccl \
     --custom_train_dataset_path $custom_train_dataset_path \
     --dataset_test_ratio 0 \
@@ -63,22 +62,22 @@ torchrun \
     --max_length $max_length \
     --max_new_tokens $max_length \
     --check_dataset_strategy warning \
-    --lora_rank 8 \
-    --lora_alpha 32 \
+    --lora_rank 4 \
+    --lora_alpha 16 \
     --lora_dropout_p 0.1 \
     --lora_target_modules ALL \
     --lora_dtype AUTO \
-    --adalora_target_r 8 \
-    --adalora_init_r 12 \
+    --adalora_target_r 4 \
+    --adalora_init_r 8 \
     --gradient_checkpointing true \
     --batch_size 1 \
     --weight_decay 0.01 \
     --learning_rate $learning_rate \
     --gradient_accumulation_steps $gradient_accumulation_steps \
     --max_grad_norm 0.5 \
-    --warmup_ratio 0.03 \
+    --warmup_ratio 0.05 \
     --save_total_limit 1 \
-    --logging_steps 10 \
+    --logging_steps 5 \
     --use_flash_attn false \
     --do_sample false
 

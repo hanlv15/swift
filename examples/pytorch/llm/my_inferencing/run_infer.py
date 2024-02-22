@@ -1,7 +1,7 @@
 ckpt_list = [
 
 ]
-path = "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/openchat_3.5/with_solar_info/brave/data1-split=8:2-ratio=1.0/adalora"
+path = "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/openchat_3.5/with_solar_info/brave/data1-split=8:2-ratio=1.0/adalora-r=4_8-drop=0.1"
 
 import subprocess
 import os
