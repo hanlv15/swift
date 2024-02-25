@@ -52,7 +52,7 @@ torchrun \
     --template_type openchat_3.5 \
     --dtype AUTO \
     --add_output_dir_suffix false \
-    --output_dir output/openchat_3.5/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/$sft_type-r=4_8-drop=0.1/"$output_name" \
+    --output_dir output/openchat_3.5/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/$sft_type-r=4_6-drop=0.05/"$output_name" \
     --ddp_backend nccl \
     --custom_train_dataset_path $custom_train_dataset_path \
     --dataset_test_ratio 0 \
@@ -64,11 +64,11 @@ torchrun \
     --check_dataset_strategy warning \
     --lora_rank 4 \
     --lora_alpha 16 \
-    --lora_dropout_p 0.1 \
+    --lora_dropout_p 0.05 \
     --lora_target_modules ALL \
     --lora_dtype AUTO \
     --adalora_target_r 4 \
-    --adalora_init_r 8 \
+    --adalora_init_r 6 \
     --gradient_checkpointing true \
     --batch_size 1 \
     --weight_decay 0.01 \

@@ -30,7 +30,7 @@ gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
 max_length=32768
 
 PYTHONPATH=../../.. \
-CUDA_VISIBLE_DEVICES=0,1 \
+CUDA_VISIBLE_DEVICES=1,2 \
 PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512 \
 torchrun \
     --nproc_per_node=$nproc_per_node \
@@ -54,13 +54,13 @@ torchrun \
     --max_length $max_length \
     --max_new_tokens $max_length \
     --check_dataset_strategy warning \
-    --lora_rank 8 \
-    --lora_alpha 32 \
+    --lora_rank 4 \
+    --lora_alpha 16 \
     --lora_dropout_p 0.05 \
     --lora_target_modules ALL \
     --lora_dtype AUTO \
-    --adalora_target_r 8 \
-    --adalora_init_r 12 \
+    --adalora_target_r 4 \
+    --adalora_init_r 8 \
     --gradient_checkpointing true \
     --batch_size 1 \
     --weight_decay 0.01 \

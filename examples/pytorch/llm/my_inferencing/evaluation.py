@@ -58,6 +58,7 @@ def cal_metric_single_llm(get_model_template, inference, sft_args, save=True, us
             Recall=recall_score(labels, preds, average='macro'),
         )
         metrics.append(new_item)
+        return new_item
     
     def get_with_or_without_info(train_dataset_path: str):
         with_or_without_info_list = ["with_info", "with_solar_info", "without_info"]
@@ -210,16 +211,18 @@ test_data{data_version}.jsonl", 'r') as f:
 
     # ratio为1.0
     if train_ratio == "1.0":
-        update_metrics(metrics, model_name, split_type, train_ratio, lr)
+        new_metric = update_metrics(metrics, model_name, split_type, train_ratio, lr)
         metrics.sort(key=lambda x: (x["train_test_split"], x["train_ratio"], float(x["lr"])))
         save_metrics(file_dir, model_name, template_type, metrics, save=save)
     else:
         # 不同的ratio
-        update_metrics(metrics, model_name, split_type, train_ratio)
+        new_metric = update_metrics(metrics, model_name, split_type, train_ratio)
         metrics.sort(key=lambda x: (x["train_test_split"], x["train_ratio"]))
         save_metrics(file_dir, model_name, template_type, metrics, save=save)
     
-    with open("wrong_ans.txt", "a") as f:
-        title = f'{model_name}, sft_type={sft_type}, lr={lr}, wrong={cnt["wrong"]}'
-        f.writelines('\n'.join([title] + wrong_ans) + '\n\n')
+    print(json.dumps(new_metric, indent=4))
+    
+    # with open("wrong_ans.txt", "a") as f:
+    #     title = f'{model_name}, sft_type={sft_type}, lr={lr}, wrong={cnt["wrong"]}'
+    #     f.writelines('\n'.join([title] + wrong_ans) + '\n\n')
 
