@@ -1,18 +1,19 @@
 #!/bin/bash
 
 # 检查是否提供了足够的参数
-if [ "$#" -ne 6 ]; then
-    echo "错误：需要提供6个参数"
-    echo "用法: bash $0 <test_size> <train_ratio> <sft_type> <learning_rate> <with_or_without_info> <data_version>"
+if [ "$#" -ne 7 ]; then
+    echo "错误：需要提供7个参数"
+    echo "用法: bash $0 <test_size> <train_ratio> <sft_type> <lora_rank> <learning_rate> <with_or_without_info> <data_version>"
     exit 1
 fi
 
 test_size=$1
 train_ratio=$2
 sft_type=$3
-learning_rate=$4 # 1e-4
-with_or_without_info=$5
-data_version=$6
+lora_rank=$4
+learning_rate=$5 # 1e-4
+with_or_without_info=$6
+data_version=$7
 
 num_epochs=1
 
@@ -30,6 +31,7 @@ fi
 nproc_per_node=2
 # eval_times=15
 gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
+lora_alpha=$(expr $lora_rank \* 4)
 # num_train_data=$(echo "scale=0; 12192 * (1 - $test_size) * $train_ratio / 1" | bc)
 # total_batch_size=$(expr $gradient_accumulation_steps \* $nproc_per_node)
 # eval_steps=$(expr $num_train_data \* num_epochs / $total_batch_size / $eval_times)
@@ -52,7 +54,7 @@ torchrun \
     --template_type openchat_3.5 \
     --dtype AUTO \
     --add_output_dir_suffix false \
-    --output_dir output/openchat_3.5/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/$sft_type-drop=0.1/"$output_name" \
+    --output_dir output/openchat_3.5/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/$sft_type-r=$lora_rank/"$output_name" \
     --ddp_backend nccl \
     --custom_train_dataset_path $custom_train_dataset_path \
     --dataset_test_ratio 0 \
@@ -62,13 +64,13 @@ torchrun \
     --max_length $max_length \
     --max_new_tokens $max_length \
     --check_dataset_strategy warning \
-    --lora_rank 4 \
-    --lora_alpha 16 \
-    --lora_dropout_p 0.1 \
+    --lora_rank $lora_rank \
+    --lora_alpha $lora_alpha \
+    --lora_dropout_p 0.05 \
     --lora_target_modules ALL \
     --lora_dtype AUTO \
-    --adalora_target_r 4 \
-    --adalora_init_r 8 \
+    --adalora_target_r $lora_rank \
+    --adalora_init_r $(expr $lora_rank + 4) \
     --gradient_checkpointing true \
     --batch_size 1 \
     --weight_decay 0.01 \

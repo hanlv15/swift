@@ -10,8 +10,9 @@ fi
 test_size=$1
 train_ratio=$2
 sft_type=$3
-learning_rate=$4 # 1e-4
-data_version=$5
+lora_rank=$4
+learning_rate=$5 # 1e-4
+data_version=$6
 with_or_without_info=with_solar_info/brave
 
 split_type=$(echo "10 - $test_size * 10" | bc | awk '{print int($1)}'):$(echo "$test_size * 10" | bc | awk '{print int($1)}')
@@ -27,10 +28,11 @@ fi
 
 nproc_per_node=2
 gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
+lora_alpha=$(expr $lora_rank \* 4)
 max_length=32768
 
 PYTHONPATH=../../.. \
-CUDA_VISIBLE_DEVICES=1,2 \
+CUDA_VISIBLE_DEVICES=0,1 \
 PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512 \
 torchrun \
     --nproc_per_node=$nproc_per_node \
@@ -54,13 +56,13 @@ torchrun \
     --max_length $max_length \
     --max_new_tokens $max_length \
     --check_dataset_strategy warning \
-    --lora_rank 4 \
-    --lora_alpha 16 \
+    --lora_rank $lora_rank \
+    --lora_alpha $lora_alpha \
     --lora_dropout_p 0.05 \
     --lora_target_modules ALL \
     --lora_dtype AUTO \
-    --adalora_target_r 4 \
-    --adalora_init_r 8 \
+    --adalora_target_r $lora_rank \
+    --adalora_init_r $(expr $lora_rank + 4) \
     --gradient_checkpointing true \
     --batch_size 1 \
     --weight_decay 0.01 \

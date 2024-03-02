@@ -1,14 +1,11 @@
 ckpt_list = [
-    # "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Mistral-7B-Instruct-v0.2/with_solar_info/brave/data1-split=8:2-ratio=1.0/adalora/lr=1.5e-3-20240225-13:37:27/checkpoint-609",
-    # "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Mistral-7B-Instruct-v0.2/with_solar_info/brave/data1-split=8:2-ratio=1.0/adalora/lr=1.6e-3-20240225-16:34:33/checkpoint-609",
-    "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Mistral-7B-Instruct-v0.2/with_solar_info/brave/data1-split=8:2-ratio=1.0/adalora/lr=1.7e-3-20240225-19:10:24/checkpoint-609",
-    "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Mistral-7B-Instruct-v0.2/with_solar_info/brave/data1-split=8:2-ratio=1.0/adalora/lr=1.8e-3-20240225-21:45:30/checkpoint-609"
+
 ]
 path = "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Mistral-7B-Instruct-v0.2/with_solar_info/brave/data1-split=8:2-ratio=1.0/adalora"
-path = ""
+# path = ""
 import subprocess
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '2'
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:1024'
 
 # 要运行的Python文件的路径
