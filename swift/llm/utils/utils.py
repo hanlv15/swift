@@ -31,7 +31,7 @@ from torch.nn import Linear, Module
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data import Dataset
 from tqdm.auto import tqdm
-from transformers import (GenerationConfig, PreTrainedModel,
+from transformers import (GenerationConfig, PretrainedConfig, PreTrainedModel,
                           PreTrainedTokenizerBase, StoppingCriteriaList,
                           TextStreamer, trainer)
 
@@ -339,13 +339,28 @@ def print_example(example: Dict[str, Any],
         logger.info(f'[LABLES] {labels_str}')
 
 
-def find_embedding(model: Module) -> List[str]:
-    target_module_names = set()
+def _find_layers(model: Module, module_cls: type) -> List[str]:
+    module_names = set()
     for name, module in model.named_modules():
-        if isinstance(module, torch.nn.Embedding):
+        if isinstance(module, module_cls):
             module_name = '.'.join(name.split('.')[-2:])
-            target_module_names.add(module_name)
-    return list(target_module_names)
+            module_names.add(module_name)
+    return list(module_names)
+
+
+def find_ln(model: Module) -> List[str]:
+    module_names = set()
+    for name, module in model.named_modules():
+        module_cls_name = module.__class__.__name__.lower()
+        if isinstance(module,
+                      torch.nn.LayerNorm) or 'rmsnorm' in module_cls_name:
+            module_name = '.'.join(name.split('.')[-1:])
+            module_names.add(module_name)
+    return list(module_names)
+
+
+def find_embedding(model: Module) -> List[str]:
+    return _find_layers(model, torch.nn.Embedding)
 
 
 def find_all_linears(model: Module, quantization_bit: int,
@@ -356,24 +371,30 @@ def find_all_linears(model: Module, quantization_bit: int,
         head_module_name = 'output_layer'
     if quantization_bit == 4:
         from bitsandbytes.nn import Linear4bit
-        linear_cls = Linear4bit
+        linear_cls = [Linear4bit]
     elif quantization_bit == 8:
         from bitsandbytes.nn import Linear8bitLt
-        linear_cls = Linear8bitLt
+        linear_cls = [Linear8bitLt]
     else:
-        linear_cls = Linear
+        linear_cls = [Linear]
     if 'int4' in model_type or 'int8' in model_type:
         from bitsandbytes.nn import Linear4bit
         from peft.utils import get_auto_gptq_quant_linear, get_quantization_config
         gptq_quantization_config = get_quantization_config(model, 'gptq')
         AutoGPTQQuantLinear = get_auto_gptq_quant_linear(
             gptq_quantization_config)
-        linear_cls = Linear4bit
+        linear_cls = [Linear4bit]
         if AutoGPTQQuantLinear is not None:
-            linear_cls = (Linear4bit, AutoGPTQQuantLinear)
+            linear_cls.append(AutoGPTQQuantLinear)
+    if 'awq' in model_type:
+        from awq.modules.linear import WQLinear_GEMM
+        linear_cls.append(WQLinear_GEMM)
+    if 'aqlm' in model_type:
+        from aqlm import QuantizedLinear
+        linear_cls.append(QuantizedLinear)
     target_module_names = set()
     for name, module in model.named_modules():
-        if isinstance(module, linear_cls):
+        if isinstance(module, tuple(linear_cls)):
             module_name = '.'.join(name.split('.')[-2:])
             if head_module_name not in module_name:
                 target_module_names.add(module_name)
@@ -430,6 +451,7 @@ def inference_stream(model: PreTrainedModel,
                      *,
                      generation_config: Optional[GenerationConfig] = None,
                      stop_words: Optional[StopWords] = None,
+                     generation_info: Optional[Dict[str, int]] = None,
                      **kwargs) -> Iterator[Tuple[str, History]]:
     """
     generation_config: Priority: generation_config > model.generation_config.
@@ -441,6 +463,7 @@ def inference_stream(model: PreTrainedModel,
     else:
         history = deepcopy(history)
 
+    # agent support
     is_observation = history[-1][-1].endswith(
         'Observation:') if history else False
     if is_observation:
@@ -452,10 +475,14 @@ def inference_stream(model: PreTrainedModel,
         'query': query,
         'history': history,
         'system': system,
-        'images': kwargs.pop('images', None)  # for vl
+        'images': kwargs.pop('images', None)  # for vl. str.
     }
     template.model = model
     inputs, tokenizer_kwargs = template.encode(example)
+    if len(inputs) == 0:
+        raise ValueError(
+            'input_ids exceeds `max_length`. Please increase the value of `max_length`.'
+        )
     inputs.pop('labels', None)
     tokenizer = template.tokenizer
     device = next(model.parameters()).device
@@ -496,6 +523,8 @@ def inference_stream(model: PreTrainedModel,
     stopping_criteria = StoppingCriteriaList(
         [StopWordsCriteria(tokenizer, stop_words, **tokenizer_kwargs)])
     inputs = to_device(inputs, device)
+    if generation_info is not None:
+        generation_info['num_prompt_tokens'] = len(inputs['input_ids'][0])
     gen = model.generate_stream(
         generation_config=stream_config,
         stopping_criteria=stopping_criteria,
@@ -508,6 +537,8 @@ def inference_stream(model: PreTrainedModel,
         history.append(None)  # dummy
     for token in gen:
         raw_generate_ids.append(token.item())
+        if generation_info is not None:
+            generation_info['num_generated_tokens'] = len(raw_generate_ids)
         generate_ids = raw_generate_ids
         # avoid printing template.suffix[-1])
         if isinstance(template.suffix[-1], list):
@@ -557,6 +588,7 @@ def inference(model: PreTrainedModel,
               verbose: bool = False,
               prompt_prefix: str = '[PROMPT]',
               output_prefix: str = '[OUTPUT]',
+              generation_info: Optional[Dict[str, int]] = None,
               **kwargs) -> Tuple[str, History]:
     """
     generation_config: Priority: generation_config > model.generation_config.
@@ -572,17 +604,20 @@ def inference(model: PreTrainedModel,
         'Observation:') if history else False
     if is_observation:
         history[-1][-1] = history[-1][-1] + query
-        act_length = len(history[-1][-1])
         query = None
 
     example = {
         'query': query,
         'history': history,
         'system': system,
-        'images': kwargs.pop('images', None)  # for vl
+        'images': kwargs.pop('images', None)  # for vl. str.
     }
     template.model = model
     inputs, tokenizer_kwargs = template.encode(example)
+    if len(inputs) == 0:
+        raise ValueError(
+            'input_ids exceeds `max_length`. Please increase the value of `max_length`.'
+        )
     inputs.pop('labels', None)
     tokenizer = template.tokenizer
     device = next(model.parameters()).device
@@ -631,12 +666,16 @@ def inference(model: PreTrainedModel,
     stopping_criteria = StoppingCriteriaList(
         [StopWordsCriteria(tokenizer, stop_words, **tokenizer_kwargs)])
     inputs = to_device(inputs, device)
+    if generation_info is not None:
+        generation_info['num_prompt_tokens'] = len(inputs['input_ids'][0])
     generate_ids = model.generate(
         streamer=streamer,
         generation_config=generation_config,
         stopping_criteria=stopping_criteria,
         **inputs)
     generate_ids = template.get_generate_ids(generate_ids, token_len)
+    if generation_info is not None:
+        generation_info['num_generated_tokens'] = len(generate_ids)
     response = None
     if verbose and stream is False:
         response = tokenizer.decode(generate_ids, **tokenizer_kwargs)
@@ -655,7 +694,7 @@ def inference(model: PreTrainedModel,
     if not is_observation:
         history.append((query, response))
     else:
-        history[-1][-1] = history[-1][-1][:act_length] + response
+        history[-1][-1] = history[-1][-1] + response
     return response, history
 
 
@@ -746,6 +785,29 @@ def get_time_info(log_history: List[Dict[str, Any]],
     except Exception:
         pass
     return time_info
+
+
+def get_max_model_len(config: PretrainedConfig) -> Optional[int]:
+    INF = int(1e9)
+    max_model_len = INF
+    possible_keys = [
+        'seq_length',  # qwen, chatglm
+        'max_position_embeddings',  # qwen1.5, llama2
+        'n_positions',  # polylm, phi-2
+        'model_max_length',  # baichuan2
+        # others
+        'seq_len',
+        'max_seq_len',
+        'max_sequence_length',
+        'max_seq_length',
+    ]
+    for key in possible_keys:
+        max_len_key = getattr(config, key, None)
+        if max_len_key is not None:
+            max_model_len = min(max_model_len, max_len_key)
+    if max_model_len == INF:
+        max_model_len = None
+    return max_model_len
 
 
 # monkey patching

@@ -5,7 +5,9 @@ from copy import deepcopy
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 import torch
+import vllm
 from modelscope import GenerationConfig, snapshot_download
+from packaging import version
 from torch import dtype as Dtype
 from tqdm import tqdm
 from transformers import PreTrainedTokenizerBase
@@ -24,52 +26,43 @@ logger = get_logger()
 def get_vllm_engine(model_type: str,
                     torch_dtype: Optional[Dtype] = None,
                     *,
+                    model_id_or_path: Optional[str] = None,
                     gpu_memory_utilization: float = 0.9,
                     tensor_parallel_size: int = 1,
                     max_model_len: Optional[int] = None,
                     engine_kwargs: Optional[Dict[str, Any]] = None,
                     use_async: bool = False,
                     **kwargs) -> LLMEngine:
+    model_dir = kwargs.pop('model_dir', None)  # compat with swift<1.7
+    tokenizer = get_model_tokenizer(
+        model_type,
+        load_model=False,
+        model_id_or_path=model_id_or_path,
+        model_dir=model_dir)[1]
+    model_dir = tokenizer.model_dir
+
     if engine_kwargs is None:
         engine_kwargs = {}
-    model_info = MODEL_MAPPING[model_type]
-    support_vllm = model_info.get('support_vllm', False)
-    if not support_vllm:
-        raise ValueError(f'vllm not support `{model_type}`')
-    model_id_or_path = model_info['model_id_or_path']
-    ignore_file_pattern = model_info['ignore_file_pattern']
-    model_dir = kwargs.get('model_dir', None)
-    if model_dir is None:
-        model_dir = model_id_or_path
-        if model_id_or_path is not None and not os.path.exists(
-                model_id_or_path):
-            revision = model_info['revision']
-            model_dir = snapshot_download(
-                model_id_or_path,
-                revision,
-                ignore_file_pattern=ignore_file_pattern)
-    model_dir = os.path.expanduser(model_dir)
-    assert os.path.isdir(model_dir), f'model_dir: {model_dir}'
-
     dtype_mapping = {
         torch.float16: 'float16',
         torch.bfloat16: 'bfloat16',
         torch.float32: 'float32',
         None: 'auto'
     }
-    tokenizer = get_model_tokenizer(
-        model_type, load_model=False, model_dir=model_dir)[1]
+    dtype = dtype_mapping[torch_dtype]
     disable_log_stats = engine_kwargs.pop('disable_log_stats', True)
+
     if use_async:
         engine_args_cls = AsyncEngineArgs
         llm_engine_cls = AsyncLLMEngine
+        engine_kwargs['disable_log_requests'] = True
     else:
         engine_args_cls = EngineArgs
         llm_engine_cls = LLMEngine
     engine_args = engine_args_cls(
         model=model_dir,
         trust_remote_code=True,
-        dtype=dtype_mapping[torch_dtype],
+        dtype=dtype,
         gpu_memory_utilization=gpu_memory_utilization,
         tensor_parallel_size=tensor_parallel_size,
         max_model_len=max_model_len,
@@ -82,20 +75,23 @@ def get_vllm_engine(model_type: str,
         pass
     # fix HTTPError bug (use model_dir)
     os.environ.pop('VLLM_USE_MODELSCOPE', None)
-    try:
-        llm_engine = llm_engine_cls.from_engine_args(engine_args)
-    except ValueError:
-        logger.warning(
-            f'The current version of VLLM does not support {model_type}. '
-            'Please upgrade VLLM or specify `--infer_backend pt`.')
-        raise
+    llm_engine = llm_engine_cls.from_engine_args(engine_args)
     llm_engine.engine_args = engine_args
     llm_engine.model_dir = model_dir
     llm_engine.model_type = model_type
+
+    if use_async:
+        _engine = llm_engine.engine
+    else:
+        _engine = llm_engine
     # compatible with vllm==0.3.*
-    if hasattr(llm_engine, 'tokenizer') and not isinstance(
-            llm_engine.tokenizer, PreTrainedTokenizerBase):
-        llm_engine.tokenizer.tokenizer = tokenizer
+    if version.parse(vllm.__version__) >= version.parse('0.3'):
+        assert isinstance(_engine.tokenizer.tokenizer, PreTrainedTokenizerBase)
+        _engine.tokenizer.tokenizer = tokenizer
+    else:
+        assert isinstance(_engine.tokenizer, PreTrainedTokenizerBase)
+        _engine.tokenizer = tokenizer
+
     llm_engine.hf_tokenizer = tokenizer
     generation_config_path = os.path.join(model_dir, 'generation_config.json')
     if os.path.isfile(generation_config_path):
@@ -325,18 +321,17 @@ def inference_vllm(llm_engine: LLMEngine,
 def prepare_vllm_engine_template(
         args: InferArguments,
         use_async: bool = False) -> Tuple[LLMEngine, Template]:
-    logger.info(f'args: {args}')
     logger.info(f'device_count: {torch.cuda.device_count()}')
     seed_everything(args.seed)
 
     assert args.quantization_bit == 0, 'not support bnb'
     assert args.sft_type == 'full', 'you need to merge lora'
     # Loading Model and Tokenizer
-    kwargs = {}
+    model_id_or_path = None
     if args.sft_type == 'full' and args.ckpt_dir is not None:
-        kwargs['model_dir'] = args.ckpt_dir
-    elif args.model_cache_dir is not None:
-        kwargs['model_dir'] = args.model_cache_dir
+        model_id_or_path = args.ckpt_dir
+    elif args.model_id_or_path is not None:
+        model_id_or_path = args.model_id_or_path
     llm_engine = get_vllm_engine(
         args.model_type,
         args.torch_dtype,
@@ -344,7 +339,7 @@ def prepare_vllm_engine_template(
         tensor_parallel_size=args.tensor_parallel_size,
         max_model_len=args.max_model_len,
         use_async=use_async,
-        **kwargs)
+        model_id_or_path=model_id_or_path)
     tokenizer = llm_engine.hf_tokenizer
     if use_async:
         model_config = asyncio.run(llm_engine.get_model_config())
@@ -352,6 +347,7 @@ def prepare_vllm_engine_template(
     else:
         model_config = llm_engine.model_config
     logger.info(f'model_config: {model_config.hf_config}')
+
     if not args.do_sample:
         args.temperature = 0
     generation_config = VllmGenerationConfig(

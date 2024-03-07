@@ -1,5 +1,4 @@
-import re
-from typing import Dict, List, Tuple
+from typing import List
 
 from swift.llm import MODEL_MAPPING, ModelType
 
@@ -32,6 +31,7 @@ def get_model_info_table() -> List[str]:
     for r in res:
         url = f'https://modelscope.cn/models/{r[1]}/summary'
         text += f'|{r[0]}|[{r[1]}]({url})|{r[2]}|{r[3]}|{r[4]}|{r[5]}|{r[6]}|\n'
+    print(f'模型总数: {len(res)}')
     result += text
     #
     fpath = 'docs/source/LLM/支持的模型和数据集.md'
