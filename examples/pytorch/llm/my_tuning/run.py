@@ -11,27 +11,19 @@ lrs = [value for value in lrs2 if value not in lr_del]
 
 
 # openchat 3.5
-# for sft_type in ["adalora"]:
-#     for lr in ["3.5e-4", "3.4e-4", "3.3e-4", "3.2e-4", "3.1e-4"]:
-#         for j in ["with_solar_info/brave"]:
-#             data_version = "1"
+for sft_type in ["adalora"]:
+    for lr in ["3.7e-4", "3.9e-4"]:
+        for j in ["with_solar_info/brave"]:
+            data_version = "1"
 
-#             # if j == "without_info":
-#             #     for i in test_sizes:
-#             #         subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/sft.sh", f"{i}", "1", j, data_version])
+            # if j == "without_info":
+            #     for i in test_sizes:
+            #         subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/sft.sh", f"{i}", "1", j, data_version])
 
-#             # sft
-#             for i in [1.0]:
-#                 subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/sft2.sh", "0.2", f"{i}", sft_type, lr, j, data_version])
+            # sft
+            for i in [1.0]:
+                subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/sft2.sh", "0.2", f"{i}", sft_type, "3", lr, j, data_version])
 
-for sft_type in ["lora"]:
-    for lora_rank in ["1", "2", "3"]:
-        for lr in ["1.1e-4", "1.2e-4", "1.3e-4"]:
-            for j in ["with_solar_info/brave"]:
-                data_version = "1"
-
-                for i in [1.0]:
-                    subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/sft.sh", "0.2", f"{i}", sft_type, lora_rank, lr, j, data_version])
 
 
 

@@ -132,6 +132,7 @@ def cal_metric_single_llm(get_model_template, inference, sft_args, save=True, us
     model_name = get_model_name(sft_args["model_cache_dir"])
     template_type = sft_args["template_type"]
     sft_type = sft_args["sft_type"]
+    lora_rank = sft_args["lora_rank"]
 
     lr = get_lr(sft_args["output_dir"])
 
@@ -140,6 +141,10 @@ def cal_metric_single_llm(get_model_template, inference, sft_args, save=True, us
     if train_ratio == "1.0":
         file_dir = f"test_metric_single_llm/{with_or_without_info}/\
 data{data_version}-split={split_type}-ratio={train_ratio}/{sft_type}"
+        if sft_type == "lora":
+            file_dir += f"-r={lora_rank}"
+        elif sft_type == "adalora":
+            file_dir += f"-r={sft_args["adalora_target_r"]}_{sft_args["adalora_init_r"]}"
         metrics = load_metrics(file_dir, model_name, template_type)
         for item in metrics:
             if item["train_test_split"] == split_type and \

@@ -22,6 +22,7 @@ class CustomModelType:
 
     orca2_7b = "orca-2-13b"
     openchat_35 = "openchat_3.5"
+    mistral_7b_instruct = "mistral-7b-instruct-v0.2"
     neural_chat_7b = "neural-chat-7b-v3"
     solar_instruct_10_7b = "solar-10.7b-instruct"
     solar_instruct_10_7b_128k = "solar-10.7b-instruct-128k"
@@ -112,6 +113,9 @@ def get_orca2_model_tokenizer(model_dir: str,
 @register_model(CustomModelType.openchat_35,
                 '/home/css/models/openchat-3.5-0106', LoRATM.llama2,
                 CustomTemplateType.openchat_35)
+@register_model(CustomModelType.mistral_7b_instruct,
+                '/home/css/models/Mistral-7B-Instruct-v0.2', LoRATM.llama2,
+                CustomTemplateType.mistral)
 @register_model(CustomModelType.neural_chat_7b,
                 '/home/css/models/neural-chat-7b-v3-3', LoRATM.llama2,
                 CustomTemplateType.neural)
@@ -152,6 +156,7 @@ def get_model_tokenizer(
 ):
     model_config = AutoConfig.from_pretrained(model_dir, trust_remote_code=True)
     model_config.torch_dtype = torch_dtype
+    model_config._attn_implementation = 'eager'
     logger.info(f'model_config: {model_config}')
     tokenizer = AutoTokenizer.from_pretrained(model_dir)
     model = None
