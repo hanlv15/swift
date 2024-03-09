@@ -36,7 +36,7 @@ torchrun \
     --master_port 29505 \
     llm_sft.py \
     --model_type neural-chat-7b-v3 \
-    --model_cache_dir /home/css/models/neural-chat-7b-v3-3 \
+    --model_id_or_path /home/css/models/neural-chat-7b-v3-3 \
     --check_model_is_latest false \
     --model_revision master \
     --sft_type $sft_type \

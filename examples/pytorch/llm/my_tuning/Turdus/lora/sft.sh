@@ -37,7 +37,7 @@ torchrun \
     --master_port 29507 \
     llm_sft.py \
     --model_type turdus \
-    --model_cache_dir /home/css/models/Turdus \
+    --model_id_or_path /home/css/models/Turdus \
     --check_model_is_latest false \
     --sft_type $sft_type \
     --tuner_backend peft \

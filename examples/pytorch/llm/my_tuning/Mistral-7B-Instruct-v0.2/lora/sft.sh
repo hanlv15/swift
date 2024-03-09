@@ -39,7 +39,7 @@ torchrun \
     --master_port 29505 \
     llm_sft.py \
     --model_type mistral-7b-instruct-v0.2 \
-    --model_cache_dir /home/css/models/Mistral-7B-Instruct-v0.2 \
+    --model_id_or_path /home/css/models/Mistral-7B-Instruct-v0.2 \
     --check_model_is_latest false \
     --sft_type $sft_type \
     --tuner_backend peft \

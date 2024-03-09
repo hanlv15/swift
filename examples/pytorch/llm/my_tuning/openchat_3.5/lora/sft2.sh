@@ -40,14 +40,14 @@ lora_alpha=$(expr $lora_rank \* 4)
 max_length=8192
 
 PYTHONPATH=../../.. \
-CUDA_VISIBLE_DEVICES=1,2 \
+CUDA_VISIBLE_DEVICES=0,1 \
 PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512 \
 torchrun \
     --nproc_per_node=$nproc_per_node \
     --master_port 29505 \
     llm_sft.py \
     --model_type openchat_3.5 \
-    --model_cache_dir /home/css/models/openchat-3.5-0106 \
+    --model_id_or_path /home/css/models/openchat-3.5-0106 \
     --check_model_is_latest false \
     --sft_type $sft_type \
     --tuner_backend peft \

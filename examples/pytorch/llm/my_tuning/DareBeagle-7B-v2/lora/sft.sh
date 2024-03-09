@@ -36,7 +36,7 @@ torchrun \
     --master_port 29505 \
     llm_sft.py \
     --model_type darebeagle-7b-v2 \
-    --model_cache_dir /home/css/models/DareBeagle-7B-v2 \
+    --model_id_or_path /home/css/models/DareBeagle-7B-v2 \
     --check_model_is_latest false \
     --sft_type $sft_type \
     --tuner_backend peft \

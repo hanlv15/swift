@@ -97,8 +97,11 @@ def cal_metric_single_llm(get_model_template, inference, sft_args, save=True, us
         pos_end = custom_train_dataset_path.find("/", pos_sub)
         return custom_train_dataset_path[pos_sub + len("subtrain_data"): pos_end]
     
-    def get_model_name(model_cache_dir: str):
-        return model_cache_dir[model_cache_dir.rfind('/') + 1:]
+    def get_model_name(sft_args):
+        model_id_or_path = sft_args.get("model_cache_dir", None)
+        if model_id_or_path is None:
+            model_id_or_path = sft_args["model_id_or_path"]
+        return model_id_or_path[model_id_or_path.rfind('/') + 1:]
 
     def get_label(prompt, use_tqdm=False):
         # 0:false, 2:true
@@ -129,10 +132,11 @@ def cal_metric_single_llm(get_model_template, inference, sft_args, save=True, us
     split_type = get_split_type(sft_args["custom_train_dataset_path"][0])
     train_ratio = get_train_ratio(sft_args["custom_train_dataset_path"][0])
     data_version = get_data_version(sft_args["custom_train_dataset_path"][0])
-    model_name = get_model_name(sft_args["model_cache_dir"])
+    model_name = get_model_name(sft_args)
     template_type = sft_args["template_type"]
     sft_type = sft_args["sft_type"]
     lora_rank = sft_args["lora_rank"]
+    lora_lr_ratio = sft_args["lora_lr_ratio"]
 
     lr = get_lr(sft_args["output_dir"])
 
@@ -142,9 +146,12 @@ def cal_metric_single_llm(get_model_template, inference, sft_args, save=True, us
         file_dir = f"test_metric_single_llm/{with_or_without_info}/\
 data{data_version}-split={split_type}-ratio={train_ratio}/{sft_type}"
         if sft_type == "lora":
-            file_dir += f"-r={lora_rank}"
+            if lora_lr_ratio is not None:
+                file_dir += "_plus"
+            file_dir += f"-r={lora_rank}"  
         elif sft_type == "adalora":
-            file_dir += f"-r={sft_args["adalora_target_r"]}_{sft_args["adalora_init_r"]}"
+            r1, r2 = sft_args["adalora_target_r"], sft_args["adalora_init_r"]
+            file_dir += f"-r={r1}_{r2}"
         metrics = load_metrics(file_dir, model_name, template_type)
         for item in metrics:
             if item["train_test_split"] == split_type and \

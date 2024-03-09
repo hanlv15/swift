@@ -47,7 +47,7 @@ torchrun \
     --master_port 29505 \
     llm_sft.py \
     --model_type openchat_3.5 \
-    --model_cache_dir /home/css/models/openchat-3.5-0106 \
+    --model_id_or_path /home/css/models/openchat-3.5-0106 \
     --check_model_is_latest false \
     --sft_type $sft_type \
     --tuner_backend peft \
