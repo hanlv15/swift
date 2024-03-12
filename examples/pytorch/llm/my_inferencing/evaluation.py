@@ -102,7 +102,18 @@ def cal_metric_single_llm(get_model_template, inference, sft_args, save=True, us
         if model_id_or_path is None:
             model_id_or_path = sft_args["model_id_or_path"]
         return model_id_or_path[model_id_or_path.rfind('/') + 1:]
-
+    
+    def get_sft_type(sft_args):
+        sft_type = sft_args["sft_type"]
+        if sft_type == "lora":
+            if sft_args["use_dora"]:
+                sft_type = "dora"
+            elif sft_args["use_rslora"]:
+                sft_type = "rslora"
+            elif sft_args["lora_lr_ratio"] is not None:
+                sft_type += "_plus"
+        return sft_type
+    
     def get_label(prompt, use_tqdm=False):
         # 0:false, 2:true
         response = get_response(prompt)[0].strip()
@@ -134,10 +145,10 @@ def cal_metric_single_llm(get_model_template, inference, sft_args, save=True, us
     data_version = get_data_version(sft_args["custom_train_dataset_path"][0])
     model_name = get_model_name(sft_args)
     template_type = sft_args["template_type"]
-    sft_type = sft_args["sft_type"]
+    sft_type = get_sft_type(sft_args)
     lora_rank = sft_args["lora_rank"]
     lora_lr_ratio = sft_args["lora_lr_ratio"]
-
+    
     lr = get_lr(sft_args["output_dir"])
 
     # 判断metric是否已经存在，那么不用再计算
@@ -145,13 +156,11 @@ def cal_metric_single_llm(get_model_template, inference, sft_args, save=True, us
     if train_ratio == "1.0":
         file_dir = f"test_metric_single_llm/{with_or_without_info}/\
 data{data_version}-split={split_type}-ratio={train_ratio}/{sft_type}"
-        if sft_type == "lora":
-            if lora_lr_ratio is not None:
-                file_dir += "_plus"
-            file_dir += f"-r={lora_rank}"  
-        elif sft_type == "adalora":
+        if sft_type == "adalora":
             r1, r2 = sft_args["adalora_target_r"], sft_args["adalora_init_r"]
             file_dir += f"-r={r1}_{r2}"
+        else:
+            file_dir += f"-r={lora_rank}" 
         metrics = load_metrics(file_dir, model_name, template_type)
         for item in metrics:
             if item["train_test_split"] == split_type and \

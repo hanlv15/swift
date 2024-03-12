@@ -10,6 +10,7 @@ lr_del = ["1.1e-4", "1.5e-4"]
 lrs = [value for value in lrs2 if value not in lr_del]
 
 
+
 # openchat 3.5
 # for sft_type in ["adalora"]:
 #     for lr in ["3.7e-4", "3.9e-4", "3.2e-4", "3.4e-4", "3.8e-4", "4e-4"]:
@@ -24,15 +25,16 @@ lrs = [value for value in lrs2 if value not in lr_del]
 #             for i in [1.0]:
 #                 subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/sft2.sh", "0.2", f"{i}", sft_type, "3", lr, j, data_version])
 
-for sft_type in ["lora"]: # lora+
-    for lr in ["5e-5", "7e-5", "9e-5", "1.1e-4"]:
-        for j in ["with_solar_info/brave"]:
-            data_version = "1"
+# lora+
+# for lr in ["1e-4", "1.2e-4", "1.4e-4"]:
+#     data_version = "1"
+#     subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/lora_plus.sh", "0.2", "1.0", "lora", "8", lr, "with_solar_info/brave", data_version])
 
-            # sft
-            for i in [1.0]:
-                subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/sft3.sh", "0.2", f"{i}", sft_type, "8", lr, j, data_version])
-
+# dora
+for lr in ["1.7e-4", "1.9e-4", "1.6e-4"]:
+    data_version = "1"
+    rank = "3"
+    subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/dora.sh", "0.2", "1.0", "lora", rank, lr, "with_solar_info/brave", data_version])
 
 
 # neural-chat-v3-3
