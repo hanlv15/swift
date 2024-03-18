@@ -88,7 +88,6 @@ def prepare_model(model, args: SftArguments):
                     assert args.lora_lr_ratio is None, 'Please use tuner_backend="swift" to use LoRA+'
                     lora_config = LoraConfig(
                         task_type='CAUSAL_LM', **lora_kwargs)
-                    print(f'###################{lora_config["lr_ratio"]}############')
                 model = Swift.prepare_model(model, lora_config)
                 logger.info(f'lora_config: {lora_config}')
             elif args.sft_type == 'longlora':
