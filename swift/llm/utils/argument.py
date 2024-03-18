@@ -9,7 +9,9 @@ import json
 import numpy as np
 import torch
 import torch.distributed as dist
+import transformers
 from datasets import concatenate_datasets
+from packaging import version
 from torch import dtype as Dtype
 from transformers.utils import (is_torch_bf16_gpu_available,
                                 is_torch_cuda_available,
@@ -123,7 +125,7 @@ class SftArguments:
     # galore
     use_galore: bool = False
     galore_rank: int = 128
-    galore_target_modules: Union[str, List[str]] = None
+    galore_target_modules: Optional[List[str]] = None
     galore_update_proj_gap: int = 50
     galore_scale: float = 1.0
     galore_proj_type: str = 'std'
@@ -147,7 +149,10 @@ class SftArguments:
     llamapro_num_new_blocks: int = 4
     llamapro_num_groups: Optional[int] = None
 
+    # neftune
     neftune_noise_alpha: Optional[float] = None  # e.g. 5, 10, 15
+    neftune_backend: Literal['swift', 'transformers'] = None
+
     gradient_checkpointing: Optional[bool] = None
     # e.g. 'default-zero3', 'default-zero2', 'ds_config/zero2.json'
     deepspeed: Optional[str] = None
@@ -385,6 +390,10 @@ class SftArguments:
         self.bnb_4bit_compute_dtype, self.load_in_4bit, self.load_in_8bit = select_bnb(
             self)
 
+        if self.neftune_backend is None:
+            self.neftune_backend = 'swift' if version.parse(transformers.__version__) < version.parse('4.35') \
+                else 'transformers'
+
         prepare_push_ms_hub(self)
         self.train_sampler_random = not self.test_oom_error
         if self.eval_batch_size is None:
@@ -457,11 +466,8 @@ class SftArguments:
                 self.model_type)
 
         kwargs = {}
-        parameters = inspect.signature(
-            Seq2SeqTrainingArguments.__init__).parameters
-        for key in ['neftune_noise_alpha']:
-            if key in parameters:
-                kwargs[key] = getattr(self, key)
+        if self.neftune_backend != 'swift':
+            kwargs['neftune_noise_alpha'] = self.neftune_noise_alpha
 
         training_args = Seq2SeqTrainingArguments(
             output_dir=self.output_dir,
@@ -582,7 +588,7 @@ class InferArguments:
     val_dataset_sample: int = 10  # -1: all dataset
     save_result: bool = True
     system: Optional[str] = None
-    max_length: int = 2048  # -1: no limit
+    max_length: int = -1  # -1: no limit
     truncation_strategy: Literal['delete', 'truncation_left'] = 'delete'
     check_dataset_strategy: Literal['none', 'discard', 'error',
                                     'warning'] = 'none'
@@ -601,6 +607,7 @@ class InferArguments:
     top_p: float = 0.7
     repetition_penalty: float = 1.
     num_beams: int = 1
+    stop_words: List[str] = None
 
     # other
     use_flash_attn: Optional[bool] = None
@@ -697,8 +704,7 @@ class InferArguments:
                     'To use VLLM, you need to provide the complete weight parameters. '
                     'Please set `--merge_lora true`.')
         template_info = TEMPLATE_MAPPING[self.template_type]
-        support_stream = template_info.get('support_stream', True)
-        if self.num_beams != 1 or not support_stream:
+        if self.num_beams != 1:
             self.stream = False
             logger.info('Setting self.stream: False')
         self.infer_media_type = template_info.get('infer_media_type', 'none')
@@ -906,13 +912,25 @@ def select_bnb(
 
 
 def handle_compatibility(args: Union[SftArguments, InferArguments]) -> None:
+    template_type_mapping = {
+        'chatglm2-generation': 'chatglm-generation',
+        'chatml': 'qwen'
+    }
+    model_type_mapping = {
+        'openbmb-minicpm-2b-sft-chat': 'minicpm-2b-sft-chat',
+        'openbmb-minicpm-2b-chat': 'minicpm-2b-chat',
+    }
+    for k, v in template_type_mapping.items():
+        if k == args.template_type:
+            args.template_type = v
+            break
+    for k, v in model_type_mapping.items():
+        if k == args.model_type:
+            args.model_type = v
+            break
     if args.dataset is not None and len(
             args.dataset) == 1 and ',' in args.dataset[0]:
         args.dataset = args.dataset[0].split(',')
-    if args.template_type == 'chatglm2-generation':
-        args.template_type = 'chatglm-generation'
-    if args.template_type == 'chatml':
-        args.template_type = TemplateType.qwen
     if args.truncation_strategy == 'ignore':
         args.truncation_strategy = 'delete'
     if isinstance(args, InferArguments):
@@ -950,8 +968,10 @@ def set_model_type(args: Union[SftArguments, InferArguments]) -> None:
         model_id_or_path = args.model_id_or_path
         model_id_or_path_lower = model_id_or_path.lower()
         if model_id_or_path_lower not in model_mapping_reversed:
-            if isinstance(args,
-                          InferArguments) and 'checkpoint' in model_id_or_path:
+            if (isinstance(args, InferArguments)
+                    and 'checkpoint' in model_id_or_path
+                    and 'merged' not in model_id_or_path
+                    and args.ckpt_dir is None):
                 raise ValueError(
                     'Please use `--ckpt_dir vx-xxx/checkpoint-xxx` to use the checkpoint.'
                 )

@@ -76,6 +76,7 @@ def prepare_model(model, args: SftArguments):
                 'rank_pattern': args.lora_rank_pattern,
                 'alpha_pattern': args.lora_alpha_pattern,
                 'loftq_config': args.lora_loftq_config,
+                'use_rslora': args.use_rslora,
                 'use_dora': args.use_dora,
             }
             if args.sft_type == 'lora':
@@ -84,6 +85,7 @@ def prepare_model(model, args: SftArguments):
                     lora_config = LoRAConfig(
                         lora_dtype=args.lora_dtype, **lora_kwargs)
                 elif args.tuner_backend == 'peft':
+                    assert args.lora_lr_ratio is None, 'Please use tuner_backend="swift" to use LoRA+'
                     lora_config = LoraConfig(
                         task_type='CAUSAL_LM', **lora_kwargs)
                     print(f'###################{lora_config["lr_ratio"]}############')
@@ -171,28 +173,27 @@ def prepare_model(model, args: SftArguments):
     else:
         raise ValueError(f'args.sft_type: {args.sft_type}')
 
-    if version.parse(transformers.__version__) < version.parse(
-            '4.35') and args.neftune_noise_alpha not in {None, 0.}:
+    if args.neftune_backend == 'swift' and args.neftune_noise_alpha not in {
+            None, 0.
+    }:
         neftune_config = NEFTuneConfig(noise_alpha=args.neftune_noise_alpha)
         model = Swift.prepare_model(model, {'neftune': neftune_config})
         logger.info(f'neftune_config: {neftune_config}')
 
     if args.use_galore:
         from swift.trainers.optimizers.galore import GaLoreConfig
-        model_type = args.model_type
-        for key in MODEL_KEYS_MAPPING.keys():
-            if key in model_type.lower():
-                model_type = key
-                break
+        if args.galore_target_modules is None:
+            args.galore_target_modules = find_all_linears(
+                model, 0, args.model_type)
+        if args.galore_with_embedding:
+            args.galore_target_modules += find_embedding(model)
         args.training_args.galore_config = GaLoreConfig(
-            model_type=model_type,
             target_modules=args.galore_target_modules,
             rank=args.galore_rank,
             update_proj_gap=args.galore_update_proj_gap,
             galore_scale=args.galore_scale,
             proj_type=args.galore_proj_type,
             optim_per_parameter=args.galore_optim_per_parameter,
-            with_embedding=args.galore_with_embedding,
         )
 
     class TrainerAdapterCallback(TrainerCallback):
