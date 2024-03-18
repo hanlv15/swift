@@ -1,0 +1,20 @@
+deploy参数继承了infer参数, 除此之外增加了以下参数:
+
+--host: 默认为127.0.0.1
+--port: 默认为8000.
+--ssl_keyfile: 默认为None.
+--ssl_certfile: 默认为None.
+
+
+RAY_memory_monitor_refresh_ms=0 \
+CUDA_VISIBLE_DEVICES=1,2 \
+python llm_deploy.py \
+--model_type solar-10.7b-instruct \
+--infer_backend vllm \
+--max_new_tokens 4096 \
+--do_sample false \
+--temperature 0 \
+--tensor_parallel_size 2 \
+--host 127.0.0.1 \
+--port 8005 \
+--max_length -1 

@@ -102,10 +102,11 @@ def get_bing_snippet_v2(bing_search_results, K, claim_date, sort):
 
     return snippet
 
-def get_brave_snippet(search_results, ids: slice | list):
+def get_brave_snippet(search_results, ids: slice | list, ret_type='str'):
 
     results = search_results["web"]["results"]
     snippet = ""
+    snippets = []
     if isinstance(ids, slice):
         results_filtered = results[ids]
         id_start = ids.start
@@ -126,13 +127,25 @@ def get_brave_snippet(search_results, ids: slice | list):
             content = "\n".join(extra_snippets)
         else:
             content = item["description"]
-        snippet += f"Information {id_start + i + 1}:\n" + "Publication date: " + date + '\n' + \
+
+        one_info = f"Information {id_start + i + 1}:\n" + "Publication date: " + date + '\n' + \
             "Title: " + item["title"] + '\n' + "Content:\n" + content + '\n'
-    return snippet
+        
+        if ret_type == 'str':
+            snippet += one_info
+        elif ret_type == 'list':
+            snippets.append(one_info.strip())
+        else:
+            raise Exception('返回类型只能从 str 与 list 中选取！')
+        
+    if ret_type == "str":
+        return snippet
+    else:
+        return snippets
 
 def get_prompt_for_generating_prior_knowledge(
         claim, claim_date, search_engine, search_results, 
-        K=5, sort=False, ids=None):
+        K=5, sort=False, ids=None, without_info=False):
     """
     sort: 对search result 按时间进行排序
     """
@@ -154,7 +167,10 @@ def get_prompt_for_generating_prior_knowledge(
 
     info = "INFORMATION:\n" + snippet
 
-    return pre + text + info
+    if without_info:
+        return (pre + text).strip()
+    else:
+        return pre + text + info
 
 def get_prompts_for_summarize_snippets(
         claim, claim_date, search_engine, search_results, K=5

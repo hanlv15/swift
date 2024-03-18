@@ -1,0 +1,142 @@
+[
+    {
+        "model": "FuseChat-7B-VaRM",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "lr": "5e-5",
+        "ACC": 0.994259942599426,
+        "F1": 0.9899896572104019,
+        "Precision": 0.9918318270953344,
+        "Recall": 0.988170453881652
+    },
+    {
+        "model": "FuseChat-7B-VaRM",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "lr": "7e-5",
+        "ACC": 0.994259942599426,
+        "F1": 0.9900268707284303,
+        "Precision": 0.9900268707284303,
+        "Recall": 0.9900268707284303
+    },
+    {
+        "model": "FuseChat-7B-VaRM",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "lr": "8e-5",
+        "ACC": 0.994669946699467,
+        "F1": 0.9906959888611265,
+        "Precision": 0.9930092690865351,
+        "Recall": 0.9884187160464981
+    },
+    {
+        "model": "FuseChat-7B-VaRM",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "lr": "9e-5",
+        "ACC": 0.995079950799508,
+        "F1": 0.9914356945549885,
+        "Precision": 0.9923537234042553,
+        "Recall": 0.9905233950581225
+    },
+    {
+        "model": "FuseChat-7B-VaRM",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "lr": "1e-4",
+        "ACC": 0.9958999589995899,
+        "F1": 0.9928763362345931,
+        "Precision": 0.9928763362345931,
+        "Recall": 0.9928763362345931
+    },
+    {
+        "model": "FuseChat-7B-VaRM",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "lr": "1.1e-4",
+        "ACC": 0.994669946699467,
+        "F1": 0.9907133528612522,
+        "Precision": 0.9920926861017841,
+        "Recall": 0.9893469244698873
+    },
+    {
+        "model": "FuseChat-7B-VaRM",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "lr": "1.2e-4",
+        "ACC": 0.993439934399344,
+        "F1": 0.9886232446842005,
+        "Precision": 0.9877217956895629,
+        "Recall": 0.9895303463987382
+    },
+    {
+        "model": "FuseChat-7B-VaRM",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "lr": "1.3e-4",
+        "ACC": 0.995489954899549,
+        "F1": 0.9921126089774968,
+        "Precision": 0.9953810350174839,
+        "Recall": 0.9889152403761903
+    },
+    {
+        "model": "FuseChat-7B-VaRM",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "lr": "1.4e-4",
+        "ACC": 0.995489954899549,
+        "F1": 0.992127375190184,
+        "Precision": 0.9944473926271846,
+        "Recall": 0.9898434487995794
+    },
+    {
+        "model": "FuseChat-7B-VaRM",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "lr": "1.5e-4",
+        "ACC": 0.995489954899549,
+        "F1": 0.992127375190184,
+        "Precision": 0.9944473926271846,
+        "Recall": 0.9898434487995794
+    },
+    {
+        "model": "FuseChat-7B-VaRM",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "lr": "1.6e-4",
+        "ACC": 0.995079950799508,
+        "F1": 0.9914197061803445,
+        "Precision": 0.993267245620767,
+        "Recall": 0.9895951866347333
+    },
+    {
+        "model": "FuseChat-7B-VaRM",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "lr": "1.7e-4",
+        "ACC": 0.995079950799508,
+        "F1": 0.9914356945549885,
+        "Precision": 0.9923537234042553,
+        "Recall": 0.9905233950581225
+    },
+    {
+        "model": "FuseChat-7B-VaRM",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "lr": "1.8e-4",
+        "ACC": 0.995079950799508,
+        "F1": 0.9914516034815117,
+        "Precision": 0.9914516034815117,
+        "Recall": 0.9914516034815117
+    },
+    {
+        "model": "FuseChat-7B-VaRM",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "lr": "2e-4",
+        "ACC": 0.994669946699467,
+        "F1": 0.9906959888611265,
+        "Precision": 0.9930092690865351,
+        "Recall": 0.9884187160464981
+    }
+]

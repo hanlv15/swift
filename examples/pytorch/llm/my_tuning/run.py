@@ -31,10 +31,47 @@ lrs = [value for value in lrs2 if value not in lr_del]
 #     subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/lora_plus.sh", "0.2", "1.0", "lora", "8", lr, "with_solar_info/brave", data_version])
 
 # dora
-for lr in ["1.7e-4", "1.9e-4", "1.6e-4"]:
+# for lr in ["7e-5", "9e-5", "1.1e-4", "2.1e-4"]:
+#     data_version = "1"
+#     rank = "3"
+#     subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/dora.sh", "0.2", "1.0", "lora", rank, lr, "with_solar_info/brave", data_version])
+
+# rslora
+for lr in ["2.5e-4", "9e-5", "1.1e-4", "1.3e-4", "1.1e-4", "1.7e-4", "1.9e-4", "2.1e-4"]:
     data_version = "1"
     rank = "3"
-    subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/dora.sh", "0.2", "1.0", "lora", rank, lr, "with_solar_info/brave", data_version])
+    subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/rslora.sh", "0.2", "1.0", "lora", rank, lr, "with_solar_info/brave", data_version])
+
+
+# fusechat-7b-varm
+# lora+
+# for lr in ["1.9e-4"]:
+#     data_version = "1"
+#     rank = "3"
+#     subprocess.run(["bash", f"my_tuning/fusechat-7b-varm/lora/lora_plus.sh", "0.2", "1.0", "lora", rank, lr, data_version])
+
+
+
+# gemma-7b-it
+# lora+
+# for lr in ["5e-5", "1e-4", "1.5e-4", "2e-4", "1.3e-4"]:
+#     data_version = "1"
+#     rank = "3"
+#     subprocess.run(["bash", f"my_tuning/gemma-7b-it/lora/lora_plus.sh", "0.2", "1.0", "lora", rank, lr, data_version])
+
+# merlinite-7b
+# lora+
+# for lr in ["1.9e-4"]:
+#     data_version = "1"
+#     rank = "3"
+#     subprocess.run(["bash", f"my_tuning/merlinite-7b/lora/lora_plus.sh", "0.2", "1.0", "lora", rank, lr, data_version])
+
+# lora
+for lr in ["1.2e-4", "1.6e-4"]:
+    data_version = "1"
+    rank = "3"
+    subprocess.run(["bash", f"my_tuning/merlinite-7b/lora/lora.sh", "0.2", "1.0", "lora", rank, lr, data_version])
+
 
 
 # neural-chat-v3-3

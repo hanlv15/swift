@@ -22,6 +22,7 @@ class CustomModelType:
 
     orca2_7b = "orca-2-13b"
     openchat_35 = "openchat_3.5"
+    fusechat_7b = "fusechat-7b-varm"
     mistral_7b_instruct = "mistral-7b-instruct-v0.2"
     neural_chat_7b = "neural-chat-7b-v3"
     solar_instruct_10_7b = "solar-10.7b-instruct"
@@ -34,6 +35,8 @@ class CustomModelType:
     darebeagle_7b = "darebeagle-7b-v2"
     una_thebeagle_7b = "una-thebeagle-7b-v1"
     mixtral_moe_7b_instruct_gptq_int4 = "mixtral-8x7B-instruct-v0.1-gptq-int4"
+    gemma_7b_it = 'gemma-7b-it'
+    merlinite_7b = 'merlinite-7b'
 
 class CustomTemplateType:
     tigerbot = 'tigerbot'
@@ -46,6 +49,7 @@ class CustomTemplateType:
     mistral = "mistral"
     chatml = "_chatml" # 无system message的chatml
     llama = "_llama" # 无system message的llama
+    merlinite = "merlinite"
 
 class CustomDatasetName:
     stsb_en = 'stsb-en'
@@ -113,6 +117,9 @@ def get_orca2_model_tokenizer(model_dir: str,
 @register_model(CustomModelType.openchat_35,
                 '/home/css/models/openchat-3.5-0106', LoRATM.llama2,
                 CustomTemplateType.openchat_35)
+@register_model(CustomModelType.fusechat_7b,
+                '/home/css/models/FuseChat-7B-VaRM', LoRATM.llama2,
+                CustomTemplateType.openchat_35)
 @register_model(CustomModelType.mistral_7b_instruct,
                 '/home/css/models/Mistral-7B-Instruct-v0.2', LoRATM.llama2,
                 CustomTemplateType.mistral)
@@ -147,6 +154,12 @@ def get_orca2_model_tokenizer(model_dir: str,
 @register_model(CustomModelType.mixtral_moe_7b_instruct_gptq_int4,
                 '/home/css/models/Mixtral-8x7B-Instruct-v0.1-GPTQ-int4', LoRATM.llama2,
                 CustomTemplateType.mistral)
+@register_model(CustomModelType.gemma_7b_it,
+                '/home/css/models/gemma-7b-it', LoRATM.llama2,
+                TemplateType.gemma)
+@register_model(CustomModelType.merlinite_7b,
+                '/home/css/models/merlinite-7b', LoRATM.llama2,
+                CustomTemplateType.merlinite)
 def get_model_tokenizer(
     model_dir: str,
     torch_dtype: Dtype, 
@@ -225,14 +238,14 @@ register_template(
 
 register_template(
     CustomTemplateType.solar,
-    Template( 
+    Template(
         [],
         ['### User:\n{{QUERY}}\n\n### Assistant:\n'],
         ['\n\n'], ['</s>'], None, ['### System:\n{{SYSTEM}}\n\n']))
 
 register_template(
     CustomTemplateType.marcoroni,
-    Template( 
+    Template(
         [],
         ['### Instruction:\n\n{{QUERY}}\n\n### Response:\n'],
         ['\n\n'], ['</s>'], None, ['### System:\n\n{{SYSTEM}}\n\n']))
@@ -241,7 +254,7 @@ register_template(
     CustomTemplateType.mistral,
     Template(
         ['<s>[INST] '], ['{{QUERY}} [/INST]'], ['</s><s>[INST] '], 
-        ['</s>'], None, 
+        ['</s>'], None,
         ['<s>[INST] {{SYSTEM}}\n']))
 
 register_template(
@@ -250,6 +263,14 @@ register_template(
         [], ['<|im_start|>user\n{{QUERY}}<|im_end|>\n<|im_start|>assistant\n'],
         ['<|im_end|>\n'], ['<|im_end|>'], None,
         ['<|im_start|>system\n{{SYSTEM}}<|im_end|>\n']))
+
+# default system: "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
+register_template(
+    CustomTemplateType.merlinite,
+    Template(
+        [], ['<|user|>\n{{QUERY}}\n<|assistant|>\n'],
+        ['<|endoftext|>\n'], ['<|endoftext|>'], None,
+        ['<|system|>\n{{SYSTEM}}\n']))
 
 # 无限回答的问题
 # register_template(
