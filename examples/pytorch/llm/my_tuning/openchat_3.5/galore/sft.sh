@@ -27,7 +27,7 @@ if [ "$train_ratio" = "1" ] || [ -z "$train_ratio" ]; then
     custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/train_data$data_version.jsonl
 fi
 
-nproc_per_node=2
+nproc_per_node=1
 # eval_times=15
 gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
 # num_train_data=$(echo "scale=0; 12192 * (1 - $test_size) * $train_ratio / 1" | bc)
@@ -38,7 +38,7 @@ gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
 max_length=8192
 
 PYTHONPATH=../../.. \
-CUDA_VISIBLE_DEVICES=0,1 \
+CUDA_VISIBLE_DEVICES=1,2 \
 torchrun \
     --nproc_per_node=$nproc_per_node \
     --master_port 29505 \

@@ -40,7 +40,7 @@ lora_alpha=$(expr $lora_rank \* 4)
 max_length=8192
 
 PYTHONPATH=../../.. \
-CUDA_VISIBLE_DEVICES=0,1 \
+CUDA_VISIBLE_DEVICES=1,2 \
 PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512 \
 torchrun \
     --nproc_per_node=$nproc_per_node \
@@ -51,7 +51,7 @@ torchrun \
     --check_model_is_latest false \
     --lora_lr_ratio 16.0 \
     --sft_type $sft_type \
-    --tuner_backend peft \
+    --tuner_backend swift \
     --template_type openchat_3.5 \
     --dtype AUTO \
     --add_output_dir_suffix false \
@@ -70,8 +70,6 @@ torchrun \
     --lora_dropout_p 0.05 \
     --lora_target_modules ALL \
     --lora_dtype AUTO \
-    --adalora_target_r $lora_rank \
-    --adalora_init_r $(expr $lora_rank + 4) \
     --gradient_checkpointing true \
     --batch_size 1 \
     --weight_decay 0.01 \

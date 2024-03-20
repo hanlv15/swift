@@ -51,7 +51,7 @@ torchrun \
     --check_model_is_latest false \
     --lora_lr_ratio 16.0 \
     --sft_type $sft_type \
-    --tuner_backend peft \
+    --tuner_backend swift \
     --template_type merlinite \
     --dtype AUTO \
     --add_output_dir_suffix false \

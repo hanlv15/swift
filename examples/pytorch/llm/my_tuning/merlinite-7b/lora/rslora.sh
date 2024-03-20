@@ -47,7 +47,7 @@ torchrun \
     --model_id_or_path /home/css/models/merlinite-7b \
     --check_model_is_latest false \
     --sft_type $sft_type \
-    --tuner_backend peft \
+    --tuner_backend swift \
     --template_type merlinite \
     --dtype AUTO \
     --add_output_dir_suffix false \
