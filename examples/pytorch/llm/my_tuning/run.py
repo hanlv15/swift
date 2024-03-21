@@ -37,16 +37,16 @@ lrs = [value for value in lrs2 if value not in lr_del]
 
 
 # dora
-# for lr in ["7e-5", "9e-5", "1.1e-4", "2.1e-4"]:
-#     data_version = "1"
-#     rank = "3"
-#     subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/dora.sh", "0.2", "1.0", "lora", rank, lr, "with_solar_info/brave", data_version])
-
-# rslora
-for lr in ["1e-4", "5e-5", "2e-4", "1.5e-4"]:
+for lr in ["1e-4", "2e-4", "1.5e-4", "8e-5"]:
     data_version = "1"
     rank = "3"
-    subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/rslora.sh", "0.2", "1.0", "lora", rank, lr, "with_solar_info/brave", data_version])
+    subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/dora.sh", "0.2", "1.0", "lora", rank, lr, "with_solar_info/brave", data_version])
+
+# rslora
+# for lr in ["8e-5", "1.2e-4", "1.4e-4", "1.6e-4"]:
+#     data_version = "1"
+#     rank = "3"
+#     subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/rslora.sh", "0.2", "1.0", "lora", rank, lr, "with_solar_info/brave", data_version])
 
 
 # fusechat-7b-varm
