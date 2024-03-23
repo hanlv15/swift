@@ -1,9 +1,30 @@
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 import jsonlines, json
 import os
+from IPython import display
 from tqdm import tqdm
 
-def cal_metric_single_llm(get_engine_config_request, inference, sft_args, ckpt_dir, train_loss, save=True):
+def cal_metric_single_llm(get_model_template, inference, sft_args, save=True, use_tqdm=False):
+    cnt = {}
+    cnt[0] = cnt[2] = cnt[-2] = cnt["wrong"] = 0
+    
+    data = []
+    preds = []
+    labels = []
+
+    def print_metrics(labels, preds):
+        print(f"ACC: {accuracy_score(labels, preds)}")
+        print(f"F1: {f1_score(labels, preds, average='macro')}")
+        print(f"Precision: {precision_score(labels, preds, average='macro')}")
+        print(f"Recall: {recall_score(labels, preds, average='macro')}")
+        print()
+
+    def update_item_metric(item):
+        item["ACC"] = accuracy_score(labels, preds)
+        item["F1"] = f1_score(labels, preds, average='macro')
+        item["Precision"] = precision_score(labels, preds, average='macro')
+        item["Recall"] = recall_score(labels, preds, average='macro')
+
     def load_metrics(file_dir, model_name, template_type):
         os.makedirs(file_dir, exist_ok=True)
         file_path = file_dir + '/' + f"{model_name}({template_type}).json"
@@ -19,14 +40,13 @@ def cal_metric_single_llm(get_engine_config_request, inference, sft_args, ckpt_d
         if save:
             file_path = file_dir + '/' + f"{model_name}({template_type}).json"
             with open(file_path, "w") as f:
-                json.dump(metrics, f, indent=4)
+                json.dump(metrics, f, indent=4) 
 
-    def update_metrics(metrics, model_name, split_type, train_ratio, labels, preds, lr=None):
+    def update_metrics(metrics, model_name, split_type, train_ratio, lr=None):
         new_item = {
             "model": model_name,
             "train_test_split": split_type,
-            "train_ratio": train_ratio,
-            "train_loss": train_loss,
+            "train_ratio": train_ratio
         }
         
         if lr is not None:
@@ -94,15 +114,18 @@ def cal_metric_single_llm(get_engine_config_request, inference, sft_args, ckpt_d
                 sft_type += "_plus"
         return sft_type
     
-    def get_label(response):
+    def get_label(prompt, use_tqdm=False):
         # 0:false, 2:true
+        response = get_response(prompt)[0].strip()
+        if not use_tqdm:
+            print(f"\nPrompt:\n{prompt}\nAnswer:\n{response}\n")
 
         if response == "TRUE.":
             return 2
         elif response == "FALSE.":
             return 0
         else:
-            raise Exception("Response既不是'TRUE.'，也不是'FALSE.'。")
+            raise Exception("LLM的回答既不是'TRUE.'，也不是'FALSE.'。")
         
     def get_lr(output_dir: str):
         pos_lr = output_dir.find('lr=')
@@ -160,47 +183,61 @@ data{data_version}-split={split_type}-sft={sft_type}-lr={lr}"
     if exist:
         return wrong_ans
 
-    data = []
+    model, template = get_model_template()
+    get_response = lambda prompt : inference(model, template, prompt)
+    
     with jsonlines.open(
         f"../my_data/{with_or_without_info}/train_test_split/{split_type}/\
 test_data{data_version}.jsonl", 'r') as f:
+        
         for item in f.iter():
             data.append(item)
+        
+    data_iter = enumerate(data)
+    progress_bar = tqdm(enumerate(data), desc=f'{model_name} lr={lr}', total=len(data))
 
-    # 推理
-    vllm_engine, template, generation_config, lora_request = get_engine_config_request(ckpt_dir)
-    print(f'{model_name} sft_type={sft_type} lr={lr} ')
+    for i, item in data_iter:
 
-    request_list = [{'query': i["query"]} for i in data]
-    response_list = inference(
-        vllm_engine, template, request_list, 
-        generation_config=generation_config, 
-        lora_request=lora_request,
-        use_tqdm=True,
-    )
-    
-    labels, preds = [], []
-    for item_data, item_resp in zip(data, response_list):
-        pred = get_label(item_resp["response"])
-        label = get_label(item_data["response"])
+        if not use_tqdm:
+            display.clear_output(wait=True)
+            print(f"{i + 1} / {len(data)}")
+            print(cnt)
+            if i > 0:
+                print_metrics(labels, preds)
+        else:
+            progress_bar.set_description(f'{model_name} lr={lr} wrong={cnt["wrong"]}')
+            progress_bar.update(1)  # Increment the progress bar
+
+        pred = get_label(item["query"], use_tqdm=use_tqdm)
+
+        if item["response"] == "FALSE.":
+            label = 0
+        elif item["response"] == "TRUE.":
+            label = 2
+        else:
+            raise Exception()
 
         labels.append(label)
         preds.append(pred)
 
+        if label != pred:
+            wrong_ans.append(item["query"])
+            cnt["wrong"] += 1
+        cnt[pred] += 1
+
+    progress_bar.close()
+    
+    if not use_tqdm:
+        print_metrics(labels, preds)
+
     # ratio为1.0
     if train_ratio == "1.0":
-        new_metric = update_metrics(
-            metrics, model_name, split_type, train_ratio, 
-            labels=labels, preds=preds, lr=lr
-        )
+        new_metric = update_metrics(metrics, model_name, split_type, train_ratio, lr)
         metrics.sort(key=lambda x: (x["train_test_split"], x["train_ratio"], float(x["lr"])))
         save_metrics(file_dir, model_name, template_type, metrics, save=save)
     else:
         # 不同的ratio
-        new_metric = update_metrics(
-            metrics, model_name, split_type, train_ratio,
-            labels=labels, preds=preds, 
-        )
+        new_metric = update_metrics(metrics, model_name, split_type, train_ratio)
         metrics.sort(key=lambda x: (x["train_test_split"], x["train_ratio"]))
         save_metrics(file_dir, model_name, template_type, metrics, save=save)
     
