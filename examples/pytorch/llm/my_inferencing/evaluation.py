@@ -86,12 +86,15 @@ def cal_metric_single_llm(get_engine_config_request, inference, sft_args, ckpt_d
     def get_sft_type(sft_args):
         sft_type = sft_args["sft_type"]
         if sft_type == "lora":
+            quantization_bit = sft_args["quantization_bit"]
             if sft_args["use_dora"]:
                 sft_type = "dora"
             elif sft_args["use_rslora"]:
                 sft_type = "rslora"
             elif sft_args["lora_lr_ratio"] is not None:
                 sft_type += "_plus"
+            elif quantization_bit != 0:
+                sft_type = f"qlora-int{quantization_bit}"
         return sft_type
     
     def get_label(response):
@@ -124,7 +127,6 @@ def cal_metric_single_llm(get_engine_config_request, inference, sft_args, ckpt_d
     template_type = sft_args["template_type"]
     sft_type = get_sft_type(sft_args)
     lora_rank = sft_args["lora_rank"]
-    lora_lr_ratio = sft_args["lora_lr_ratio"]
     
     lr = get_lr(sft_args["output_dir"])
 
