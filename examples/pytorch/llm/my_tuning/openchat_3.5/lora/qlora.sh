@@ -51,7 +51,7 @@ torchrun \
     --sft_type $sft_type \
     --quantization_bit 4 \
     --bnb_4bit_comp_dtype AUTO \
-    --tuner_backend swift \
+    --tuner_backend peft \
     --template_type openchat_3.5 \
     --dtype AUTO \
     --add_output_dir_suffix false \

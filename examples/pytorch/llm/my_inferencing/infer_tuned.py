@@ -18,7 +18,7 @@ for _dir in dirs:
 
 from swift.llm import (
     get_model_tokenizer, get_template, get_vllm_engine, 
-    inference_vllm, VllmGenerationConfig, LoRARequest
+    inference_vllm, inference, VllmGenerationConfig, LoRARequest
 )
 from swift.tuners import Swift
 from custom import CustomModelType, CustomTemplateType
@@ -61,8 +61,25 @@ def get_engine_config_request(ckpt_dir):
     )
     return vllm_engine, template, generation_config, lora_request
 
+def get_model_template():
+    model_type, template_type = sft_args["model_type"], sft_args["template_type"]
+    model, tokenizer = get_model_tokenizer(
+        model_type, model_kwargs={'device_map': 'auto'},
+        model_dir=sft_args["model_cache_dir"]
+    )
+    model = Swift.from_pretrained(model, ckpt_dir, inference_mode=True)
+    if sft_args["sft_type"] == 'adalora':
+        model = model.to(model.dtype)
+    model.generation_config.max_new_tokens = 512
+    model.generation_config.do_sample = False
+
+    template = get_template(template_type, tokenizer)
+
+    return model, template
+
 evaluation.cal_metric_single_llm(
-    get_engine_config_request, inference_vllm, 
+    (get_model_template, get_engine_config_request), 
+    (inference, inference_vllm), 
     sft_args, ckpt_dir, train_loss, save=True, 
 )
 

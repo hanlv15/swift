@@ -49,7 +49,7 @@ torchrun \
     --model_id_or_path /home/css/models/openchat-3.5-0106 \
     --check_model_is_latest false \
     --sft_type $sft_type \
-    --tuner_backend swift \
+    --tuner_backend peft \
     --template_type openchat_3.5 \
     --dtype AUTO \
     --add_output_dir_suffix false \

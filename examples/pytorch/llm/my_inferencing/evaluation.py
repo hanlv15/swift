@@ -3,7 +3,10 @@ import jsonlines, json
 import os
 from tqdm import tqdm
 
-def cal_metric_single_llm(get_engine_config_request, inference, sft_args, ckpt_dir, train_loss, save=True):
+def cal_metric_single_llm(
+        inference_prepare, inference_functions, 
+        sft_args, ckpt_dir, train_loss, save=True
+):
     def load_metrics(file_dir, model_name, template_type):
         os.makedirs(file_dir, exist_ok=True)
         file_path = file_dir + '/' + f"{model_name}({template_type}).json"
@@ -21,6 +24,17 @@ def cal_metric_single_llm(get_engine_config_request, inference, sft_args, ckpt_d
             with open(file_path, "w") as f:
                 json.dump(metrics, f, indent=4)
 
+    def update_metric_item(item, train_loss):
+        """
+        如果已经存在, 那么更新其缺少的信息: train_loss
+        """
+        do_update = False
+
+        if item.get("train_loss") is None:
+            do_update = True
+            item["train_loss"] = train_loss
+        return do_update
+    
     def update_metrics(metrics, model_name, split_type, train_ratio, labels, preds, lr=None):
         new_item = {
             "model": model_name,
@@ -87,17 +101,23 @@ def cal_metric_single_llm(get_engine_config_request, inference, sft_args, ckpt_d
         sft_type = sft_args["sft_type"]
         if sft_type == "lora":
             quantization_bit = sft_args["quantization_bit"]
-            if sft_args["use_dora"]:
+            if sft_args.get('use_dora'):
                 sft_type = "dora"
-            elif sft_args["use_rslora"]:
+            elif sft_args.get("use_rslora"):
                 sft_type = "rslora"
-            elif sft_args["lora_lr_ratio"] is not None:
+            elif sft_args.get("lora_lr_ratio") is not None:
                 sft_type += "_plus"
             elif quantization_bit != 0:
                 sft_type = f"qlora-int{quantization_bit}"
         return sft_type
     
     def get_label(response):
+        """
+        response -> label:
+
+        TRUE. -> 2 and FALSE. -> 0
+
+        """
         # 0:false, 2:true
 
         if response == "TRUE.":
@@ -113,11 +133,9 @@ def cal_metric_single_llm(get_engine_config_request, inference, sft_args, ckpt_d
             raise Exception("无法从训练数据路径中找到'lr'")
         pos_end = output_dir.find("-20", pos_lr)
         return output_dir[pos_lr + len("lr="): pos_end]
-
-    wrong_ans = []
-
-    # if train_ratio != 1:
-    #     train_ratio = float(train_ratio)
+    
+    def show_val_info(model_name, sft_type, lr, train_loss):
+        print(f'{model_name} sft_type={sft_type} lr={lr} train_loss={train_loss}')
 
     with_or_without_info = get_with_or_without_info(sft_args["custom_train_dataset_path"][0])
     split_type = get_split_type(sft_args["custom_train_dataset_path"][0])
@@ -132,6 +150,8 @@ def cal_metric_single_llm(get_engine_config_request, inference, sft_args, ckpt_d
 
     # 判断metric是否已经存在，那么不用再计算
     exist = False
+    do_update = False
+
     if train_ratio == "1.0":
         file_dir = f"test_metric_single_llm/{with_or_without_info}/\
 data{data_version}-split={split_type}-ratio={train_ratio}/{sft_type}"
@@ -145,7 +165,7 @@ data{data_version}-split={split_type}-ratio={train_ratio}/{sft_type}"
             if item["train_test_split"] == split_type and \
                 item["train_ratio"] == train_ratio and item["lr"] == lr:
 
-                # update_item_metric(item)
+                do_update = update_metric_item(item, train_loss)
                 exist = True
                 break
     else:
@@ -156,38 +176,66 @@ data{data_version}-split={split_type}-sft={sft_type}-lr={lr}"
             if item["train_test_split"] == split_type and \
                 item["train_ratio"] == train_ratio:
 
-                # update_item_metric(item)
+                do_update = update_metric_item(item, train_loss)
                 exist = True
                 break
     if exist:
-        return wrong_ans
+        if do_update:
+            save_metrics(file_dir, model_name, template_type, metrics, save=save)
+        return
 
     data = []
+    labels, preds = [], []
     with jsonlines.open(
         f"../my_data/{with_or_without_info}/train_test_split/{split_type}/\
 test_data{data_version}.jsonl", 'r') as f:
         for item in f.iter():
             data.append(item)
-
-    # 推理
-    vllm_engine, template, generation_config, lora_request = get_engine_config_request(ckpt_dir)
-    print(f'{model_name} sft_type={sft_type} lr={lr} ')
-
-    request_list = [{'query': i["query"]} for i in data]
-    response_list = inference(
-        vllm_engine, template, request_list, 
-        generation_config=generation_config, 
-        lora_request=lora_request,
-        use_tqdm=True,
-    )
     
-    labels, preds = [], []
-    for item_data, item_resp in zip(data, response_list):
-        pred = get_label(item_resp["response"])
-        label = get_label(item_data["response"])
 
-        labels.append(label)
-        preds.append(pred)
+    if sft_type in ["adalora", "dora"]:
+        # 使用 非vllm 推理
+        model, template = inference_prepare[0]()
+        inference = inference_functions[0]
+        show_val_info(model_name, sft_type, lr, train_loss)
+
+        progress_bar = tqdm(data, desc=f'{model_name} lr={lr}', total=len(data))
+
+        cnt_wrong = 0
+        for item in data:
+            progress_bar.set_description(f'cnt_wrong={cnt_wrong}')
+            progress_bar.update(1)  # Increment the progress bar
+
+            response = inference(model, template, item["query"])[0].strip()
+            pred = get_label(response)
+            label = get_label(item["response"])
+
+            labels.append(label)
+            preds.append(pred)
+
+            if label != pred:
+                cnt_wrong += 1
+        progress_bar.close()
+    else:
+        # vllm 推理
+        vllm_engine, template, generation_config, lora_request = inference_prepare[1](ckpt_dir)
+        inference = inference_functions[1]
+        show_val_info(model_name, sft_type, lr, train_loss)
+
+        request_list = [{'query': i["query"]} for i in data]
+        response_list = inference(
+            vllm_engine, template, request_list, 
+            generation_config=generation_config, 
+            lora_request=lora_request,
+            use_tqdm=True,
+        )
+        
+        for item_data, item_resp in zip(data, response_list):
+            pred = get_label(item_resp["response"])
+            label = get_label(item_data["response"])
+
+            labels.append(label)
+            preds.append(pred)
 
     # ratio为1.0
     if train_ratio == "1.0":
@@ -196,7 +244,7 @@ test_data{data_version}.jsonl", 'r') as f:
             labels=labels, preds=preds, lr=lr
         )
         metrics.sort(key=lambda x: (x["train_test_split"], x["train_ratio"], float(x["lr"])))
-        save_metrics(file_dir, model_name, template_type, metrics, save=save)
+        # save_metrics(file_dir, model_name, template_type, metrics, save=save)
     else:
         # 不同的ratio
         new_metric = update_metrics(
@@ -204,8 +252,8 @@ test_data{data_version}.jsonl", 'r') as f:
             labels=labels, preds=preds, 
         )
         metrics.sort(key=lambda x: (x["train_test_split"], x["train_ratio"]))
-        save_metrics(file_dir, model_name, template_type, metrics, save=save)
     
+    save_metrics(file_dir, model_name, template_type, metrics, save=save)
     print(json.dumps(new_metric, indent=4))
     
     # with open("wrong_ans.txt", "a") as f:

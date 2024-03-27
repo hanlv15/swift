@@ -1,16 +1,14 @@
 import json
 from tqdm import tqdm
 from datetime import datetime
-import random
 
 import sys
-if "../../../../../../autogen" not in sys.path:
-    sys.path.append("../../../../../../autogen")
-    
-try:
-    import autogen_label as al
-except:
-    pass
+# if "../../../../../../autogen" not in sys.path:
+#     sys.path.append("../../../../../../autogen")
+# try:
+#     import autogen_label as al
+# except:
+#     pass
 
 def get_claim_with_date(claim, claim_date=None):
     if claim_date is None:
@@ -303,81 +301,81 @@ def load_search_summary_part(part):
     except:
         return []
     
-def update_train_search_llm(
-        model, model_name, port, search_engine, data_search, part, 
-        K=5, sort=False, use_random=False):
-    data_search_llm = load_search_llm_part(part)
+# def update_train_search_llm(
+#         model, model_name, port, search_engine, data_search, part, 
+#         K=5, sort=False, use_random=False):
+#     data_search_llm = load_search_llm_part(part)
 
-    for i in tqdm(range(len(data_search_llm), len(data_search))):
-        item = data_search[i]
-        if use_random:
-            if K != 5 or sort:
-                raise Exception()
-            ids = item["random_ids"]
-        else:
-            ids = None
+#     for i in tqdm(range(len(data_search_llm), len(data_search))):
+#         item = data_search[i]
+#         if use_random:
+#             if K != 5 or sort:
+#                 raise Exception()
+#             ids = item["random_ids"]
+#         else:
+#             ids = None
             
-        item_llm = {}
+#         item_llm = {}
         
-        item_llm["claim"] = item["claim"]
-        prompt = get_prompt_for_generating_prior_knowledge(
-            item["claim"], item["date"], search_engine, item[f"{search_engine}_search_results"], 
-            K=K, sort=sort, ids=ids
-        )
+#         item_llm["claim"] = item["claim"]
+#         prompt = get_prompt_for_generating_prior_knowledge(
+#             item["claim"], item["date"], search_engine, item[f"{search_engine}_search_results"], 
+#             K=K, sort=sort, ids=ids
+#         )
         
-        item_llm[f"prior_knowledge_{model_name}"] = al.get_response(prompt, model, cache_seed=None, port=port)
-        data_search_llm.append(item_llm)
+#         item_llm[f"prior_knowledge_{model_name}"] = al.get_response(prompt, model, cache_seed=None, port=port)
+#         data_search_llm.append(item_llm)
 
-        if i % 10 == 0:
-            save_search_llm_part(data_search_llm, part)
+#         if i % 10 == 0:
+#             save_search_llm_part(data_search_llm, part)
 
-    save_search_llm_part(data_search_llm, part)
+#     save_search_llm_part(data_search_llm, part)
 
-def update_train_search_summary(
-        model, model_name, port, search_engine, data_search, part, K=20):
-    data_search_summary = load_search_summary_part(part)
-    for i in tqdm(range(len(data_search_summary), len(data_search))):
-        item = data_search[i]
-        item_summary = {}
+# def update_train_search_summary(
+#         model, model_name, port, search_engine, data_search, part, K=20):
+#     data_search_summary = load_search_summary_part(part)
+#     for i in tqdm(range(len(data_search_summary), len(data_search))):
+#         item = data_search[i]
+#         item_summary = {}
         
-        # print(item["claim"])
-        item_summary["claim"] = item["claim"]
-        res = []
-        prompts = get_prompts_for_summarize_snippets(
-            item["claim"], item["date"], search_engine, item[f"{search_engine}_search_results"], K=K)
-        for prompt in prompts:
-            res_tmp = al.get_response(prompt, model, cache_seed=None, port=port)
-            res.append(res_tmp.strip())
+#         # print(item["claim"])
+#         item_summary["claim"] = item["claim"]
+#         res = []
+#         prompts = get_prompts_for_summarize_snippets(
+#             item["claim"], item["date"], search_engine, item[f"{search_engine}_search_results"], K=K)
+#         for prompt in prompts:
+#             res_tmp = al.get_response(prompt, model, cache_seed=None, port=port)
+#             res.append(res_tmp.strip())
         
-        item_summary[f"summary_{model_name}"] = res
+#         item_summary[f"summary_{model_name}"] = res
         
-        data_search_summary.append(item_summary)
+#         data_search_summary.append(item_summary)
 
-        if i % 5 == 0:
-            save_search_summary_part(data_search_summary, part)
+#         if i % 5 == 0:
+#             save_search_summary_part(data_search_summary, part)
 
-    save_search_summary_part(data_search_summary, part)
+#     save_search_summary_part(data_search_summary, part)
 
-def update_train_search_llm_by_summary(
-        model, model_name, port, 
-        data_search_summary, summary_version, part, K=5):
+# def update_train_search_llm_by_summary(
+#         model, model_name, port, 
+#         data_search_summary, summary_version, part, K=5):
     
-    assert K in [5, 10, 15, 20], "请从K只能为5, 10, 15, 20。"
+#     assert K in [5, 10, 15, 20], "请从K只能为5, 10, 15, 20。"
 
-    data_search_llm = load_search_llm_part(part)
-    for i in tqdm(range(len(data_search_llm), len(data_search_summary))):
-        item = data_search_summary[i]
-        item_llm = {}
+#     data_search_llm = load_search_llm_part(part)
+#     for i in tqdm(range(len(data_search_llm), len(data_search_summary))):
+#         item = data_search_summary[i]
+#         item_llm = {}
         
-        item_llm["claim"] = item["claim"]
-        prompt = get_prompt_for_generating_prior_knowledge_by_summary(
-            item["claim"], item["date"], item[f"summary_solar_v{summary_version}"], K=K)
+#         item_llm["claim"] = item["claim"]
+#         prompt = get_prompt_for_generating_prior_knowledge_by_summary(
+#             item["claim"], item["date"], item[f"summary_solar_v{summary_version}"], K=K)
         
-        item_llm[f"prior_knowledge_by_summary_{model_name}"] = al.get_response(prompt, model, cache_seed=None, port=port)
-        data_search_llm.append(item_llm)
+#         item_llm[f"prior_knowledge_by_summary_{model_name}"] = al.get_response(prompt, model, cache_seed=None, port=port)
+#         data_search_llm.append(item_llm)
 
-        if i % 20 == 0:
-            save_search_llm_part(data_search_llm, part)
+#         if i % 20 == 0:
+#             save_search_llm_part(data_search_llm, part)
 
-    save_search_llm_part(data_search_llm, part)
+#     save_search_llm_part(data_search_llm, part)
 

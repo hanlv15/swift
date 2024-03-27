@@ -37,6 +37,7 @@ class CustomModelType:
     mixtral_moe_7b_instruct_gptq_int4 = "mixtral-8x7B-instruct-v0.1-gptq-int4"
     gemma_7b_it = 'gemma-7b-it'
     merlinite_7b = 'merlinite-7b'
+    c4ai_command_r_4bit = "c4ai-command-r-v01-4bit"
 
 class CustomTemplateType:
     tigerbot = 'tigerbot'
@@ -50,6 +51,7 @@ class CustomTemplateType:
     chatml = "_chatml" # 无system message的chatml
     llama = "_llama" # 无system message的llama
     merlinite = "merlinite"
+    c4ai_command_r = "c4ai_command_r" # 用于RAG的Template
 
 class CustomDatasetName:
     stsb_en = 'stsb-en'
@@ -160,6 +162,9 @@ def get_orca2_model_tokenizer(model_dir: str,
 @register_model(CustomModelType.merlinite_7b,
                 '/home/css/models/merlinite-7b', LoRATM.llama2,
                 CustomTemplateType.merlinite)
+@register_model(CustomModelType.c4ai_command_r_4bit,
+                '/home/css/models/c4ai-command-r-v01-4bit', LoRATM.llama2,
+                CustomTemplateType.c4ai_command_r)
 def get_model_tokenizer(
     model_dir: str,
     torch_dtype: Dtype, 
@@ -267,6 +272,13 @@ register_template(
 # default system: "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
 register_template(
     CustomTemplateType.merlinite,
+    Template(
+        [], ['<|user|>\n{{QUERY}}\n<|assistant|>\n'],
+        ['<|endoftext|>\n'], ['<|endoftext|>'], None,
+        ['<|system|>\n{{SYSTEM}}\n']))
+
+register_template(
+    CustomTemplateType.c4ai_command_r,
     Template(
         [], ['<|user|>\n{{QUERY}}\n<|assistant|>\n'],
         ['<|endoftext|>\n'], ['<|endoftext|>'], None,
