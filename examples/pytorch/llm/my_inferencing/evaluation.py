@@ -55,10 +55,10 @@ def cal_metric_single_llm(
         return new_item
     
     def get_with_or_without_info(train_dataset_path: str):
-        with_or_without_info_list = ["with_info", "with_solar_info", "without_info"]
+        with_or_without_info_list = ["with_info", "with_solar_info", "with_mixtral_info", "without_info"]
         search_engines = ["brave"]
         for with_or_without_info in with_or_without_info_list:
-            if with_or_without_info == "with_solar_info":
+            if with_or_without_info in ["with_solar_info", "with_mixtral_info"]:
                 for search_engine in search_engines:
                     info_search = with_or_without_info + '/' + search_engine
                     if info_search in train_dataset_path:

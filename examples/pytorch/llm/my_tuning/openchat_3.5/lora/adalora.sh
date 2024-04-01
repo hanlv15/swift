@@ -15,6 +15,7 @@ learning_rate=$5 # 1e-4
 with_or_without_info=$6
 data_version=$7
 
+lora_rank2=8
 num_epochs=1
 
 split_type=$(echo "10 - $test_size * 10" | bc | awk '{print int($1)}'):$(echo "$test_size * 10" | bc | awk '{print int($1)}')
@@ -28,6 +29,11 @@ if [ "$train_ratio" = "1" ] || [ -z "$train_ratio" ]; then
     custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/train_data$data_version.jsonl
 fi
 
+if [ "$lora_rank" = "8" ]; then
+    lora_rank2=12
+fi
+
+
 nproc_per_node=2
 # eval_times=15
 gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
@@ -40,7 +46,7 @@ lora_alpha=$(expr $lora_rank \* 4)
 max_length=8192
 
 PYTHONPATH=../../.. \
-CUDA_VISIBLE_DEVICES=0,1 \
+CUDA_VISIBLE_DEVICES=1,2 \
 PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512 \
 torchrun \
     --nproc_per_node=$nproc_per_node \
@@ -54,7 +60,7 @@ torchrun \
     --template_type openchat_3.5 \
     --dtype AUTO \
     --add_output_dir_suffix false \
-    --output_dir output/openchat_3.5/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/$sft_type-r="$lora_rank"_8/"$output_name" \
+    --output_dir output/openchat_3.5/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/$sft_type-r="$lora_rank"_"$lora_rank2"/"$output_name" \
     --ddp_backend nccl \
     --custom_train_dataset_path $custom_train_dataset_path \
     --dataset_test_ratio 0 \
@@ -70,7 +76,7 @@ torchrun \
     --lora_target_modules ALL \
     --lora_dtype AUTO \
     --adalora_target_r $lora_rank \
-    --adalora_init_r 8 \
+    --adalora_init_r $lora_rank2 \
     --gradient_checkpointing true \
     --batch_size 1 \
     --weight_decay 0.01 \

@@ -1,6 +1,7 @@
 import json
 from tqdm import tqdm
 from datetime import datetime
+import jsonlines
 
 import sys
 # if "../../../../../../autogen" not in sys.path:
@@ -142,15 +143,21 @@ def get_brave_snippet(search_results, ids: slice | list, ret_type='str'):
         return snippets
 
 def get_prompt_for_generating_prior_knowledge(
-        claim, claim_date, search_engine, search_results, 
+        claim, claim_date, search_engine, search_results, model_name,
         K=5, sort=False, ids=None, without_info=False):
     """
     sort: 对search result 按时间进行排序
     """
 
     claim = claim.strip()
-    pre = "Below is a CLAIM and some INFORMATION searched online. These pieces of INFORMATION are relevant to the CLAIM. This CLAIM and all INFORMATION include their respective publication dates and contents. To classify the CLAIM more accurately (if the content described by the CLAIM is correct, it will be classified as TRUE; if the content described by the CLAIM is incorrect, it will be classified as FALSE), please first expand on the given INFORMATION and provide a detailed summary of it. Then analyze, reason, and provide reasonable evidence to judge the correctness of the CLAIM based on the available information and your knowledge, and finally generate prior knowledge that helps classify the CLAIM.\n\n"
 
+    if model_name == "solar":
+        pre = "Below is a CLAIM and some INFORMATION searched online. These pieces of INFORMATION are relevant to the CLAIM. This CLAIM and all INFORMATION include their respective publication dates and contents. To classify the CLAIM more accurately (if the content described by the CLAIM is correct, it will be classified as TRUE; if the content described by the CLAIM is incorrect, it will be classified as FALSE), please first expand on the given INFORMATION and provide a detailed summary of it. Then analyze, reason, and provide reasonable evidence to judge the correctness of the CLAIM based on the available information and your knowledge, and finally generate prior knowledge that helps classify the CLAIM.\n\n"
+    elif model_name == "mixtral":
+        pre = "Below is a CLAIM and some INFORMATION searched online. These pieces of INFORMATION are relevant to the CLAIM. This CLAIM and all INFORMATION include their respective publication dates and contents. To classify the CLAIM more accurately (if the content described by the CLAIM is correct, it will be classified as TRUE; if the content described by the CLAIM is incorrect, it will be classified as FALSE), please first expand on the given INFORMATION and provide a detailed summary of it. Then analyze, reason, and provide reasonable evidence to judge the correctness of the CLAIM based on the available information and your knowledge.\n\n"
+    else:
+        raise Exception("model_name 只能从solar，mixtral中选择")
+    
     text = "CLAIM:" + get_claim_with_date(claim, claim_date) +'\n\n'
 
     if search_engine == "bing":
@@ -279,13 +286,13 @@ def save_search_summary(x, search_engine):
     with open(f"/home/hanlv/workspace/data/machine_learning/dataset/research/misinformation_dataset/COVMIS-main/data/train_{search_engine}_search_summary.json", "w") as f:
         json.dump(x, f, indent=4)
 
-def save_search_llm_part(x, part):
-    with open(f"train_search_llm_v{part}.json", "w") as f:
+def save_search_llm_tmp(x):
+    with open(f"train_search_llm_tmp.json", "w") as f:
         json.dump(x, f, indent=4)
 
-def load_search_llm_part(part):
+def load_search_llm_tmp():
     try:
-        with open(f"train_search_llm_v{part}.json", "r") as f:
+        with open(f"train_search_llm_tmp.json", "r") as f:
             return json.load(f)
     except:
         return []
@@ -301,35 +308,48 @@ def load_search_summary_part(part):
     except:
         return []
     
-# def update_train_search_llm(
-#         model, model_name, port, search_engine, data_search, part, 
-#         K=5, sort=False, use_random=False):
-#     data_search_llm = load_search_llm_part(part)
+def update_train_search_llm(
+        model_name, get_resp_list, search_engine, data_search, 
+        K=5, sort=False, use_random=False):
+    data_search_llm = load_search_llm_tmp()
 
-#     for i in tqdm(range(len(data_search_llm), len(data_search))):
-#         item = data_search[i]
-#         if use_random:
-#             if K != 5 or sort:
-#                 raise Exception()
-#             ids = item["random_ids"]
-#         else:
-#             ids = None
+    len_data_search_llm = len(data_search_llm)
+    prompt_list = []
+    for i in range(len_data_search_llm, len(data_search)):
+        item = data_search[i]
+        if use_random:
+            if K != 5 or sort:
+                raise Exception()
+            ids = item["random_ids"]
+        else:
+            ids = None
             
-#         item_llm = {}
+        item_llm = {}
         
-#         item_llm["claim"] = item["claim"]
-#         prompt = get_prompt_for_generating_prior_knowledge(
-#             item["claim"], item["date"], search_engine, item[f"{search_engine}_search_results"], 
-#             K=K, sort=sort, ids=ids
-#         )
-        
-#         item_llm[f"prior_knowledge_{model_name}"] = al.get_response(prompt, model, cache_seed=None, port=port)
-#         data_search_llm.append(item_llm)
+        item_llm["claim"] = item["claim"]
+        prompt = get_prompt_for_generating_prior_knowledge(
+            item["claim"], item["date"], 
+            search_engine, item[f"{search_engine}_search_results"], 
+            model_name, K=K, sort=sort, ids=ids
+        )
+        prompt_list.append(prompt)
 
-#         if i % 10 == 0:
-#             save_search_llm_part(data_search_llm, part)
+    request_list = [{'query': prompt} for prompt in prompt_list]
+    resp_list = get_resp_list(request_list)
+    resp_list = [i["response"] for i in resp_list]
 
-#     save_search_llm_part(data_search_llm, part)
+    with jsonlines.open("resp_list.jsonl", mode="w") as file_jsonl:
+        for item in resp_list:
+            file_jsonl.write(item)
+
+    for i in range(len_data_search_llm, len(data_search)):
+        item = data_search[i]
+        item_llm = {}
+        item_llm["claim"] = item["claim"]
+        item_llm[f"prior_knowledge_{model_name}"] = resp_list[i-len_data_search_llm].strip()
+        data_search_llm.append(item_llm)
+
+    save_search_llm_tmp(data_search_llm)
 
 # def update_train_search_summary(
 #         model, model_name, port, search_engine, data_search, part, K=20):

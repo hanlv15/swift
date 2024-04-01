@@ -25,6 +25,28 @@
         "model": "openchat-3.5-0106",
         "train_test_split": "8:2",
         "train_ratio": "1.0",
+        "train_loss": 0.05469947,
+        "lr": "3.6e-5",
+        "ACC": 0.993439934399344,
+        "F1": 0.988580926073318,
+        "Precision": 0.9894936254643701,
+        "Recall": 0.9876739295519599
+    },
+    {
+        "model": "openchat-3.5-0106",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.05281733,
+        "lr": "3.8e-5",
+        "ACC": 0.994259942599426,
+        "F1": 0.9899896572104019,
+        "Precision": 0.9918318270953344,
+        "Recall": 0.988170453881652
+    },
+    {
+        "model": "openchat-3.5-0106",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
         "train_loss": 0.05209873,
         "lr": "4e-5",
         "ACC": 0.995489954899549,

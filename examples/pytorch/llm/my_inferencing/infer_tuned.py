@@ -46,11 +46,14 @@ def get_engine_config_request(ckpt_dir):
     vllm_engine = get_vllm_engine(
         model_type, 
         tensor_parallel_size=1,
-        seed=42,
+        max_model_len=8192,
         enable_lora=True,
         max_loras=1, 
         max_lora_rank=16,
-        engine_kwargs={"max_num_seqs": 128}
+        engine_kwargs={
+            "max_num_seqs": 128,
+            "seed": 42,
+        }
     )
 
     template = get_template(template_type, vllm_engine.hf_tokenizer)
