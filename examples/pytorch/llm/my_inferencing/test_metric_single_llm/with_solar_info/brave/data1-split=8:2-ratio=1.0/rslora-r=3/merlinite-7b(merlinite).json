@@ -25,6 +25,17 @@
         "model": "merlinite-7b",
         "train_test_split": "8:2",
         "train_ratio": "1.0",
+        "train_loss": 0.07234275,
+        "lr": "1.6e-4",
+        "ACC": 0.994669946699467,
+        "F1": 0.9907133528612522,
+        "Precision": 0.9920926861017841,
+        "Recall": 0.9893469244698873
+    },
+    {
+        "model": "merlinite-7b",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
         "train_loss": 0.13617762,
         "lr": "1.7e-4",
         "ACC": 0.993849938499385,

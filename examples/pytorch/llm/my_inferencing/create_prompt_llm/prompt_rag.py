@@ -144,7 +144,7 @@ def get_brave_snippet(search_results, ids: slice | list, ret_type='str'):
 
 def get_prompt_for_generating_prior_knowledge(
         claim, claim_date, search_engine, search_results, model_name,
-        K=5, sort=False, ids=None, without_info=False):
+        K=5, sort=False, ids=None, without_info=False, without_claim_date=False):
     """
     sort: 对search result 按时间进行排序
     """
@@ -154,11 +154,14 @@ def get_prompt_for_generating_prior_knowledge(
     if model_name == "solar":
         pre = "Below is a CLAIM and some INFORMATION searched online. These pieces of INFORMATION are relevant to the CLAIM. This CLAIM and all INFORMATION include their respective publication dates and contents. To classify the CLAIM more accurately (if the content described by the CLAIM is correct, it will be classified as TRUE; if the content described by the CLAIM is incorrect, it will be classified as FALSE), please first expand on the given INFORMATION and provide a detailed summary of it. Then analyze, reason, and provide reasonable evidence to judge the correctness of the CLAIM based on the available information and your knowledge, and finally generate prior knowledge that helps classify the CLAIM.\n\n"
     elif model_name == "mixtral":
-        pre = "Below is a CLAIM and some INFORMATION searched online. These pieces of INFORMATION are relevant to the CLAIM. This CLAIM and all INFORMATION include their respective publication dates and contents. To classify the CLAIM more accurately (if the content described by the CLAIM is correct, it will be classified as TRUE; if the content described by the CLAIM is incorrect, it will be classified as FALSE), please first expand on the given INFORMATION and provide a detailed summary of it. Then analyze, reason, and provide reasonable evidence to judge the correctness of the CLAIM based on the available information and your knowledge.\n\n"
+        pre = "Below is a CLAIM and some INFORMATION searched online. These pieces of INFORMATION are relevant to the CLAIM. This CLAIM and all INFORMATION include their respective publication dates and contents. To classify the CLAIM more accurately (if the content described by the CLAIM is correct, it will be classified as TRUE; if the content described by the CLAIM is incorrect, it will be classified as FALSE), please first provide a detailed summary of the given INFORMATION. Then reason, and provide reasonable evidence to judge the correctness of the CLAIM based on the available information and your knowledge. In reasoning, it is necessary to consider the sequential relationship between the date of publication of the CLAIM and the date of publication of the INFORMATION.\n\n"
     else:
         raise Exception("model_name 只能从solar，mixtral中选择")
     
-    text = "CLAIM:" + get_claim_with_date(claim, claim_date) +'\n\n'
+    if without_claim_date:
+        text = "CLAIM: " + claim +'\n\n'
+    else:
+        text = "CLAIM:" + get_claim_with_date(claim, claim_date) +'\n\n'
 
     if search_engine == "bing":
         snippet = get_bing_snippet_v2(search_results, K=K, claim_date=claim_date, sort=sort)
@@ -282,9 +285,9 @@ def save_search_llm(x, search_engine):
     with open(f"/home/hanlv/workspace/data/machine_learning/dataset/research/misinformation_dataset/COVMIS-main/data/train_{search_engine}_search_llm.json", "w") as f:
         json.dump(x, f, indent=4)
 
-def save_search_summary(x, search_engine):
-    with open(f"/home/hanlv/workspace/data/machine_learning/dataset/research/misinformation_dataset/COVMIS-main/data/train_{search_engine}_search_summary.json", "w") as f:
-        json.dump(x, f, indent=4)
+# def save_search_summary(x, search_engine):
+#     with open(f"/home/hanlv/workspace/data/machine_learning/dataset/research/misinformation_dataset/COVMIS-main/data/train_{search_engine}_search_summary.json", "w") as f:
+#         json.dump(x, f, indent=4)
 
 def save_search_llm_tmp(x):
     with open(f"train_search_llm_tmp.json", "w") as f:
@@ -297,16 +300,16 @@ def load_search_llm_tmp():
     except:
         return []
 
-def save_search_summary_part(x, part):
-    with open(f"train_search_summary_v{part}.json", "w") as f:
-        json.dump(x, f, indent=4)
+# def save_search_summary_part(x, part):
+#     with open(f"train_search_summary_v{part}.json", "w") as f:
+#         json.dump(x, f, indent=4)
 
-def load_search_summary_part(part):
-    try:
-        with open(f"train_search_summary_v{part}.json", "r") as f:
-            return json.load(f)
-    except:
-        return []
+# def load_search_summary_part(part):
+#     try:
+#         with open(f"train_search_summary_v{part}.json", "r") as f:
+#             return json.load(f)
+#     except:
+#         return []
     
 def update_train_search_llm(
         model_name, get_resp_list, search_engine, data_search, 
@@ -342,11 +345,23 @@ def update_train_search_llm(
         for item in resp_list:
             file_jsonl.write(item)
 
+    # resp_list = []
+    # for prompt in tqdm(prompt_list):
+    #     request_list = [{'query': prompt}]
+    #     resp:str = get_resp_list(request_list)[0]["response"].strip()
+
+    #     with open("resp_list.txt", "a") as f:
+    #         f.writelines(resp + '\n\n\n')
+
+    #     resp_list.append(resp)
+
+
+
     for i in range(len_data_search_llm, len(data_search)):
         item = data_search[i]
         item_llm = {}
         item_llm["claim"] = item["claim"]
-        item_llm[f"prior_knowledge_{model_name}"] = resp_list[i-len_data_search_llm].strip()
+        item_llm[f"prior_knowledge_{model_name}"] = resp_list[i - len_data_search_llm].strip()
         data_search_llm.append(item_llm)
 
     save_search_llm_tmp(data_search_llm)

@@ -35,7 +35,7 @@ lora_alpha=$(expr $lora_rank \* 4)
 
 
 
-max_length=32768
+max_length=3700
 
 PYTHONPATH=../../.. \
 CUDA_VISIBLE_DEVICES=1,2 \

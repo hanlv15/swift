@@ -30,6 +30,14 @@ lrs = [value for value in lrs2 if value not in lr_del]
 #     subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/lora_plus.sh", "0.2", "1.0", "lora", rank, lr, "with_solar_info/brave", data_version])
 
 
+# lora
+for lr in ["1e-4", "1.5e-4", "2e-4", "1.1e-4", "1.3e-4", "1.7e-4", "1.9e-4"]:
+    data_version = "2"
+    rank = "3"
+    model_name = "mixtral"
+    subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/lora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
+
+
 # galore
 # for lr in ["1e-5"]:
 #     data_version = "1"
@@ -54,15 +62,6 @@ lrs = [value for value in lrs2 if value not in lr_del]
 #     rank = "3"
 #     subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/qlora.sh", "0.2", "1.0", "lora", rank, lr, "with_solar_info/brave", data_version])
 
-
-# fusechat-7b-varm
-# lora+
-# for lr in ["1.9e-4"]:
-#     data_version = "1"
-#     rank = "3"
-#     subprocess.run(["bash", f"my_tuning/fusechat-7b-varm/lora/lora_plus.sh", "0.2", "1.0", "lora", rank, lr, data_version])
-
-
 # gemma-7b-it
 # lora+
 # for lr in ["5e-5", "1e-4", "1.5e-4", "2e-4", "1.3e-4"]:
@@ -77,33 +76,28 @@ lrs = [value for value in lrs2 if value not in lr_del]
 #     rank = "3"
 #     subprocess.run(["bash", f"my_tuning/merlinite-7b/lora/lora_plus.sh", "0.2", "1.0", "lora", rank, lr, data_version])
 
-# adalora
-for lr in ["6e-4", "4.5e-4"]:
-    data_version = "1"
-    rank = "3"
-    subprocess.run(["bash", f"my_tuning/merlinite-7b/lora/adalora.sh", "0.2", "1.0", "adalora", rank, lr, data_version])
+# adalora 
+# for lr in ["6e-4", "4.5e-4"]:
+#     data_version = "1"
+#     rank = "3"
+#     subprocess.run(["bash", f"my_tuning/merlinite-7b/lora/adalora.sh", "0.2", "1.0", "adalora", rank, lr, data_version])
 
 # rslora
-for lr in ["1.6e-4"]:
-    data_version = "1"
-    rank = "3"
-    subprocess.run(["bash", f"my_tuning/merlinite-7b/lora/rslora.sh", "0.2", "1.0", "lora", rank, lr, data_version])
+# for lr in ["1.6e-4"]:
+#     data_version = "1"
+#     rank = "3"
+#     subprocess.run(["bash", f"my_tuning/merlinite-7b/lora/rslora.sh", "0.2", "1.0", "lora", rank, lr, data_version])
 
-# lora
-for lr in ["1.4e-4", "1.2e-4", "1.9e-4"]: 
-    data_version = "1"
-    rank = "3"
-    model_name = "solar"
-    subprocess.run(["bash", f"my_tuning/merlinite-7b/lora/lora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
-
-
+# lora 
+# for lr in ["1.3e-4", "1.9e-4"]: 
+#     data_version = "1"
+#     rank = "3"
+#     model_name = "mixtral"
+#     subprocess.run(["bash", f"my_tuning/merlinite-7b/lora/lora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
 
 
-
-
-
-# qlora
-# for lr in ["1.5e-4", "2e-4"]:
+# qlora need run
+# for lr in ["2e-4"]:
 #     data_version = "1"
 #     rank = "3"
 #     subprocess.run(["bash", f"my_tuning/merlinite-7b/lora/qlora.sh", "0.2", "1.0", "lora", rank, lr, data_version])

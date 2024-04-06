@@ -9,9 +9,11 @@ deploy参数继承了infer参数, 除此之外增加了以下参数:
 RAY_memory_monitor_refresh_ms=0 \
 CUDA_VISIBLE_DEVICES=1,2 \
 python llm_deploy.py \
---model_type solar-10.7b-instruct \
+--model_type mixtral-moe-7b-instruct \
+--model_id_or_path /home/css/models/Mixtral-8x7B-Instruct-v0.1-GPTQ-int4 \
+--dtype fp16 \
 --infer_backend vllm \
---max_new_tokens 4096 \
+--max_new_tokens 2048 \
 --do_sample false \
 --temperature 0 \
 --tensor_parallel_size 2 \
