@@ -28,7 +28,7 @@
 - `--dataset`: Datasets to use for training, default is `[]`. Available datasets can be found in [Supported Datasets](Supported-models-datasets.md#Datasets). To use multiple datasets for training, separate them with ',' or ' ', e.g. `--dataset alpaca-en,alpaca-zh` or `--dataset alpaca-en alpaca-zh`.
 - `--dataset_seed`: Seed for dataset processing, default is `42`. Exists as random_state, does not affect global seed.
 - `--dataset_test_ratio`: Ratio for splitting subdataset into train and validation sets, default is `0.01`. If the subdataset is already split into train and validation, this parameter has no effect.
-- `--train_dataset_sample`: Sampling of training set, default is `20000`, to speed up training. This avoids long epoch times when dataset is too large. If set to `-1`, use the full training set.
+- `--train_dataset_sample`: The number of samples for training set, default is `-1`, which means using the entire training set for training.
 - `--val_dataset_sample`: Sampling of validation set, default is `None`, automatically selects appropriate dataset size for validation. If set to `-1`, use the full validation set.
 - `--system`: System used in dialogue template, default is `None`, i.e. use the model's default system. If set to '', no system is used.
 - `--max_length`: Maximum token length, default is `2048`. Avoids OOM issues caused by individual overly long samples. When `--truncation_strategy delete` is specified, samples exceeding max_length will be deleted. When `--truncation_strategy truncation_left` is specified, the leftmost tokens will be truncated: `input_ids[-max_length:]`. If set to -1, no limit.
@@ -43,6 +43,7 @@
 - `--bnb_4bit_comp_dtype`: When doing 4bit quantization, we need to dequantize during model forward and backward passes. This specifies the torch_dtype after dequantization. Default is `'AUTO'`, i.e. consistent with `dtype`. Options: 'fp16', 'bf16', 'fp32'. Has no effect when quantization_bit is 0.
 - `--bnb_4bit_quant_type`: Quantization method for 4bit quantization, default is `'nf4'`. Options: 'nf4', 'fp4'. Has no effect when quantization_bit is 0.
 - `--bnb_4bit_use_double_quant`: Whether to enable double quantization for 4bit quantization, default is `True`. Has no effect when quantization_bit is 0.
+- `--bnb_4bit_quant_storage`: Default vlaue `None`.This sets the storage type to pack the quanitzed 4-bit prarams. Has no effect when quantization_bit is 0.
 - `--lora_target_modules`: Specify lora modules, default is `['DEFAULT']`. If lora_target_modules is passed `'DEFAULT'` or `'AUTO'`, look up `lora_target_modules` in `MODEL_MAPPING` based on `model_type` (default specifies qkv). If passed `'ALL'`, all Linear layers (excluding head) will be specified as lora modules. If passed `'EMBEDDING'`, Embedding layer will be specified as lora module. If memory allows, setting to 'ALL' is recommended. You can also set `['ALL', 'EMBEDDING']` to specify all Linear and embedding layers as lora modules. This parameter only takes effect when `sft_type` is 'lora'.
 - `--lora_rank`: Default is `8`. Only takes effect when `sft_type` is 'lora'.
 - `--lora_alpha`: Default is `32`. Only takes effect when `sft_type` is 'lora'.
@@ -103,6 +104,12 @@
 - `--train_dataset_mix_ratio`: Default is `0`. This defines how to mix datasets for training. When specifying this, training set will be mixed `train_dataset_mix_ratio` times with the general knowledge dataset specified by `train_dataset_mix_ds`, making total dataset length reach `train_dataset_sample`.
 - `--train_dataset_mix_ds`: Default is `ms-bench`. General knowledge dataset used to prevent knowledge forgetting.
 - `--use_loss_scale`: Default is `False`. When taking effect, strengthens loss weight of some Agent fields (Action/Action Input part) to enhance CoT, has no effect in regular SFT scenarios.
+
+### FSDP Parameters
+
+- `--fsdp`: Default value `''`, the FSDP type, please check [this documentation](https://huggingface.co/docs/transformers/v4.39.3/en/main_classes/trainer#transformers.TrainingArguments.fsdp) for details.
+
+- `--fsdp_config`: Default value `None`, the FSDP config file path.
 
 ### LoRA+ Fine-tuning Parameters
 
@@ -184,6 +191,7 @@ dpo parameters inherit from sft parameters, with the following added parameters:
 - `--bnb_4bit_comp_dtype`: Default is `'AUTO'`.  See `sft.sh command line arguments` for parameter details. If `quantization_bit` is set to 0, this parameter has no effect.
 - `--bnb_4bit_quant_type`: Default is `'nf4'`.  See `sft.sh command line arguments` for parameter details. If `quantization_bit` is set to 0, this parameter has no effect.
 - `--bnb_4bit_use_double_quant`: Default is `True`.  See `sft.sh command line arguments` for parameter details. If `quantization_bit` is set to 0, this parameter has no effect.
+- `--bnb_4bit_quant_storage`: Default value `None`.See `sft.sh command line arguments` for parameter details. If `quantization_bit` is set to 0, this parameter has no effect.
 - `--max_new_tokens`: Maximum number of new tokens to generate, default is `2048`.
 - `--do_sample`: Whether to use greedy generation or sampling generation, default is `True`.
 - `--temperature`: Default is `0.3`. This parameter only takes effect when `do_sample` is set to True. This parameter will be used as default value in deployment parameters.
