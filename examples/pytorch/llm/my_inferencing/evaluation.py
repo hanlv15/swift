@@ -192,7 +192,8 @@ test_data{data_version}.jsonl", 'r') as f:
         for item in f.iter():
             data.append(item)
     
-
+    wrong_ans = []
+    cnt_wrong = 0
     if sft_type in ["adalora", "dora"]:
         # 使用 非vllm 推理
         model, template = inference_prepare[0]()
@@ -201,7 +202,7 @@ test_data{data_version}.jsonl", 'r') as f:
 
         progress_bar = tqdm(data, desc=f'{model_name} lr={lr}', total=len(data))
 
-        cnt_wrong = 0
+        
         for item in data:
             progress_bar.set_description(f'cnt_wrong={cnt_wrong}')
             progress_bar.update(1)  # Increment the progress bar
@@ -214,6 +215,7 @@ test_data{data_version}.jsonl", 'r') as f:
             preds.append(pred)
 
             if label != pred:
+                wrong_ans.append(item["query"])
                 cnt_wrong += 1
         progress_bar.close()
     else:
@@ -237,6 +239,9 @@ test_data{data_version}.jsonl", 'r') as f:
             labels.append(label)
             preds.append(pred)
 
+            if label != pred:
+                wrong_ans.append(item_data["query"])
+                cnt_wrong += 1
     # ratio为1.0
     if train_ratio == "1.0":
         new_metric = update_metrics(
@@ -257,6 +262,6 @@ test_data{data_version}.jsonl", 'r') as f:
     print(json.dumps(new_metric, indent=4))
     
     # with open("wrong_ans.txt", "a") as f:
-    #     title = f'{model_name}, sft_type={sft_type}, lr={lr}, wrong={cnt["wrong"]}'
+    #     title = f'{model_name}, sft_type={sft_type}, lr={lr}, wrong={cnt_wrong}'
     #     f.writelines('\n'.join([title] + wrong_ans) + '\n\n')
 

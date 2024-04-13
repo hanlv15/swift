@@ -74,18 +74,18 @@ torchrun \
     --lora_alpha $lora_alpha \
     --lora_dropout_p 0.05 \
     --lora_target_modules ALL \
-    --lora_dtype AUTO \
     --adalora_target_r $lora_rank \
     --adalora_init_r $lora_rank2 \
+    --lora_dtype bf16 \
     --gradient_checkpointing true \
     --batch_size 1 \
-    --weight_decay 0.01 \
+    --weight_decay 0.1 \
     --learning_rate $learning_rate \
     --gradient_accumulation_steps $gradient_accumulation_steps \
     --max_grad_norm 0.5 \
-    --warmup_ratio 0.05 \
+    --warmup_ratio 0.03 \
     --save_total_limit 1 \
-    --logging_steps 5 \
+    --logging_steps 10 \
     --use_flash_attn false \
     --do_sample false
 

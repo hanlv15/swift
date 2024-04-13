@@ -20,7 +20,7 @@ def set_seed(seed=DEFAULT_SEED):
 search_engine = "brave"
 model_name = "mixtral"
 data_dir = f"./with_{model_name}_info/{search_engine}/"
-version = "2"
+version = "1"
 
 dict_list = []
 with jsonlines.open(data_dir + f"data{version}.jsonl", mode="r") as file_jsonl:
