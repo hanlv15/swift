@@ -34,7 +34,7 @@ def save_checkpoint(model: Optional[PreTrainedModel],
         model.save_pretrained(target_dir, safe_serialization=save_safetensors)
     tokenizer.save_pretrained(target_dir)
     model_type = getattr(tokenizer, 'model_type')
-    fname_list = ['generation_config.json']
+    fname_list = ['generation_config.json', 'preprocessor_config.json']
     if model_type is not None:
         fname_list += get_additional_saved_files(model_type)
 
@@ -84,8 +84,8 @@ def merge_lora(args: InferArguments,
     logger.info(f'replace_if_exists: {replace_if_exists}')
     assert args.ckpt_dir is not None, 'args.ckpt_dir is not specified.'
     assert args.sft_type == 'lora', "Only supports sft_type == 'lora'"
-    assert 'int4' not in args.model_type, 'int4 model is not supported'
-    assert 'int8' not in args.model_type, 'int8 model is not supported'
+    for s in ['int4', 'int8', 'awq']:
+        assert s not in args.model_type, f'{s} model is not supported'
     if args.quantization_bit != 0:
         logger.warning('It is not recommended to merge quantized models, '
                        'as this can result in performance degradation')
@@ -107,10 +107,13 @@ def merge_lora(args: InferArguments,
     model_kwargs = {}
     if is_torch_npu_available():
         logger.info(f'device_count: {torch.npu.device_count()}')
-        device_map = 'npu:0'
+        if device_map is None:
+            device_map = 'npu:0'
     else:
         logger.info(f'device_count: {torch.cuda.device_count()}')
-        device_map = 'auto'
+        if device_map is None:
+            device_map = 'auto'
+    if device_map == 'auto':
         model_kwargs['low_cpu_mem_usage'] = True
     model_kwargs['device_map'] = device_map
 
@@ -122,7 +125,8 @@ def merge_lora(args: InferArguments,
         args.model_type,
         args.torch_dtype,
         model_kwargs,
-        model_id_or_path=model_id_or_path)
+        model_id_or_path=model_id_or_path,
+        revision=args.model_revision)
     logger.info(f'model_config: {model.config}')
 
     # Preparing LoRA
@@ -150,10 +154,13 @@ def prepare_model_template(
     model_kwargs = {}
     if is_torch_npu_available():
         logger.info(f'device_count: {torch.npu.device_count()}')
-        device_map = 'npu:0'
+        if device_map is None:
+            device_map = 'npu:0'
     else:
         logger.info(f'device_count: {torch.cuda.device_count()}')
-        device_map = 'auto'
+        if device_map is None:
+            device_map = 'auto'
+    if device_map == 'auto':
         model_kwargs['low_cpu_mem_usage'] = True
     model_kwargs['device_map'] = device_map
 
@@ -183,6 +190,7 @@ def prepare_model_template(
         args.torch_dtype,
         model_kwargs,
         model_id_or_path=model_id_or_path,
+        revision=args.model_revision,
         **kwargs)
     logger.info(f'model_config: {model.config}')
     if model.max_model_len is None:

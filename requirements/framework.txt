@@ -3,12 +3,12 @@ dacite
 datasets
 jieba
 matplotlib
-modelscope>=1.9.3
+modelscope>=1.13.3
 nltk
 numpy
 optimum>=1.17.0
 pandas
-peft>=0.9.0,<0.10.0
+peft>=0.9.0,<0.11.0
 requests
 rouge
 safetensors
