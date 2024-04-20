@@ -15,6 +15,7 @@ lrs = [value for value in lrs2 if value not in lr_del]
 #         for j in ["with_solar_info/brave"]:
 #             data_version = "1"
 
+
 #             # if j == "without_info":
 #             #     for i in test_sizes:
 #             #         subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/sft.sh", f"{i}", "1", j, data_version])
@@ -23,47 +24,50 @@ lrs = [value for value in lrs2 if value not in lr_del]
 #             for i in [1.0]:
 #                 subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/sft2.sh", "0.2", f"{i}", sft_type, "3", lr, j, data_version])
 
-# lora
+
+# dora
+for lr in ["9.2e-5", "7.9e-5", "8.9e-5", "7.7e-5"]:
+    data_version = "1"
+    rank = "2"
+    model_name = "mixtral"
+    subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/dora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
+
+
+# lora+ OK
+# for lr in ["1.7e-5"]:
+#     data_version = "1"
+#     rank = "2"
+#     model_name = "mixtral"
+#     subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/lora_plus.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
+
+# adalora OK
+# for lr in ["1e-3", "1.3e-3"]:
+#     data_version = "1"
+#     rank = "2"
+#     model_name = "mixtral"
+#     subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/adalora.sh", "0.2", "1.0", "adalora", rank, lr, f"with_{model_name}_info/brave", data_version])
+
+
+# lora OK
 # for rank in ["2"]:
 #     for lr in ["1.1e-4"]:
 #         data_version = "1"
 #         model_name = "mixtral"
 #         subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/lora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
 
-# rslora
-for lr in ["1.5e-4", "1e-4"]:
-    data_version = "1"
-    rank = "2"
-    model_name = "mixtral"
-    subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/rslora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
-
-# adalora
-# for lr in ["3e-4"]:
+# rslora OK
+# for lr in []:
 #     data_version = "1"
-#     rank = "3"
+#     rank = "2"
 #     model_name = "mixtral"
-#     subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/adalora.sh", "0.2", "1.0", "adalora", rank, lr, f"with_{model_name}_info/brave", data_version])
+#     subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/rslora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
 
-# lora+
-for lr in ["2e-5"]:
-    data_version = "1"
-    rank = "2"
-    model_name = "mixtral"
-    subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/lora_plus.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
-
-# qlora
-for lr in ["1.5e-4", "1e-4"]:
-    data_version = "1"
-    rank = "2"
-    model_name = "mixtral"
-    subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/qlora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
-
-# dora
-for lr in ["5e-5"]:
-    data_version = "1"
-    rank = "2"
-    model_name = "mixtral"
-    subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/dora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
+# qlora OK
+# for lr in ["1.5e-4", "1e-4"]:
+#     data_version = "1"
+#     rank = "2"
+#     model_name = "mixtral"
+#     subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/qlora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
 
 
 # gemma-7b-it
