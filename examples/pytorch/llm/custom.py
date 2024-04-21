@@ -38,6 +38,7 @@ class CustomModelType:
     gemma_7b_it = 'gemma-7b-it'
     merlinite_7b = 'merlinite-7b'
     c4ai_command_r_4bit = "c4ai-command-r-v01-4bit"
+    llama_3_8b_instruct = "meta-llama-3-8B-instruct"
 
 class CustomTemplateType:
     tigerbot = 'tigerbot'
@@ -52,6 +53,8 @@ class CustomTemplateType:
     llama = "_llama" # 无system message的llama
     merlinite = "merlinite"
     c4ai_command_r = "c4ai_command_r" # 用于RAG的Template
+    llama3 = "_llama3"
+    gemma = '_gemma'
 
 class CustomDatasetName:
     stsb_en = 'stsb-en'
@@ -158,13 +161,16 @@ def get_orca2_model_tokenizer(model_dir: str,
                 CustomTemplateType.mistral)
 @register_model(CustomModelType.gemma_7b_it,
                 '/home/css/models/gemma-7b-it', LoRATM.llama2,
-                TemplateType.gemma)
+                CustomTemplateType.gemma)
 @register_model(CustomModelType.merlinite_7b,
                 '/home/css/models/merlinite-7b', LoRATM.llama2,
                 CustomTemplateType.merlinite)
 @register_model(CustomModelType.c4ai_command_r_4bit,
                 '/home/css/models/c4ai-command-r-v01-4bit', LoRATM.llama2,
                 CustomTemplateType.c4ai_command_r)
+@register_model(CustomModelType.llama_3_8b_instruct,
+                '/home/css/models/Meta-Llama-3-8B-Instruct', LoRATM.llama2,
+                CustomTemplateType.llama3)
 def get_model_tokenizer(
     model_dir: str,
     torch_dtype: Dtype, 
@@ -304,6 +310,23 @@ register_template(
         ['</s>'], None,
         ['<s>[INST] <<SYS>>\n{{SYSTEM}}\n<</SYS>>\n\n'])
 )
+
+register_template(
+    CustomTemplateType.llama3,
+    Template(['<|begin_of_text|>'], [
+        '<|start_header_id|>user<|end_header_id|>\n\n{{QUERY}}<|eot_id|>'
+        '<|start_header_id|>assistant<|end_header_id|>\n\n'
+    ], ['<|eot_id|>'], ['<|eot_id|>'], None, [
+        '<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n{{SYSTEM}}<|eot_id|>'
+    ]))
+
+register_template(
+    CustomTemplateType.gemma, Template(
+    ['<bos>'],
+    ['<start_of_turn>user\n{{QUERY}}<end_of_turn>\n<start_of_turn>model\n'],
+    ['<end_of_turn>\n'], ['<end_of_turn>'], None,
+    ['<bos><start_of_turn>system\n{{SYSTEM}}<end_of_turn>\n']))
+
 
 def _preprocess_stsb(dataset: HfDataset) -> HfDataset:
     prompt = """Task: Based on the given two sentences, provide a similarity score between 0.0 and 5.0.

@@ -26,11 +26,11 @@ lrs = [value for value in lrs2 if value not in lr_del]
 
 
 # dora
-for lr in ["9.2e-5", "7.9e-5", "8.9e-5", "7.7e-5"]:
-    data_version = "1"
-    rank = "2"
-    model_name = "mixtral"
-    subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/dora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
+# for lr in ["9.2e-5", "7.9e-5", "8.9e-5", "7.7e-5"]:
+#     data_version = "1"
+#     rank = "2"
+#     model_name = "mixtral"
+#     subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/dora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
 
 
 # lora+ OK
@@ -70,46 +70,27 @@ for lr in ["9.2e-5", "7.9e-5", "8.9e-5", "7.7e-5"]:
 #     subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/qlora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
 
 
-# gemma-7b-it
-# lora+
-# for lr in ["5e-5", "1e-4", "1.5e-4", "2e-4", "1.3e-4"]:
-#     data_version = "1"
-#     rank = "3"
-#     subprocess.run(["bash", f"my_tuning/gemma-7b-it/lora/lora_plus.sh", "0.2", "1.0", "lora", rank, lr, data_version])
-
-# merlinite-7b
-# lora+ ok
-# for lr in ["2.3e-5", "2.5e-5"]:
-#     data_version = "1"
-#     rank = "3"
-#     subprocess.run(["bash", f"my_tuning/merlinite-7b/lora/lora_plus.sh", "0.2", "1.0", "lora", rank, lr, data_version])
-
-# adalora 
-# for lr in ["6e-4", "4.5e-4"]:
-#     data_version = "1"
-#     rank = "3"
-#     subprocess.run(["bash", f"my_tuning/merlinite-7b/lora/adalora.sh", "0.2", "1.0", "adalora", rank, lr, data_version])
+# llama-3
+# lora
+for rank in ["2"]:
+    for lr in ["1e-4", "5e-5", "1.5e-4"]:
+        data_version = "1"
+        model_name = "mixtral"
+        subprocess.run(["bash", f"my_tuning/Meta-Llama-3-8B-Instruct/lora/lora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
 
 # rslora
-# for lr in ["1.6e-4"]:
-#     data_version = "1"
-#     rank = "3"
-#     subprocess.run(["bash", f"my_tuning/merlinite-7b/lora/rslora.sh", "0.2", "1.0", "lora", rank, lr, data_version])
+for lr in ["1e-4", "1.5e-4"]: # 5e-5 2e-4
+    data_version = "1"
+    rank = "2"
+    model_name = "mixtral"
+    subprocess.run(["bash", f"my_tuning/Meta-Llama-3-8B-Instruct/lora/rslora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
 
-# lora 
-# for lr in ["1.3e-4", "1.9e-4"]: 
-#     data_version = "1"
-#     rank = "3"
-#     model_name = "mixtral"
-#     subprocess.run(["bash", f"my_tuning/merlinite-7b/lora/lora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
-
-
-# qlora need run
-# for lr in ["2e-4"]:
-#     data_version = "1"
-#     rank = "3"
-#     subprocess.run(["bash", f"my_tuning/merlinite-7b/lora/qlora.sh", "0.2", "1.0", "lora", rank, lr, data_version])
-
+# qlora
+for lr in ["1e-4", "1.5e-4"]:
+    data_version = "1"
+    rank = "2"
+    model_name = "mixtral"
+    subprocess.run(["bash", f"my_tuning/Meta-Llama-3-8B-Instruct/lora/qlora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
 
 
 # Mistral-7B-Instruct-v0.2

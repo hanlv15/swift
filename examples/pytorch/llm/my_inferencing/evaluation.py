@@ -194,7 +194,7 @@ test_data{data_version}.jsonl", 'r') as f:
     
     wrong_ans = []
     cnt_wrong = 0
-    if sft_type in ["adalora", "dora"]:
+    if model_name in ["Meta-Llama-3-8B-Instruct"] or sft_type in ["adalora", "dora"]:
         # 使用 非vllm 推理
         model, template = inference_prepare[0]()
         inference = inference_functions[0]

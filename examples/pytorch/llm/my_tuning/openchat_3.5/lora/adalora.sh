@@ -76,7 +76,7 @@ torchrun \
     --lora_target_modules ALL \
     --adalora_target_r $lora_rank \
     --adalora_init_r $lora_rank2 \
-    --lora_dtype bf16 \
+    --lora_dtype AUTO \
     --gradient_checkpointing true \
     --batch_size 1 \
     --weight_decay 0.1 \

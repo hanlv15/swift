@@ -27,10 +27,13 @@ import evaluation
 with open(f"{ckpt_dir}/sft_args.json", "r") as f:
     sft_args = json.load(f)
 
+
 with jsonlines.open(f"{ckpt_dir}/../logging.jsonl", 'r') as f:
     for item in f.iter():
         training_result = item
-train_loss = training_result["train_loss"]
+        train_loss = training_result.get("train_loss")
+        if train_loss is not None:
+            break
 
 def get_engine_config_request(ckpt_dir):
     # 检查checkpoint是否为peft格式

@@ -15,6 +15,7 @@ learning_rate=$5 # 1e-4
 with_or_without_info=$6
 data_version=$7
 
+lora_rank2=8
 num_epochs=1
 
 split_type=$(echo "10 - $test_size * 10" | bc | awk '{print int($1)}'):$(echo "$test_size * 10" | bc | awk '{print int($1)}')
@@ -28,13 +29,15 @@ if [ "$train_ratio" = "1" ] || [ -z "$train_ratio" ]; then
     custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/train_data$data_version.jsonl
 fi
 
+if [ "$lora_rank" = "8" ]; then
+    lora_rank2=12
+fi
+
+
 nproc_per_node=2
-# eval_times=15
+
 gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
 lora_alpha=$(expr $lora_rank \* 4)
-# num_train_data=$(echo "scale=0; 12192 * (1 - $test_size) * $train_ratio / 1" | bc)
-# total_batch_size=$(expr $gradient_accumulation_steps \* $nproc_per_node)
-# eval_steps=$(expr $num_train_data \* num_epochs / $total_batch_size / $eval_times)
 
 
 max_length=8192
@@ -44,18 +47,17 @@ CUDA_VISIBLE_DEVICES=1,2 \
 PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512 \
 torchrun \
     --nproc_per_node=$nproc_per_node \
-    --master_port 29507 \
+    --master_port 29505 \
     llm_sft.py \
-    --model_type openchat_3.5 \
-    --model_id_or_path /home/css/models/openchat-3.5-0106 \
+    --model_type meta-llama-3-8B-instruct \
+    --model_id_or_path /home/css/models/Meta-Llama-3-8B-Instruct \
     --check_model_is_latest false \
-    --lora_lr_ratio 16.0 \
     --sft_type $sft_type \
     --tuner_backend peft \
-    --template_type openchat_3.5 \
+    --template_type _llama3 \
     --dtype AUTO \
     --add_output_dir_suffix false \
-    --output_dir output/openchat_3.5/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/"$sft_type"_plus-r=$lora_rank/"$output_name" \
+    --output_dir output/Llama-3-8B-Instruct/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/$sft_type-r="$lora_rank"_"$lora_rank2"/"$output_name" \
     --ddp_backend nccl \
     --custom_train_dataset_path $custom_train_dataset_path \
     --dataset_test_ratio 0 \
@@ -69,6 +71,8 @@ torchrun \
     --lora_alpha $lora_alpha \
     --lora_dropout_p 0.05 \
     --lora_target_modules ALL \
+    --adalora_target_r $lora_rank \
+    --adalora_init_r $lora_rank2 \
     --lora_dtype AUTO \
     --gradient_checkpointing true \
     --batch_size 1 \

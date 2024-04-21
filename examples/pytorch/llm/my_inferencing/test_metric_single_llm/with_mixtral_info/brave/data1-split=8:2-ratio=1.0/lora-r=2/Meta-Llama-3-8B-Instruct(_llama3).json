@@ -1,0 +1,13 @@
+[
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.09064145,
+        "lr": "1e-4",
+        "ACC": 0.991389913899139,
+        "F1": 0.9848854479315352,
+        "Precision": 0.9900107353730542,
+        "Recall": 0.9799351597640049
+    }
+]
