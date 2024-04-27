@@ -17,7 +17,13 @@ data_version=$7
 
 num_epochs=1
 
+# [0.1, ..., 0.9]
 split_type=$(echo "10 - $test_size * 10" | bc | awk '{print int($1)}'):$(echo "$test_size * 10" | bc | awk '{print int($1)}')
+
+# [0.01, ..., 0.99]
+# part1=$(printf "%.1f" "$(echo "10 - $test_size * 10" | bc)")
+# part2=$(printf "%.1f" "$(echo "$test_size * 10" | bc)")
+# split_type="${part1}:${part2}"
 
 custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/subtrain_data$data_version/train_data_$train_ratio.jsonl
 custom_val_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/test_data$data_version.jsonl

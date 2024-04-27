@@ -8,7 +8,7 @@ path = "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch
 
 import subprocess
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 # 要运行的Python文件的路径
 if len(ckpt_list) == 0 and len(path) == 0:

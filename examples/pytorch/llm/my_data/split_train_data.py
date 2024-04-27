@@ -21,8 +21,9 @@ search_engine = "brave"
 model_name = "mixtral"
 data_dir = f"./with_{model_name}_info/{search_engine}/"
 version = "1"
+split_type = "0.5:9.5"
 
-data_path = data_dir + f"train_test_split/8:2/"
+data_path = data_dir + f"train_test_split/{split_type}/"
 train_data = []
 with jsonlines.open(
     data_path + f"train_data{version}.jsonl", 
@@ -36,7 +37,8 @@ set_seed()
 for size in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
     sample_size = int(size * len(train_data))
     new_train_data = random.sample(train_data, sample_size)
-        
+    
+    os.makedirs(data_path + f"subtrain_data{version}", exist_ok=True)
     with jsonlines.open(data_path + f"subtrain_data{version}/train_data_{size}.jsonl", mode="w") as file_jsonl:
         for line in new_train_data:
             file_jsonl.write(line)

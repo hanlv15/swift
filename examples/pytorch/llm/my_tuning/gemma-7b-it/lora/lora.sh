@@ -29,32 +29,28 @@ if [ "$train_ratio" = "1" ] || [ -z "$train_ratio" ]; then
 fi
 
 nproc_per_node=2
-# eval_times=15
 gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
 lora_alpha=$(expr $lora_rank \* 4)
-# num_train_data=$(echo "scale=0; 12192 * (1 - $test_size) * $train_ratio / 1" | bc)
-# total_batch_size=$(expr $gradient_accumulation_steps \* $nproc_per_node)
-# eval_steps=$(expr $num_train_data \* num_epochs / $total_batch_size / $eval_times)
 
 
-max_length=2500 # 2500
+max_length=8192 # 2500
 
 PYTHONPATH=../../.. \
 CUDA_VISIBLE_DEVICES=1,2 \
-PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:64 \
+PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512 \
 torchrun \
     --nproc_per_node=$nproc_per_node \
-    --master_port 29505 \
+    --master_port 29503 \
     llm_sft.py \
     --model_type gemma-7b-it \
-    --model_id_or_path /home/css/models/gemma-7b-it \
+    --model_id_or_path /home/css/models/gemma-1.1-7b-it \
     --check_model_is_latest false \
     --sft_type $sft_type \
     --tuner_backend peft \
     --template_type _gemma \
     --dtype AUTO \
     --add_output_dir_suffix false \
-    --output_dir output/gemma_7b_it/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/$sft_type-r=$lora_rank/"$output_name" \
+    --output_dir output/gemma-1.1-7b-it/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/$sft_type-r=$lora_rank/"$output_name" \
     --ddp_backend nccl \
     --custom_train_dataset_path $custom_train_dataset_path \
     --dataset_test_ratio 0 \
@@ -80,5 +76,5 @@ torchrun \
     --logging_steps 10 \
     --use_flash_attn false \
     --do_sample false \
-    --test_oom_error true
+    --deepspeed my_ds_config/zero3.json
 

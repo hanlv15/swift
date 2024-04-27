@@ -1,0 +1,35 @@
+[
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.08264278,
+        "lr": "1e-4",
+        "ACC": 0.993029930299303,
+        "F1": 0.9877874606383226,
+        "Precision": 0.991979257766455,
+        "Recall": 0.9837128336935568
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07338933,
+        "lr": "1.5e-4",
+        "ACC": 0.992619926199262,
+        "F1": 0.9871054566986304,
+        "Precision": 0.9898697984356908,
+        "Recall": 0.9843927799521
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.06714799,
+        "lr": "2e-4",
+        "ACC": 0.993849938499385,
+        "F1": 0.9893045736432069,
+        "Precision": 0.9897601713563369,
+        "Recall": 0.9888504001401951
+    }
+]

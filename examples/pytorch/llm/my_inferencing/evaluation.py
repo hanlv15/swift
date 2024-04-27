@@ -69,11 +69,11 @@ def cal_metric_single_llm(
         raise Exception(f"with_or_without_info选择范围：{with_or_without_info_list}\nsearch_engines的选择范围：{search_engines}")
     
     def get_split_type(train_dataset_path: str):
-        split_types = ["5:5", "6:4", "7:3", "8:2", "9:1"]
-        for split_type in split_types:
-            if split_type in train_dataset_path:
-                return split_type
-        raise Exception(f"split_type选择范围：{split_types}")
+        pos_colon = train_dataset_path.find(":")
+        pos_slash_1 = train_dataset_path.rfind("/", 0, pos_colon)
+        pos_slash_2 = train_dataset_path.find("/", pos_colon)
+        split_types = f"{train_dataset_path[pos_slash_1+1:pos_colon]}:{train_dataset_path[pos_colon+1:pos_slash_2]}"
+        return split_types
     
     def get_train_ratio(train_dataset_path: str):
         pos_train = train_dataset_path.find("/train_data_")
@@ -136,7 +136,20 @@ def cal_metric_single_llm(
     
     def show_val_info(model_name, sft_type, lr, train_loss):
         print(f'{model_name} sft_type={sft_type} lr={lr} train_loss={train_loss}')
+        
+    def get_claim(query):
+        pos_claim = query.find("Content: ") + len("Content: ")
+        return query[pos_claim:query.find('\nPRIOR KNOWLEDGE:', pos_claim)].strip()
+    
+    def save_wrong_claims(file_dir, model_name, sft_type, lr, cnt_wrong, wrong_claims):
+        os.makedirs(file_dir, exist_ok=True)
+        file_path = file_dir + '/' + f"{model_name}-lr={lr}.txt"
+        
+        with open(file_path, "w") as f:
+            title = f'{model_name}, sft_type={sft_type}, lr={lr}, cnt_wrong={cnt_wrong}\n'
+            f.writelines(('\n').join([title] + wrong_claims))
 
+        
     with_or_without_info = get_with_or_without_info(sft_args["custom_train_dataset_path"][0])
     split_type = get_split_type(sft_args["custom_train_dataset_path"][0])
     train_ratio = get_train_ratio(sft_args["custom_train_dataset_path"][0])
@@ -192,9 +205,10 @@ test_data{data_version}.jsonl", 'r') as f:
         for item in f.iter():
             data.append(item)
     
-    wrong_ans = []
+    wrong_queries = []
+    wrong_claims = []
     cnt_wrong = 0
-    if model_name in ["Meta-Llama-3-8B-Instruct"] or sft_type in ["adalora", "dora"]:
+    if model_name in [] or sft_type in ["adalora", "dora"]:
         # 使用 非vllm 推理
         model, template = inference_prepare[0]()
         inference = inference_functions[0]
@@ -207,15 +221,16 @@ test_data{data_version}.jsonl", 'r') as f:
             progress_bar.set_description(f'cnt_wrong={cnt_wrong}')
             progress_bar.update(1)  # Increment the progress bar
 
-            response = inference(model, template, item["query"])[0].strip()
-            pred = get_label(response)
-            label = get_label(item["response"])
+            query = item["query"]
+            pred_raw = inference(model, template, query)[0].strip()
+            label_raw = item["response"]
 
-            labels.append(label)
-            preds.append(pred)
+            labels.append(get_label(label_raw))
+            preds.append(get_label(pred_raw))
 
-            if label != pred:
-                wrong_ans.append(item["query"])
+            if labels[-1] != preds[-1]:
+                wrong_queries.append(query)
+                wrong_claims.append(f"Label: {label_raw} Pred: {pred_raw} Claim: {get_claim(query)}")
                 cnt_wrong += 1
         progress_bar.close()
     else:
@@ -233,14 +248,16 @@ test_data{data_version}.jsonl", 'r') as f:
         )
         
         for item_data, item_resp in zip(data, response_list):
-            pred = get_label(item_resp["response"])
-            label = get_label(item_data["response"])
+            query = item_data["query"]
+            pred_raw = item_resp["response"]
+            label_raw = item_data["response"]
 
-            labels.append(label)
-            preds.append(pred)
+            labels.append(get_label(label_raw))
+            preds.append(get_label(pred_raw))
 
-            if label != pred:
-                wrong_ans.append(item_data["query"])
+            if labels[-1] != preds[-1]:
+                wrong_queries.append(item_data["query"])
+                wrong_claims.append(f"Label: {label_raw} Pred: {pred_raw} Claim: {get_claim(query)}")
                 cnt_wrong += 1
     # ratio为1.0
     if train_ratio == "1.0":
@@ -261,7 +278,12 @@ test_data{data_version}.jsonl", 'r') as f:
     save_metrics(file_dir, model_name, template_type, metrics, save=save)
     print(json.dumps(new_metric, indent=4))
     
+    # save query
     # with open("wrong_ans.txt", "a") as f:
     #     title = f'{model_name}, sft_type={sft_type}, lr={lr}, wrong={cnt_wrong}'
-    #     f.writelines('\n'.join([title] + wrong_ans) + '\n\n')
+    #     f.writelines(('\n\n' + '-' * 300 + '\n\n').join([title] + wrong_ans))
 
+    # save_wrong_claims(file_dir, model_name, sft_type, lr, cnt_wrong, wrong_claims)
+
+
+    

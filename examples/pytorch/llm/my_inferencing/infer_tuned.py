@@ -52,7 +52,7 @@ def get_engine_config_request(ckpt_dir):
         max_model_len=8192,
         enable_lora=True,
         max_loras=1, 
-        max_lora_rank=16,
+        max_lora_rank=8,
         engine_kwargs={
             "max_num_seqs": 128,
             "seed": 42,

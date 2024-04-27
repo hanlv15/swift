@@ -26,14 +26,6 @@ class CustomModelType:
     mistral_7b_instruct = "mistral-7b-instruct-v0.2"
     neural_chat_7b = "neural-chat-7b-v3"
     solar_instruct_10_7b = "solar-10.7b-instruct"
-    solar_instruct_10_7b_128k = "solar-10.7b-instruct-128k"
-    sauerkrautlm_solar_instruct = "sauerkrautlm-solar-instruct"
-    marcoroni_7b = "marcoroni-7b-v3"
-    dpopenHermes_7b = "dpopenHermes-7b-v2"
-    neuralbeagle14 = "neuralbeagle14-7B"
-    turdus = "turdus"
-    darebeagle_7b = "darebeagle-7b-v2"
-    una_thebeagle_7b = "una-thebeagle-7b-v1"
     mixtral_moe_7b_instruct_gptq_int4 = "mixtral-8x7B-instruct-v0.1-gptq-int4"
     gemma_7b_it = 'gemma-7b-it'
     merlinite_7b = 'merlinite-7b'
@@ -47,7 +39,6 @@ class CustomTemplateType:
     openchat_35 = "openchat_3.5"
     neural = "neural"
     solar = "solar"
-    marcoroni = "marcoroni"
     mistral = "mistral"
     chatml = "_chatml" # 无system message的chatml
     llama = "_llama" # 无system message的llama
@@ -134,33 +125,11 @@ def get_orca2_model_tokenizer(model_dir: str,
 @register_model(CustomModelType.solar_instruct_10_7b,
                 '/home/css/models/SOLAR-10.7B-Instruct-v1.0', LoRATM.llama2,
                 CustomTemplateType.solar)
-@register_model(CustomModelType.sauerkrautlm_solar_instruct,
-                '/home/css/models/SauerkrautLM-SOLAR-Instruct', LoRATM.llama2,
-                CustomTemplateType.solar)
-@register_model(CustomModelType.marcoroni_7b,
-                '/home/css/models/Marcoroni-7B-v3', LoRATM.llama2,
-                CustomTemplateType.marcoroni)
-@register_model(CustomModelType.dpopenHermes_7b,
-                '/home/css/models/DPOpenHermes-7B-v2', LoRATM.llama2,
-                CustomTemplateType.chatml)
-@register_model(CustomModelType.una_thebeagle_7b,
-                '/home/css/models/UNA-TheBeagle-7b-v1', LoRATM.llama2,
-                CustomTemplateType.neural)
-@register_model(CustomModelType.turdus,
-                '/home/css/models/Turdus', LoRATM.llama2,
-                CustomTemplateType.llama # neural 也可以
-)
-@register_model(CustomModelType.darebeagle_7b,
-                '/home/css/models/DareBeagle-7B-v2', LoRATM.llama2,
-                CustomTemplateType.neural)
-@register_model(CustomModelType.neuralbeagle14,
-                '/home/css/models/NeuralBeagle14-7B', LoRATM.llama2,
-                CustomTemplateType.neural)
 @register_model(CustomModelType.mixtral_moe_7b_instruct_gptq_int4,
                 '/home/css/models/Mixtral-8x7B-Instruct-v0.1-GPTQ-int4', LoRATM.llama2,
                 CustomTemplateType.mistral)
 @register_model(CustomModelType.gemma_7b_it,
-                '/home/css/models/gemma-7b-it', LoRATM.llama2,
+                '/home/css/models/gemma-1.1-7b-it', LoRATM.llama2,
                 CustomTemplateType.gemma)
 @register_model(CustomModelType.merlinite_7b,
                 '/home/css/models/merlinite-7b', LoRATM.llama2,
@@ -189,32 +158,6 @@ def get_model_tokenizer(
             model_dir,
             config=model_config,
             torch_dtype=torch_dtype,
-            **model_kwargs)
-    return model, tokenizer
-
-@register_model(CustomModelType.solar_instruct_10_7b_128k,
-                '/home/css/models/SOLAR-10B-Instruct-v1-128k', LoRATM.llama2,
-                CustomTemplateType.solar)
-def get_yarn_model_tokenizer(
-    model_dir: str,
-    torch_dtype: Dtype, 
-    model_kwargs: Dict[str, Any], 
-    load_model: bool = True,
-    **kwargs
-):
-    # model_config = AutoConfig.from_pretrained(model_dir, trust_remote_code=True)
-    # model_config.torch_dtype = torch_dtype
-    # logger.info(f'model_config: {model_config}')
-    tokenizer = AutoTokenizer.from_pretrained(model_dir)
-    model = None
-    
-    if load_model:
-        model = AutoModelForCausalLM.from_pretrained(
-            model_dir,
-            attn_implementation="flash_attention_2",
-            # config=model_config,
-            torch_dtype=torch_dtype,
-            trust_remote_code=True,
             **model_kwargs)
     return model, tokenizer
 
@@ -255,13 +198,6 @@ register_template(
         ['\n\n'], ['</s>'], None, ['### System:\n{{SYSTEM}}\n\n']))
 
 register_template(
-    CustomTemplateType.marcoroni,
-    Template(
-        [],
-        ['### Instruction:\n\n{{QUERY}}\n\n### Response:\n'],
-        ['\n\n'], ['</s>'], None, ['### System:\n\n{{SYSTEM}}\n\n']))
-
-register_template(
     CustomTemplateType.mistral,
     Template(
         ['<s>[INST] '], ['{{QUERY}} [/INST]'], ['</s><s>[INST] '], 
@@ -289,19 +225,6 @@ register_template(
         [], ['<|user|>\n{{QUERY}}\n<|assistant|>\n'],
         ['<|endoftext|>\n'], ['<|endoftext|>'], None,
         ['<|system|>\n{{SYSTEM}}\n']))
-
-# 无限回答的问题
-# register_template(
-#     CustomTemplateType.neuralbeagle14,
-#     # Template(
-#     #     ['<s>[INST] '], ['{{QUERY}} [/INST]'], ['</s><s>[INST] '], 
-#     #     ['</s>'], None,
-#     #     ['<s>[INST] <<SYS>>\n{{SYSTEM}}\n<</SYS>>\n\n'])
-#     Template(
-#         [], ['<|im_start|>user\n{{QUERY}}<|im_end|>\n<|im_start|>assistant\n'],
-#         ['<|im_end|>\n'], ['<|im_end|>'], None,
-#         ['<|im_start|>system\n{{SYSTEM}}<|im_end|>\n'])
-# )
 
 register_template(
     CustomTemplateType.llama,

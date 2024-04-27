@@ -1,0 +1,183 @@
+openchat-3.5-0106, sft_type=lora, lr=2e-4, cnt_wrong=91
+
+Label: TRUE., Pred: FALSE.. Claim: A photograph shows the damage to a person's lung from the COVID-19 coronavirus disease.
+
+Label: TRUE., Pred: FALSE.. Claim: There will be several thousand dollars in payments going to families with six-figure incomes who’ve had no income interruption whatsoever.
+
+Label: TRUE., Pred: FALSE.. Claim: COVID-19: 'I’ve never seen such sticky blood’ says thrombosis expert
+
+Label: TRUE., Pred: FALSE.. Claim: Wisconsin Republicans have not passed a single bill in 6 months.
+
+Label: TRUE., Pred: FALSE.. Claim: We know mask mandates work. There’s enough evidence out there between counties that have done it and counties that haven’t.
+
+Label: TRUE., Pred: FALSE.. Claim: Should people take vitamin D to ward off the new coronavirus?
+
+Label: TRUE., Pred: FALSE.. Claim: USA Today published a front-page article about the development of a COVID-19 vaccine the same day Kobe Bryant's death was reported.
+
+Label: TRUE., Pred: FALSE.. Claim: Can vitamin C prevent or treat COVID-19?
+
+Label: TRUE., Pred: FALSE.. Claim: The new coronavirus was not man-made, study shows
+
+Label: TRUE., Pred: FALSE.. Claim: COVID-19 case numbers in NSW were higher than the threshold to lift the curfew in Victoria when Mr Morrison made his claim
+
+Label: TRUE., Pred: FALSE.. Claim: Yes, World Health Organization declared Covid-19 coronavirus outbreak a pandemic
+
+Label: TRUE., Pred: FALSE.. Claim: Says of the coronavirus threat, there was not a single suggestion by anyone, a doctor, a scientist, a political figure, that we needed to cancel Mardi Gras.
+
+Label: FALSE., Pred: TRUE.. Claim: Media outlets report that A Pzifer Vaccine Volunteer Warns of Second Dose Symptoms
+
+Label: TRUE., Pred: FALSE.. Claim: Hydroxychloroquine, Oral Tablet
+
+Label: TRUE., Pred: FALSE.. Claim: Coronavirus Rumor Mill Rampant With Bogus News
+
+Label: FALSE., Pred: TRUE.. Claim: As of Jan. 29, the CDC’s Vaccine Adverse Event Reporting System shows 501 reported deaths and 10,748 other injuries.
+
+Label: TRUE., Pred: FALSE.. Claim: Some of the vaccines have to be shipped at 70 degrees below zero
+
+Label: TRUE., Pred: FALSE.. Claim: Plague in Inner Mongolia: Should we be concerned?
+
+Label: FALSE., Pred: TRUE.. Claim: Alcohol gel bottles can explode in a hot car.
+
+Label: TRUE., Pred: FALSE.. Claim: In my state, as in many other states, we have governors who are closing down businesses again.
+
+Label: TRUE., Pred: FALSE.. Claim: Mouthwash may reduce spread of the new coronavirus
+
+Label: TRUE., Pred: FALSE.. Claim: Yes, photo of temporary hospital in Cape Town convention centre
+
+Label: TRUE., Pred: FALSE.. Claim: Are Warnings Against NSAIDs in COVID-19 Warranted?
+
+Label: TRUE., Pred: FALSE.. Claim: Former Wisconsin Gov. Scott Walker cropped and tweeted an old picture of pizza at a restaurant that he first tweeted 14 months earlier.
+
+Label: TRUE., Pred: FALSE.. Claim: Claim that Israel is implementing an internal COVID-19 vaccine passport.
+
+Label: TRUE., Pred: FALSE.. Claim: Yes, suspected case of coronavirus reported in Kenya, patient in hospital after showing symptoms
+
+Label: TRUE., Pred: FALSE.. Claim: Yes, Gates foundation pledged millions of dollars for Covid-19 vaccines in late 2020
+
+Label: FALSE., Pred: TRUE.. Claim: when it comes to protecting against covid-19 transmission, neck gaiters are worse than wearing no mask at all.
+
+Label: TRUE., Pred: FALSE.. Claim: U.S. President Donald Trump suggested during a White House briefing that injecting disinfectants could treat COVID-19.
+
+Label: TRUE., Pred: FALSE.. Claim: U.S. President Donald Trump tried to deflect attention from his response to the COVID-19 coronavirus pandemic by repeatedly comparing it to President Barack Obama's handling of the H1N1 pandemic.
+
+Label: TRUE., Pred: FALSE.. Claim: a mcdonald's sign requiring that all customers provide their names and phone numbers for collection is real.
+
+Label: FALSE., Pred: TRUE.. Claim: US far from reaching herd immunity for COVID-19
+
+Label: TRUE., Pred: FALSE.. Claim: A CBS News program used a brief clip from an Italian hospital in a segment about the coronavirus crisis in New York City.
+
+Label: TRUE., Pred: FALSE.. Claim: COVID-19: Are the testes really a coronavirus reservoir?
+
+Label: FALSE., Pred: TRUE.. Claim: Contaminated CDC COVID-19 test kits recalled and did not spread virus
+
+Label: FALSE., Pred: TRUE.. Claim: WHO warns against NSAIDs Analgetics for COVID-19 patients.
+
+Label: FALSE., Pred: TRUE.. Claim: Peafowls reclaiming their space amid lockdown.
+
+Label: TRUE., Pred: FALSE.. Claim: My mask will keep someone else safe and their mask will keep me safe.
+
+Label: TRUE., Pred: FALSE.. Claim: Wearing a Mask Doesn't Cause CO2 Poisoning
+
+Label: FALSE., Pred: TRUE.. Claim: How to spot COVID-19 misinformation on WhatsApp
+
+Label: FALSE., Pred: TRUE.. Claim: ‘Treatment with hydroxychloroquine cut the death rate significantly in sick patients hospitalized with COVID-19 – and without heart-related side-effects, according to a new study published by Henry Ford Health System. In a large-scale retrospective analysis... ...of 2,541 patients hospitalized between March 10 and May 2, 2020 across the system’s six hospitals, the study found 13% of those treated with hydroxychloroquine alone died compared to 26.4% not treated with hydroxychloroquine.’ @HenryFordNews
+
+Label: FALSE., Pred: TRUE.. Claim: We kept hearing about South Korea. … In eight days, we're doing more testing than they've done in eight weeks. That's a tremendous turn.
+
+Label: TRUE., Pred: FALSE.. Claim: What essential oils are good for the flu?
+
+Label: TRUE., Pred: FALSE.. Claim: Thirteen Felician sisters from one convent died from COVID-19.
+
+Label: TRUE., Pred: FALSE.. Claim: The Week That Wasn't in COVID-19: Elon Musk, 'Pandemic' Scientist's Cure, Proof COVID-19 Was Not Man-Made
+
+Label: TRUE., Pred: FALSE.. Claim: Africans living in China now being forced to sleep outside in the cold as Chinese nationals blame them for the rising number of new coronavirus cases in the country.
+
+Label: TRUE., Pred: FALSE.. Claim: COVID-19 vaccine development
+
+Label: TRUE., Pred: FALSE.. Claim: Yes, mosques open in Nigeria’s Kwara state
+
+Label: FALSE., Pred: TRUE.. Claim: UNICEF’s advice on preventing COVID-19
+
+Label: TRUE., Pred: FALSE.. Claim: Countries in Europe have imposed lockdown against the second wave of the novel coronavirus.
+
+Label: TRUE., Pred: FALSE.. Claim: A McDonald's sign requiring that all customers provide their names and phone numbers for collection is real.
+
+Label: TRUE., Pred: FALSE.. Claim: Fauci Wasn’t Involved in New Testing Guidelines
+
+Label: TRUE., Pred: FALSE.. Claim: Until this week, they [OSHA] weren’t even enforcing these guidelines [for coronavirus]. Still today, OSHA is not specifying which rules employees must follow or how to keep their workers safe and healthy.
+
+Label: TRUE., Pred: FALSE.. Claim: Lies Spread on Social Media Hamper Vaccinations
+
+Label: TRUE., Pred: FALSE.. Claim: Claims that living at high altitudes protects against COVID-19 ‘speculative’
+
+Label: TRUE., Pred: FALSE.. Claim: Infection rates in Allegany, Cattaraugus and Chautauqua counties have consistently been among the lowest in the state.
+
+Label: TRUE., Pred: FALSE.. Claim: The Week That Wasn't in COVID-19: 17 Days, Peak in 3 Weeks, Crocodile
+
+Label: TRUE., Pred: FALSE.. Claim: President Trump ordered his administration to slow down coronavirus testing.
+
+Label: TRUE., Pred: FALSE.. Claim: Experts condemn 'rumors and misinformation' about coronavirus
+
+Label: TRUE., Pred: FALSE.. Claim: COVID-19 Primary, Not Only, Cause of 94% of Deaths
+
+Label: TRUE., Pred: FALSE.. Claim: Says Joe Biden has issued more executive fiats than anyone in such a short period of time, ever, more than Obama, more than Trump, more than anyone.
+
+Label: TRUE., Pred: FALSE.. Claim: Yes, dog tested positive for new coronavirus – but no evidence pets can spread Covid-19
+
+Label: TRUE., Pred: FALSE.. Claim: A photograph shows a flyer posted for an End the Lockdown Rally in Staten Island.
+
+Label: TRUE., Pred: FALSE.. Claim: Yes, Kenya’s president confirmed two new coronavirus cases on 15 March
+
+Label: TRUE., Pred: FALSE.. Claim: Yes, South Sudan first vice president Machar tested positive for Covid-19
+
+Label: FALSE., Pred: TRUE.. Claim: more americans have died of covid-19 than died in world war one, world war two and vietnam combined.
+
+Label: FALSE., Pred: TRUE.. Claim: Protests against inadequate lockdown measures took place in Israel.
+
+Label: TRUE., Pred: FALSE.. Claim: Yes, 103-year-old woman beat coronavirus – then had a celebratory beer
+
+Label: TRUE., Pred: FALSE.. Claim: Can antibiotics treat COVID-19 (coronavirus)? And other treatments
+
+Label: TRUE., Pred: FALSE.. Claim: Melinda Gates said Black people should be first in line, after health care workers, to be vaccinated against COVID-19.
+
+Label: TRUE., Pred: FALSE.. Claim: Claims of a Weaker COVID-19 Virus Disputed
+
+Label: TRUE., Pred: FALSE.. Claim: Melinda Gates said she feared coronavirus in Africa would lead to dead being put out in street, as in Ecuador
+
+Label: FALSE., Pred: TRUE.. Claim: Bad math (is) driving Wisconsin’s exploding positive test rate.
+
+Label: TRUE., Pred: FALSE.. Claim: Individual U.S. states would be legally authorized to impose criminal penalties on individuals who refused to undergo a mandatory COVID-19 vaccination.
+
+Label: TRUE., Pred: FALSE.. Claim: Trump Touts Unproven Therapy as COVID 'Cure'
+
+Label: FALSE., Pred: TRUE.. Claim: Reopening schools has caused a flareup of contaminations in France.
+
+Label: TRUE., Pred: FALSE.. Claim: In Februrary 2021, the Centers for Disease Control and Prevention (CDC) advised U.S. travelers to avoid all travel to Mexico.
+
+Label: FALSE., Pred: TRUE.. Claim: Indian Spritual Guru Mata Amrithanandamayi Charitable trust gifts India its first Air Ambulance.
+
+Label: TRUE., Pred: FALSE.. Claim: Company paying UK volunteers to be infected with coronaviruses – but not new Covid-19 virus
+
+Label: FALSE., Pred: TRUE.. Claim: Seasonal flu vaccines are safe, needed during Covid-19 pandemic
+
+Label: TRUE., Pred: FALSE.. Claim: Yes, two French doctors said Covid-19 vaccine trial should be done in Africa
+
+Label: TRUE., Pred: FALSE.. Claim: Plaquenil  (hydroxychloroquine)
+
+Label: TRUE., Pred: FALSE.. Claim: Closing schools has only a minor role in suppressing COVID-19
+
+Label: FALSE., Pred: TRUE.. Claim: New York hospitals treating coronavirus patients with vitamin C.
+
+Label: TRUE., Pred: FALSE.. Claim: No Pfizer Coronavirus Vaccine Before Election
+
+Label: TRUE., Pred: FALSE.. Claim: Burning sensation in the lungs
+
+Label: TRUE., Pred: FALSE.. Claim: A man wearing a Trump-shaped floatation device was charged with assault for breathing on people.
+
+Label: TRUE., Pred: FALSE.. Claim: Notre Dame, Michigan State Go to On-line Classes
+
+Label: TRUE., Pred: FALSE.. Claim: Touting Testing, Trump Says Everyone Shouldn’t Be
+
+Label: TRUE., Pred: FALSE.. Claim: U.S. President Donald Trump praised China for its transparency in handling the coronavirus outbreak, then later criticized the World Health Organization for doing the same.
+
+Label: TRUE., Pred: FALSE.. Claim: Florida Sets COVID-19 Death Record

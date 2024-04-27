@@ -30,7 +30,10 @@ with jsonlines.open(data_dir + f"data{version}.jsonl", mode="r") as file_jsonl:
     train_list, test_list = train_test_split(dict_list, test_size=args.test_size, shuffle=True)
 
 
-split_type = f"{int(10 - args.test_size * 10)}:{int(args.test_size * 10)}"
+if args.test_size in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]:
+    split_type = f"{int(10 - args.test_size * 10)}:{int(args.test_size * 10)}"
+else:
+    split_type = f"{round(10 - args.test_size * 10, 1)}:{round(args.test_size * 10, 1)}"
 
 data_path = data_dir + f"train_test_split/{split_type}/"
 

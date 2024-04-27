@@ -7,7 +7,7 @@ deploy参数继承了infer参数, 除此之外增加了以下参数:
 
 
 RAY_memory_monitor_refresh_ms=0 \
-CUDA_VISIBLE_DEVICES=1,2 \
+CUDA_VISIBLE_DEVICES=0 \
 python llm_deploy.py \
 --model_type mixtral-moe-7b-instruct \
 --model_id_or_path /home/css/models/Mixtral-8x7B-Instruct-v0.1-GPTQ-int4 \
@@ -16,7 +16,7 @@ python llm_deploy.py \
 --max_new_tokens 2048 \
 --do_sample false \
 --temperature 0 \
---tensor_parallel_size 2 \
+--tensor_parallel_size 1 \
 --host 127.0.0.1 \
 --port 8005 \
 --max_length -1 
