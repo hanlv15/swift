@@ -1,2 +1,0 @@
-data1：pre  + text + prior knowledge
-data2：pre  + text + prior knowledge(不包含已知信息)

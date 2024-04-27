@@ -1,2 +1,0 @@
-data1：pre  + text + prior knowledge（不按时间排序） 
-data2：pre  + text + prior knowledge(更新search)（随机选取）
