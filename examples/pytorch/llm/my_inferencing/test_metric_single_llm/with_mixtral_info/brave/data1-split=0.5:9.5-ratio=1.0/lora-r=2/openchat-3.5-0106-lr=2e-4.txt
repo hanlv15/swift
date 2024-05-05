@@ -363,8 +363,6 @@ Label: FALSE. Pred: TRUE. Claim: We flattened the curve.
 Label: FALSE. Pred: TRUE. Claim: In Italy, payments for utilities, housing, and loans have been canceled for the quarantine period.
 Label: FALSE. Pred: TRUE. Claim: But during the H1N1 -- and that's the swine flu -- and it was a pandemic in '09 that was not well handled at all. It got very poor marks.
 Label: TRUE. Pred: FALSE. Claim: Experts Reject Oleander Extract as COVID Treatment
-
-By Megan  Brooks
 Label: FALSE. Pred: TRUE. Claim: A statement says
 Label: TRUE. Pred: FALSE. Claim: You Can't Get Coronavirus Through Sex: Study
 Label: FALSE. Pred: TRUE. Claim: WHO offers free data for coronavirus info.
@@ -426,8 +424,7 @@ Label: FALSE. Pred: TRUE. Claim: A positive COVID-19 test result informs a perso
 Label: FALSE. Pred: TRUE. Claim: Coronavirus victims are buried in the morning this Wednesday in Italy. Rest in peace.
 Label: TRUE. Pred: FALSE. Claim: Neck Gaiters May Protect Against COVID-19 Spread
 Label: TRUE. Pred: FALSE. Claim: Coronavirus Daily Digest: March 23, 2020
-Label: FALSE. Pred: TRUE. Claim: In Kenya, the National Council For Persons With Disabilities
- is supporting children during COVID-19.
+Label: FALSE. Pred: TRUE. Claim: In Kenya, the National Council For Persons With Disabilities is supporting children during COVID-19.
 Label: TRUE. Pred: FALSE. Claim: Lab-Created Virus Can Help COVID-19 Research
 Label: TRUE. Pred: FALSE. Claim: Can pain medications help prevent contracting the new coronavirus?
 Label: TRUE. Pred: FALSE. Claim: U.S. June Forecast of 3,000 Daily COVID-19 Deaths

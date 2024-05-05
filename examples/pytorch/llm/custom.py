@@ -31,6 +31,7 @@ class CustomModelType:
     merlinite_7b = 'merlinite-7b'
     c4ai_command_r_4bit = "c4ai-command-r-v01-4bit"
     llama_3_8b_instruct = "meta-llama-3-8B-instruct"
+    llama_3_70b_instruct_gptq_int4 = "meta-llama3-70B-instruct-gptq-int4"
 
 class CustomTemplateType:
     tigerbot = 'tigerbot'
@@ -127,7 +128,8 @@ def get_orca2_model_tokenizer(model_dir: str,
                 CustomTemplateType.solar)
 @register_model(CustomModelType.mixtral_moe_7b_instruct_gptq_int4,
                 '/home/css/models/Mixtral-8x7B-Instruct-v0.1-GPTQ-int4', LoRATM.llama2,
-                CustomTemplateType.mistral)
+                CustomTemplateType.mistral,
+                function_kwargs={'gptq_bits': 4})
 @register_model(CustomModelType.gemma_7b_it,
                 '/home/css/models/gemma-1.1-7b-it', LoRATM.llama2,
                 CustomTemplateType.gemma)
@@ -140,6 +142,10 @@ def get_orca2_model_tokenizer(model_dir: str,
 @register_model(CustomModelType.llama_3_8b_instruct,
                 '/home/css/models/Meta-Llama-3-8B-Instruct', LoRATM.llama2,
                 CustomTemplateType.llama3)
+@register_model(CustomModelType.llama_3_70b_instruct_gptq_int4,
+                '/home/css/models/Meta-Llama-3-70B-Instruct-GPTQ-Int4', LoRATM.llama2,
+                CustomTemplateType.llama3,
+                function_kwargs={'gptq_bits': 4})
 def get_model_tokenizer(
     model_dir: str,
     torch_dtype: Dtype, 
@@ -147,6 +153,10 @@ def get_model_tokenizer(
     load_model: bool = True,
     **kwargs
 ):
+    is_awq = kwargs.pop('is_awq', False)
+    is_aqlm = kwargs.pop('is_aqlm', False)
+    gptq_bits = kwargs.pop('gptq_bits', 0)
+
     model_config = AutoConfig.from_pretrained(model_dir, trust_remote_code=True)
     model_config.torch_dtype = torch_dtype
     model_config._attn_implementation = 'eager'
@@ -159,6 +169,10 @@ def get_model_tokenizer(
             config=model_config,
             torch_dtype=torch_dtype,
             **model_kwargs)
+        if load_model and is_awq:
+            model.is_awq = is_awq
+        if load_model and gptq_bits > 0:
+            model.gptq_bits = gptq_bits
     return model, tokenizer
 
 # Ref: https://github.com/TigerResearch/TigerBot/blob/main/infer.py

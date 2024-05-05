@@ -17,11 +17,13 @@ from swift.llm import (
 )
 from custom import CustomModelType
 
-model_type = ModelType.mixtral_moe_7b_instruct
+model_type = CustomModelType.mixtral_moe_7b_instruct_gptq_int4
 llm_engine = get_vllm_engine(
     model_type, 
     torch_dtype=torch.float16,  # 检查正确的数据类型！！！！
     tensor_parallel_size=2,
+    max_model_len=4096,
+    # gpu_memory_utilization=0.95,
     model_id_or_path="/home/css/models/Mixtral-8x7B-Instruct-v0.1-GPTQ-int4",
     engine_kwargs = {
         # "enforce_eager": True,

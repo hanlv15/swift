@@ -82,7 +82,7 @@ lrs = [value for value in lrs2 if value not in lr_del]
 
 
 # lora
-for lr in ["5e-4", "7e-4", "3.5e-4", "4.5e-4", "5.5e-4", "6.5e-4"]:
+for lr in ["3.7e-4", "3.9e-4", "4.7e-4", "4.3e-4", "4.1e-4", "4.4e-4", "4.6e-4", "4.8e-4", "4.9e-4"]:
     data_version = "1"
     rank = "2"
     model_name = "mixtral"

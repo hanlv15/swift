@@ -1,0 +1,3 @@
+check_claim：模型分类错误的样例中不包含在先验知识与label不符的样例中的情况：如果这些样例均是label本身就正确，那么“先验知识与label不符”的策略可行
+excel_output：模型分类错误的样例
+diff_llama3：先验知识与label不符的样例
