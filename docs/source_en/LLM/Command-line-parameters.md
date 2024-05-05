@@ -50,7 +50,7 @@
 - `--lora_dropout_p`: Default is `0.05`, only takes effect when `sft_type` is 'lora'.
 - `--lora_bias_trainable`: Default is `'none'`, options: 'none', 'all'. Set to `'all'` to make all biases trainable.
 - `--lora_modules_to_save`: Default is `[]`. If you want to train embedding, lm_head, or layer_norm, you can set this parameter, e.g. `--lora_modules_to_save EMBEDDING LN lm_head`. If passed `'EMBEDDING'`, Embedding layer will be added to `lora_modules_to_save`. If passed `'LN'`, `RMSNorm` and `LayerNorm` will be added to `lora_modules_to_save`.
-- `--lora_dtype`: Default is `'fp32'`, specifies dtype for lora modules. If `AUTO`, follow dtype of original module. Options: 'fp16', 'bf16', 'fp32', 'AUTO'.
+- `--lora_dtype`: Default is `'AUTO'`, specifies dtype for lora modules. If `AUTO`, follow dtype of original module. Options: 'fp16', 'bf16', 'fp32', 'AUTO'.
 - `--use_dora`: Default is `False`, whether to use `DoRA`.
 - `--use_rslora`: Default is `False`, whether to use `RS-LoRA`.
 - `--neftune_noise_alpha`: The noise coefficient added by `NEFTune` can improve performance of instruction fine-tuning, default is `None`. Usually can be set to 5, 10, 15. See [related paper](https://arxiv.org/abs/2310.05914).
@@ -93,6 +93,7 @@
 - `--save_on_each_node`: Takes effect during multi-machine training, default is `True`.
 - `--save_strategy`: Strategy for saving checkpoint, default is `'steps'`, options include: 'steps', 'no'.
 - `--save_safetensors`: Default is `True`.
+- `--include_num_input_tokens_seen`: Default is `False`. Tracks the number of input tokens seen throughout training.
 - `--max_new_tokens`: Default is `2048`. This parameter only takes effect when `predict_with_generate` is set to True.
 - `--do_sample`: Default is `True`. This parameter only takes effect when `predict_with_generate` is set to True.
 - `--temperature`: Default is `0.3`. This parameter only takes effect when `do_sample` is set to True. This parameter will be used as default value in deployment parameters.
@@ -228,6 +229,9 @@ dpo parameters inherit from sft parameters, with the following added parameters:
 - `--gpu_memory_utilization`: Parameter for initializing vllm engine `EngineArgs`, default is `0.9`. This parameter only takes effect when using vllm. VLLM inference acceleration and deployment can be found in [VLLM Inference Acceleration and Deployment](VLLM-inference-acceleration-and-deployment.md).
 - `--tensor_parallel_size`: Parameter for initializing vllm engine `EngineArgs`, default is `1`. This parameter only takes effect when using vllm.
 - `--max_model_len`: Override model's max_model__len, default is `None`. This parameter only takes effect when using vllm.
+- `--vllm_enable_lora`: Default `False`. Whether to support vllm with lora.
+- `--vllm_max_lora_rank`: Default `16`.  Lora rank in VLLM.
+- `--lora_modules`: Default`[]`, the input format is `'{lora_name}={lora_path}'`, e.g. `--lora_modules lora_name1=lora_path1 lora_name2=lora_path2`. `ckpt_dir` will be added with `f'default-lora={args.ckpt_dir}'` by default.
 
 ## export Parameters
 
@@ -236,7 +240,7 @@ export parameters inherit from infer parameters, with the following added parame
 - `--merge_lora`: Default is `False`. This parameter is already defined in InferArguments, not a new parameter. Whether to merge lora weights into base model and save full weights. Weights will be saved in the same level directory as `ckpt_dir`, e.g. `'/path/to/your/vx-xxx/checkpoint-xxx-merged'` directory.
 - `--quant_bits`: Number of bits for quantization. Default is `0`, i.e. no quantization. If you set `--quant_method awq`, you can set this to `4` for 4bits quantization. If you set `--quant_method gptq`, you can set this to `2`,`3`,`4`,`8` for corresponding bits quantization. If quantizing original model, weights will be saved in `f'{args.model_type}-{args.quant_method}-int{args.quant_bits}'` directory. If quantizing fine-tuned model, weights will be saved in the same level directory as `ckpt_dir`, e.g. `f'/path/to/your/vx-xxx/checkpoint-xxx-{args.quant_method}-int{args.quant_bits}'` directory.
 - `--quant_method`: Quantization method, default is `'awq'`. Options are 'awq', 'gptq'.
-- `--dataset`: This parameter is already defined in InferArguments, for export it means quantization dataset. Default is `[]`. Recommended to set `--dataset ms-bench-mini`. This dataset contains multilingual content (mainly Chinese) of high quality, with good effect for quantizing Chinese models. You can also set `--dataset pileval`, using autoawq default quantization dataset, the language of this dataset is English. More details: including how to customize quantization dataset, can be found in [LLM Quantization Documentation](LLM-quantization.md).
+- `--dataset`: This parameter is already defined in InferArguments, for export it means quantization dataset. Default is `[]`. More details: including how to customize quantization dataset, can be found in [LLM Quantization Documentation](LLM-quantization.md).
 - `--quant_n_samples`: Quantization parameter, default is `256`. When set to `--quant_method awq`, if OOM occurs during quantization, you can moderately reduce `--quant_n_samples` and `--quant_seqlen`. `--quant_method gptq` generally does not encounter quantization OOM.
 - `--quant_seqlen`: Quantization parameter, default is `2048`.
 - `--quant_device_map`: Default is `'cpu'`, to save memory. You can specify 'cuda:0', 'auto', 'cpu', etc., representing the device to load model during quantization.
