@@ -24,7 +24,7 @@ llm_engine = get_vllm_engine(
     tensor_parallel_size=2,
     max_model_len=4096,
     # gpu_memory_utilization=0.95,
-    model_id_or_path="/home/css/models/Mixtral-8x7B-Instruct-v0.1-GPTQ-int4",
+    # model_id_or_path="/home/css/models/Mixtral-8x7B-Instruct-v0.1-GPTQ-int4",
     engine_kwargs = {
         # "enforce_eager": True,
         "max_num_seqs": 64,
