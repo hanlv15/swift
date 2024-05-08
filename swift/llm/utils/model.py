@@ -177,6 +177,8 @@ class ModelType:
     # yi-vl
     yi_vl_6b_chat = 'yi-vl-6b-chat'
     yi_vl_34b_chat = 'yi-vl-34b-chat'
+    # llava-llama
+    llava_llama3_8b_v1_1 = 'llava-llama-3-8b-v1_1'
     # internlm
     internlm_7b = 'internlm-7b'
     internlm_7b_chat = 'internlm-7b-chat'
@@ -204,6 +206,7 @@ class ModelType:
     internlm_xcomposer2_7b_chat = 'internlm-xcomposer2-7b-chat'
     # internvl
     internvl_chat_v1_5 = 'internvl-chat-v1_5'
+    internvl_chat_v1_5_int8 = 'internvl-chat-v1_5-int8'
     # deepseek
     deepseek_7b = 'deepseek-7b'
     deepseek_7b_chat = 'deepseek-7b-chat'
@@ -225,6 +228,8 @@ class ModelType:
     # deepseek-vl
     deepseek_vl_1_3b_chat = 'deepseek-vl-1_3b-chat'
     deepseek_vl_7b_chat = 'deepseek-vl-7b-chat'
+    # deepseek-v2
+    deepseek_v2_chat = 'deepseek-v2-chat'
     # gemma
     gemma_2b = 'gemma-2b'
     gemma_7b = 'gemma-7b'
@@ -392,6 +397,13 @@ class LoRATM(NamedTuple):
         'c_attn.multiway.0',
         'c_attn.multiway.1',
     ]
+    deepseek2 = [
+        'q_a_proj',
+        'q_b_proj',
+        'kv_a_proj_with_mqa',
+        'kv_b_proj',
+        'o_proj',
+    ]
 
 
 GetModelTokenizerFunction = Callable[..., Tuple[Optional[PreTrainedModel], PreTrainedTokenizerBase]]
@@ -410,10 +422,10 @@ def register_model(
         revision: Optional[str] = None,  # only modelscope
         ignore_file_pattern: Optional[List[str]] = None,
         function_kwargs: Optional[Dict[str, Any]] = None,
-        exists_ok: bool = False,
+        exist_ok: bool = False,
         eos_token: Optional[str] = None,
         **kwargs) -> Optional[Callable[[GetModelTokenizerFunction], GetModelTokenizerFunction]]:
-    if not exists_ok and model_type in MODEL_MAPPING:
+    if not exist_ok and model_type in MODEL_MAPPING:
         raise ValueError(f'The `{model_type}` has already been registered in the MODEL_MAPPING.')
     if requires is None:
         requires = []
@@ -786,6 +798,9 @@ def get_model_tokenizer_from_repo(model_dir: str,
     if load_model:
         if kwargs.get('use_unsloth', False):
             assert is_unsloth_available(), 'please install unsloth if using `use_unsloth=True`'
+            if 'qwen' in model_dir:
+                logger.warn('If using qwen2 models, please install unsloth with '
+                            '`pip install git+https://github.com/yangjianxin1/unsloth`')
             from unsloth import FastLanguageModel
             model, tokenizer = FastLanguageModel.from_pretrained(
                 model_name=model_dir,
@@ -802,6 +817,36 @@ def get_model_tokenizer_from_repo(model_dir: str,
             model.is_awq = is_awq
         if load_model and gptq_bits > 0:
             model.gptq_bits = gptq_bits
+    return model, tokenizer
+
+
+@register_model(
+    ModelType.llava_llama3_8b_v1_1,
+    'AI-ModelScope/llava-llama-3-8b-v1_1-transformers',
+    LoRATM.llama2,
+    TemplateType.llava_llama_instruct,
+    support_flash_attn=True,
+    requires=['transformers>=4.36'],
+    tags=['multi-modal', 'vision'],
+    hf_model_id='xtuner/llava-llama-3-8b-v1_1-transformers')
+def get_model_tokenizer_llava_llama(model_dir: str,
+                                    torch_dtype: Dtype,
+                                    model_kwargs: Dict[str, Any],
+                                    load_model: bool = True,
+                                    **kwargs):
+    from transformers import LlavaForConditionalGeneration, LlavaConfig, AutoProcessor
+
+    model_config = LlavaConfig.from_pretrained(model_dir)
+    processor = AutoProcessor.from_pretrained(model_dir)
+    model, tokenizer = get_model_tokenizer_with_flash_attn(
+        model_dir,
+        torch_dtype,
+        model_kwargs,
+        load_model,
+        model_config=model_config,
+        automodel_class=LlavaForConditionalGeneration,
+        **kwargs)
+    model.processor = processor
     return model, tokenizer
 
 
@@ -2381,6 +2426,48 @@ def get_model_tokenizer_internlm2(model_dir: str,
     return model, tokenizer
 
 
+@register_model(
+    ModelType.deepseek_v2_chat,
+    'deepseek-ai/DeepSeek-V2-Chat',
+    LoRATM.deepseek2,
+    TemplateType.deepseek2,
+    support_gradient_checkpointing=False,
+    support_flash_attn=True,
+    support_vllm=True,
+    requires=['transformers>=4.39.3'],
+    hf_model_id='deepseek-ai/DeepSeek-V2-Chat')
+def get_model_tokenizer_deepseek2(model_dir: str,
+                                  torch_dtype: Dtype,
+                                  model_kwargs: Dict[str, Any],
+                                  load_model: bool = True,
+                                  **kwargs):
+    model_config = AutoConfig.from_pretrained(model_dir, trust_remote_code=True)
+    use_flash_attn = kwargs.pop('use_flash_attn', False)
+    model_config._attn_implementation = 'flash_attention_2' if use_flash_attn else 'eager'
+    model, tokenizer = get_model_tokenizer_from_repo(
+        model_dir, torch_dtype, model_kwargs, load_model, model_config=model_config, **kwargs)
+    model.generation_config.pad_token_id = model.generation_config.eos_token_id
+    if model is not None:
+        # fix dtype bug
+        mlp_cls = model.model.layers[1].mlp.__class__
+        for module in model.modules():
+            if isinstance(module, mlp_cls):
+                if not hasattr(module, '__old_forward'):  # Avoid double patching
+                    __old_forward = module._old_forward if hasattr(module, '_old_forward') else module.forward
+
+                    def _new_forward(hidden_states, *, __old_forward) -> Tensor:
+                        dtype = hidden_states.dtype
+                        return __old_forward(hidden_states).to(dtype)
+
+                    _new_forward = partial(_new_forward, __old_forward=__old_forward)
+                    if hasattr(module, '_old_forward'):  # device_map
+                        module._old_forward = _new_forward
+                    else:
+                        module.forward = _new_forward
+                    module.__old_forward = __old_forward
+    return model, tokenizer
+
+
 def fix_internvl_inplace_bug(model) -> None:
 
     embedding = model.language_model.get_input_embeddings()
@@ -2399,10 +2486,19 @@ def fix_internvl_inplace_bug(model) -> None:
     'AI-ModelScope/InternVL-Chat-V1-5',
     LoRATM.internlm2,
     TemplateType.internvl,
-    requires=['transformers>=4.35'],
+    requires=['transformers>=4.35', 'timm'],
     support_flash_attn=True,
     support_gradient_checkpointing=False,
     hf_model_id='OpenGVLab/InternVL-Chat-V1-5')
+@register_model(
+    ModelType.internvl_chat_v1_5_int8,
+    'AI-ModelScope/InternVL-Chat-V1-5-int8',
+    LoRATM.internlm2,
+    TemplateType.internvl,
+    requires=['transformers>=4.35', 'timm'],
+    support_flash_attn=True,
+    support_gradient_checkpointing=False,
+    hf_model_id='OpenGVLab/InternVL-Chat-V1-5-int8')
 def get_model_tokenizer_internvl(model_dir: str,
                                  torch_dtype: Dtype,
                                  model_kwargs: Dict[str, Any],
@@ -2411,9 +2507,8 @@ def get_model_tokenizer_internvl(model_dir: str,
 
     model_config = AutoConfig.from_pretrained(model_dir, trust_remote_code=True)
     use_flash_attn = kwargs.pop('use_flash_attn', False)
-    if use_flash_attn:
-        model_config.attn_implementation = 'flash_attention_2'
-
+    model_config.vision_config.use_flash_attn = use_flash_attn
+    model_config.llm_config.attn_implementation = 'flash_attention_2' if use_flash_attn else 'eager'
     model, tokenizer = get_model_tokenizer_from_repo(
         model_dir,
         torch_dtype,
@@ -3606,6 +3701,7 @@ def get_model_tokenizer_yi_vl(model_dir: str,
     LoRATM.llama2,
     TemplateType.minicpm_v,
     support_flash_attn=True,
+    requires=['timm'],
     hf_model_id='openbmb/MiniCPM-V-2')
 def get_model_tokenizer_minicpm_v(model_dir: str,
                                   torch_dtype: Dtype,
