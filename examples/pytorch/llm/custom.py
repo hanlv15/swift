@@ -1,6 +1,6 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
 from typing import Any, Dict, Optional, Tuple
-
+import torch
 from datasets import Dataset as HfDataset
 from modelscope import AutoConfig, AutoModelForCausalLM, AutoTokenizer, MsDataset
 from torch import dtype as Dtype
@@ -24,6 +24,7 @@ class CustomModelType:
     neural_chat_7b = "neural-chat-7b-v3"
     solar_instruct_10_7b = "solar-10.7b-instruct"
     mixtral_moe_7b_instruct_gptq_int4 = "mixtral-8x7B-instruct-v0.1-gptq-int4"
+    mixtral_moe_7b_instruct_awq = "mixtral-8x7B-instruct-v0.1-awq"
     gemma_7b_it = 'gemma-7b-it'
     merlinite_7b = 'merlinite-7b'
     c4ai_command_r_4bit = "c4ai-command-r-v01-4bit"
@@ -37,7 +38,7 @@ class CustomTemplateType:
     openchat_35 = "openchat_3.5"
     neural = "neural"
     solar = "solar"
-    mistral = "mistral"
+    # mistral = "mistral"
     chatml = "_chatml" # 无system message的chatml
     llama = "_llama" # 无system message的llama
     merlinite = "merlinite"
@@ -107,7 +108,7 @@ def get_orca2_model_tokenizer(model_dir: str,
                 CustomTemplateType.openchat_35)
 @register_model(CustomModelType.mistral_7b_instruct,
                 '/home/css/models/Mistral-7B-Instruct-v0.2', LoRATM.llama2,
-                CustomTemplateType.mistral)
+                CustomTemplateType.llama)
 @register_model(CustomModelType.neural_chat_7b,
                 '/home/css/models/neural-chat-7b-v3-3', LoRATM.llama2,
                 CustomTemplateType.neural)
@@ -116,8 +117,15 @@ def get_orca2_model_tokenizer(model_dir: str,
                 CustomTemplateType.solar)
 @register_model(CustomModelType.mixtral_moe_7b_instruct_gptq_int4,
                 '/home/css/models/Mixtral-8x7B-Instruct-v0.1-GPTQ-int4', LoRATM.llama2,
-                CustomTemplateType.mistral,
+                CustomTemplateType.llama,
+                torch_dtype=torch.float16,
                 function_kwargs={'gptq_bits': 4})
+@register_model(CustomModelType.mixtral_moe_7b_instruct_awq,
+                '/home/css/models/Mixtral-8x7B-Instruct-v0.1-AWQ', LoRATM.llama2,
+                CustomTemplateType.llama,
+                requires=['autoawq'],
+                torch_dtype=torch.float16,
+                function_kwargs={'is_awq': True})
 @register_model(CustomModelType.gemma_7b_it,
                 '/home/css/models/gemma-1.1-7b-it', LoRATM.llama2,
                 CustomTemplateType.gemma)
@@ -127,27 +135,22 @@ def get_orca2_model_tokenizer(model_dir: str,
 @register_model(CustomModelType.c4ai_command_r_4bit,
                 '/home/css/models/c4ai-command-r-v01-4bit', LoRATM.llama2,
                 CustomTemplateType.c4ai_command_r)
-@register_model(CustomModelType.llama_3_8b_instruct,
-                '/home/css/models/Meta-Llama-3-8B-Instruct', LoRATM.llama2,
-                CustomTemplateType.llama3)
-@register_model(CustomModelType.llama_3_70b_instruct_gptq_int4,
-                '/home/css/models/Meta-Llama-3-70B-Instruct-GPTQ-Int4', LoRATM.llama2,
-                CustomTemplateType.llama3,
-                function_kwargs={'gptq_bits': 4})
 def get_model_tokenizer(
     model_dir: str,
     torch_dtype: Dtype, 
     model_kwargs: Dict[str, Any], 
     load_model: bool = True,
+    model_config=None,
     **kwargs
 ):
     is_awq = kwargs.pop('is_awq', False)
     is_aqlm = kwargs.pop('is_aqlm', False)
     gptq_bits = kwargs.pop('gptq_bits', 0)
 
-    model_config = AutoConfig.from_pretrained(model_dir, trust_remote_code=True)
+    if model_config is None:
+        model_config = AutoConfig.from_pretrained(model_dir, trust_remote_code=True)
     model_config.torch_dtype = torch_dtype
-    model_config._attn_implementation = 'eager'
+    # model_config._attn_implementation = 'eager'
     logger.info(f'model_config: {model_config}')
     tokenizer = AutoTokenizer.from_pretrained(model_dir)
     model = None
@@ -162,6 +165,26 @@ def get_model_tokenizer(
         if load_model and gptq_bits > 0:
             model.gptq_bits = gptq_bits
     return model, tokenizer
+
+@register_model(CustomModelType.llama_3_8b_instruct,
+                '/home/css/models/Meta-Llama-3-8B-Instruct', LoRATM.llama2,
+                CustomTemplateType.llama3)
+@register_model(CustomModelType.llama_3_70b_instruct_gptq_int4,
+                '/home/css/models/Meta-Llama-3-70B-Instruct-GPTQ-Int4', LoRATM.llama2,
+                CustomTemplateType.llama3,
+                function_kwargs={'gptq_bits': 4})
+def get_model_tokenizer_llama(
+    model_dir: str,
+    torch_dtype: Dtype,
+    model_kwargs: Dict[str, Any],
+    load_model: bool = True,
+    **kwargs
+):
+    model_config = AutoConfig.from_pretrained(model_dir, trust_remote_code=True)
+    model_config.pretraining_tp = 1
+    return get_model_tokenizer(
+        model_dir, torch_dtype, model_kwargs, load_model, model_config=model_config, **kwargs)
+
 
 # Ref: https://github.com/TigerResearch/TigerBot/blob/main/infer.py
 register_template(
@@ -197,12 +220,12 @@ register_template(
         ['### User:\n{{QUERY}}\n\n### Assistant:\n'],
         ['\n\n'], ['</s>'], None, ['### System:\n{{SYSTEM}}\n\n']))
 
-register_template(
-    CustomTemplateType.mistral,
-    Template(
-        ['<s>[INST] '], ['{{QUERY}} [/INST]'], ['</s><s>[INST] '], 
-        ['</s>'], None,
-        ['<s>[INST] {{SYSTEM}}\n']))
+# register_template(
+#     CustomTemplateType.mistral,
+#     Template(
+#         ['<s>[INST] '], ['{{QUERY}} [/INST]'], ['</s><s>[INST] '], 
+#         ['</s>'], None,
+#         ['<s>[INST] {{SYSTEM}}\n']))
 
 register_template(
     CustomTemplateType.chatml,
