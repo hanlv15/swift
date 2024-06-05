@@ -1,0 +1,46 @@
+15644(FALSE): A doctor says in viral video, among other things, that there are more deaths from drug side effects than from COVID-19 and that PCR are nonspecific and give false positives for any other virus
+15707(FALSE): “I never spoke to a scientist. But I will tell you this: I did speak with the President of Honduras just a little while ago, and I didn't bring it up; he brought it up. He said they use the hydroxychloroquine. And he said the results were so incredible with hydroxychloroquine. This happened an hour ago.”
+15736(FALSE): A photo of a boy who died of COVID-19 in the UK? This photo has circulated in reports about an Irish teenager who died in 2017
+15809(TRUE): The Week That Wasn't in COVID-19: 17 Days, Peak in 3 Weeks, Crocodile
+15813(TRUE): Coronavirus Social: Babies Shouldn't Wear Masks, Experts Warn
+15903(FALSE): “Why did the US (NIH) in 2017 give $3.7m to the Wuhan Lab in China? Such grants were prohibited in 2014. Did Pres. Obama grant an exception?”
+15904(FALSE): Video of a Koran recitation at the US Senate during the COVID-19 pandemic? The footage is from an interfaith prayer service at a church in 2017
+15918(FALSE): A claim of an old family photo of Turkish-German scientist Ugur Sahin, who developed a Covid-19 vaccine.
+15929(FALSE): You no longer need to have contact with someone to get the coronavirus.
+15982(FALSE): “If Biden was in charge of this vaccine, just like the swine flu, he was in charge of -- H1N1, right, which he can never get right. He can't remember it. It's always messed up. Sometime he does N1H1, and I say, 'No.' But it's the swine flu. I said, 'Just call it the swine flu. It's easier, right? It's the same thing.' Call it the swine flu. It was a catastrophe.”
+16034(FALSE): Picture of a hospital in Santo André, Brazil. It says in the caption that, despite the COVID-19 crisis, the hospital has no patients.
+16049(FALSE): There were no COVID-19 deaths in Belém, Brazil, on May 30 and May 31.
+16103(TRUE): Who's At Risk For 'Long COVID?'
+16139(FALSE): Says "there is no" COVID-19 virus.
+16218(FALSE): “And by the way when he did his H1N1, he calls it the opposite, right? The swine flu. It was one of the great, and far less lethal by the way, but it was one of the great catastrophes. Nobody knew what the hell they were doing.”
+16262(FALSE): COVID-19 is a scam, which has no scientific support.
+16312(FALSE): Says President Donald Trump implemented “a travel ban that just didn't work, 400,000 people got in from those countries that were subject to the restrictions.”
+16385(FALSE): “We inherited an obsolete deal [for testing] and we've made a good thing out of it. I haven't heard that question in a while, but go ahead.”
+16413(TRUE): DIY Masks: Worth the Risk? Researchers Are Conflicted
+16414(FALSE): “We started doing ventilators. We didn't have ventilators.”
+16431(FALSE): “Biden got failing grades and polls on his clueless handling of the Swine Flu H1N1. It was a total disaster, they had no idea what they were doing. Among the worst ever!”
+16445(TRUE): Dental Appointments Won't  Be the Same in COVID Era
+16559(FALSE): Trump called COVID-19 a “hoax”; Trump’s pandemic response saved 2 million lives;
+16623(FALSE): “I was reading where Biden was saying that, oh, he's going to have a plan. They did so bad on swine flu, you wouldn't even believe it.”
+16625(FALSE): Claim that “there is no” COVID-19 virus.
+16686(FALSE): "posts based on a video by a german neurologist have been shared thousands of times on facebook making several claims about the alleged dangers of wearing face masks, notably that rebreathing oxygen in the mask leads to neurological damage. according to experts, this is false, since these masks allow fresh air to pass through and oxygen to be inhaled." -- afp fact check
+16694(FALSE): A small city on the countryside of Brazil cured 1,500 people with hydroxichloroquine and the city has no deaths.
+16748(FALSE): “And they're finding that people that -- like in the malaria countries, that it doesn't seem that those countries have been hit, because the people take it. You have countries that have massive malaria problems and they take the hydroxychloroquine, and they don't seem to be having the problem with the -- the virus that all other countries are having.”
+16784(FALSE): Facebook posts questioning the existence of the coronavirus, as no supermarket employee has been infected in the world.
+16792(FALSE): “Then two months later, two and a half, three, and Nancy Pelosi was having dances in Chinatown, right? A month later.”
+16834(FALSE): The presidente of Salvador said that prisioners have no rights during coronavirus pandemic.
+16867(FALSE): Mayor of El Espinal, Colombia ‘bought false tests for COVID-19’.
+16895(FALSE): There is nothing called “coronavirus” and it is just a hoax to pass Bill Gates’s vaccine.
+16900(FALSE): Images of the newspaper front pages sharing vaccine misinformation
+16912(FALSE): The coronavirus pandemic is a hoax, which is proven by Germany’s and Georgia’s mortality figures for 2017-2020. According to these figures, the number of deaths for all causes is much lower in 2020 compared to the deaths reported in 2017-2019.
+16914(FALSE): Emmanuel Macron said the African people no longer will travel to Europe, if they refused to use the European vaccine against COVID-19.
+16940(FALSE): President Trump refers to the coronavirus as a hoax in an audio clip.
+16942(FALSE): “We had no -- there were no ventilators.”
+16961(FALSE): Brazilian MPs unveiled the biggest COVID-19 hoax so far
+16987(FALSE): “Sleepy Joe doesn't have a clue, just look at what his own people said about his handling of the Swine Flu. It was a disaster!”
+17010(FALSE): “And they didn't have the pandemic, although Biden did have a big problem with H1N1, which he says in reverse. With the H1N1 Swine Flu, and it was a disaster.”
+17023(FALSE): A post claims that there are no cases of the new coronavirus in Russia.
+17044(FALSE): People knew about coronavirus even in 2003. However, unlike today, there was no panic, fines, or quarantine back then.
+17067(FALSE): Video shows President Donald Trump saying COVID-19 is the Democrats’ “new hoax.”
+17109(FALSE): COVID-19 is no more harmful than the common cold.
+17123(FALSE): "I don't believe illegal casinos are operating in Bangkok, but if the doctor knows about it, he can inform the authorities."
