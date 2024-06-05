@@ -6,11 +6,14 @@ from typing import Any, Dict, Union
 import json
 import numpy as np
 import torch
+import torch.distributed as dist
+from datasets import Dataset
 from modelscope import BitsAndBytesConfig, GenerationConfig
 from transformers import IntervalStrategy
 from transformers.integrations import is_deepspeed_zero3_enabled
 from transformers.utils import is_torch_npu_available
 
+from swift.torchacc_utils import patch_acc_model
 from swift.trainers import Seq2SeqTrainer
 from swift.trainers.utils import can_return_loss, find_labels
 from swift.utils import (check_json_format, compute_acc_metrics, compute_nlg_metrics, get_dist_setting, get_logger,
@@ -18,7 +21,7 @@ from swift.utils import (check_json_format, compute_acc_metrics, compute_nlg_met
                          preprocess_logits_for_metrics, seed_everything, show_layers, use_torchacc)
 from .accelerator import ta_accelerate
 from .tuner import prepare_model
-from .utils import (TEMPLATE_MAPPING, LazyLLMDataset, SftArguments, Template, dataset_map, get_dataset,
+from .utils import (MODEL_MAPPING, TEMPLATE_MAPPING, LazyLLMDataset, SftArguments, Template, dataset_map, get_dataset,
                     get_model_tokenizer, get_template, get_time_info, print_example, set_generation_config,
                     sort_by_max_length, stat_dataset)
 
@@ -26,6 +29,7 @@ logger = get_logger()
 
 
 def llm_sft(args: SftArguments) -> Dict[str, Union[str, Any]]:
+
     logger.info(f'args: {args}')
     seed_everything(args.seed)
     training_args = args.training_args
@@ -45,6 +49,12 @@ def llm_sft(args: SftArguments) -> Dict[str, Union[str, Any]]:
         model_kwargs = {'device_map': None}
     elif is_torch_npu_available():
         model_kwargs = {'device_map': local_rank if local_rank >= 0 else 0}
+    elif args.device_map_config_path is not None:
+        cwd = os.getcwd()
+        config_path = args.device_map_config_path if os.path.isabs(args.device_map_config_path) else os.path.join(
+            cwd, args.device_map_config_path)
+        with open(config_path, 'r') as json_file:
+            model_kwargs = {'device_map': json.load(json_file)}
     else:
         model_kwargs = {'low_cpu_mem_usage': True}
         if is_dist() and not is_ddp_plus_mp():
@@ -52,7 +62,27 @@ def llm_sft(args: SftArguments) -> Dict[str, Union[str, Any]]:
         elif not use_torchacc():
             model_kwargs['device_map'] = 'auto'
 
-    if args.load_in_8bit or args.load_in_4bit:
+    if args.quant_method == 'hqq':
+        from transformers import HqqConfig
+        if args.hqq_dynamic_config_path is not None:
+            cwd = os.getcwd()
+            config_path = args.hqq_dynamic_config_path if os.path.isabs(args.hqq_dynamic_config_path) else os.path.join(
+                cwd, args.hqq_dynamic_config_path)
+            with open(config_path, 'r') as json_file:
+                quantization_config = HqqConfig(dynamic_config=json.load(json_file))
+        else:
+            if args.quantization_bit == 0:
+                logger.info("You haven't set the quantization_bit parameter; set it to 8.")
+                args.quantization_bit = 8
+            quantization_config = HqqConfig(nbits=args.quantization_bit, axis=args.hqq_axis)
+        logger.info(f'quantization_config: {quantization_config.__dict__}')
+        model_kwargs['quantization_config'] = quantization_config
+    elif args.quant_method == 'eetq':
+        from transformers import EetqConfig
+        quantization_config = EetqConfig('int8')
+        logger.info(f'quantization_config: {quantization_config.__dict__}')
+        model_kwargs['quantization_config'] = quantization_config
+    elif args.load_in_8bit or args.load_in_4bit:  # bnb
         quantization_config = BitsAndBytesConfig(
             args.load_in_8bit,
             args.load_in_4bit,
@@ -69,6 +99,19 @@ def llm_sft(args: SftArguments) -> Dict[str, Union[str, Any]]:
     }
     if args.use_flash_attn is not None:
         kwargs['use_flash_attn'] = args.use_flash_attn
+    if args.local_repo_path:
+        kwargs['local_repo_path'] = args.local_repo_path
+    if args.quant_method == 'awq':
+        kwargs['is_awq'] = True
+    elif args.quant_method == 'aqlm':
+        kwargs['is_aqlm'] = True
+    elif args.quant_method == 'gptq':
+        kwargs['is_gptq'] = True
+
+    if args.rope_scaling:
+        kwargs['rope_scaling'] = args.rope_scaling
+        kwargs['max_length'] = args.max_length
+
     model, tokenizer = get_model_tokenizer(
         args.model_type,
         args.torch_dtype,
@@ -98,7 +141,7 @@ def llm_sft(args: SftArguments) -> Dict[str, Union[str, Any]]:
         # wrapper the model and make these properties wrong.
         label_names = find_labels(model)
         return_loss = can_return_loss(model)
-        model = ta.patch_qwen_model(model)
+        model = patch_acc_model(model, args)
     # Preparing LoRA
     model, callbacks = prepare_model(model, args)
 
@@ -119,7 +162,7 @@ def llm_sft(args: SftArguments) -> Dict[str, Union[str, Any]]:
         logger.info('Setting model.config.use_cache: False')
         model = ta_accelerate(
             model,
-            world_size,
+            args.fsdp_num,
             args.model_layer_cls_name,
             args.bf16,
             args.fp16,
@@ -134,7 +177,18 @@ def llm_sft(args: SftArguments) -> Dict[str, Union[str, Any]]:
         check_dataset_strategy=args.check_dataset_strategy,
         model_name=args.model_name,
         model_author=args.model_author)
+    if len(args.val_dataset) > 0:
+        # Loading val dataset
+        _, val_dataset = get_dataset(
+            args.val_dataset,
+            1.0,
+            args.dataset_seed,
+            check_dataset_strategy=args.check_dataset_strategy,
+            model_name=args.model_name,
+            model_author=args.model_author)
+
     train_dataset, val_dataset = args._handle_dataset_compat(train_dataset, val_dataset)
+    training_args.train_dataset_sample = train_dataset.shape[0] if train_dataset is not None else 0
     logger.info(f'train_dataset: {train_dataset}')
     logger.info(f'val_dataset: {val_dataset}')
     template_kwargs = {}
@@ -143,6 +197,8 @@ def llm_sft(args: SftArguments) -> Dict[str, Union[str, Any]]:
     if use_model:
         template_kwargs['model'] = model
     template_kwargs['use_loss_scale'] = args.use_loss_scale
+    if args.sequence_parallel_size and args.sequence_parallel_size > 1:
+        template_kwargs['sequence_parallel_size'] = args.sequence_parallel_size
     template: Template = get_template(args.template_type, tokenizer, args.system, args.max_length,
                                       args.truncation_strategy, **template_kwargs)
     args.system = template.default_system
@@ -157,6 +213,8 @@ def llm_sft(args: SftArguments) -> Dict[str, Union[str, Any]]:
                 template, val_dataset, args.max_length, lazy_tokenize=args.lazy_tokenize)
         dataset_info = {}
         if not args.lazy_tokenize:
+            td0 = train_dataset[0]
+            print_example(td0, tokenizer, {})
             dataset_info['train_dataset'] = stat_dataset(train_dataset)
             if val_dataset is not None:
                 dataset_info['val_dataset'] = stat_dataset(val_dataset)
@@ -195,14 +253,14 @@ def llm_sft(args: SftArguments) -> Dict[str, Union[str, Any]]:
     padding_to = args.max_length if args.sft_type == 'longlora' else None
     data_collator = partial(template.data_collator, padding_to=padding_to)
 
-    trian_batch_size = args.batch_size
+    train_batch_size = args.batch_size
     eval_batch_size = args.eval_batch_size
     if use_torchacc():
-        trian_batch_size *= world_size
+        train_batch_size *= world_size
         eval_batch_size *= world_size
-    training_args.per_device_train_batch_size = trian_batch_size
-    training_args.per_device_eval_batch_size = eval_batch_size
-    training_args.group_by_length = use_torchacc()
+        training_args.per_device_train_batch_size = train_batch_size
+        training_args.per_device_eval_batch_size = eval_batch_size
+        training_args.group_by_length = use_torchacc()
 
     # Trainer
     logger.info(f'training_args: {training_args}')
@@ -225,6 +283,7 @@ def llm_sft(args: SftArguments) -> Dict[str, Union[str, Any]]:
         eval_dataset=val_dataset,
         tokenizer=tokenizer,
         callbacks=callbacks,
+        sequence_parallel_size=args.sequence_parallel_size,
         **trainer_kwargs)
     trainer.sft_args = args
     if use_torchacc():

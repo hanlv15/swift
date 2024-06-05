@@ -39,6 +39,25 @@ class TestRun(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
 
+    def test_template(self):
+        if not __name__ == '__main__':
+            # ignore citest error in github
+            return
+        torch.cuda.empty_cache()
+        output = sft_main(
+            SftArguments(
+                model_type=ModelType.qwen1half_1_8b,
+                model_id_or_path='../models/Qwen1.5-1.8B',
+                template_type='qwen',
+                sft_type='full',
+                dataset=f'{DatasetName.jd_sentiment_zh}#200',
+                eval_steps=5))
+        best_model_checkpoint = output['best_model_checkpoint']
+        torch.cuda.empty_cache()
+        result = infer_main(
+            InferArguments(ckpt_dir=best_model_checkpoint, load_dataset_config=True, val_dataset_sample=2))
+        assert len(result['result'][0]['response']) < 20
+
     def test_basic(self):
         output_dir = 'output'
         quantization_bit_list = [0, 4]
@@ -77,6 +96,7 @@ class TestRun(unittest.TestCase):
                 check_dataset_strategy='warning',
                 predict_with_generate=predict_with_generate,
                 dataset=dataset,
+                val_dataset=f'{DatasetName.jd_sentiment_zh}#20',
                 output_dir=output_dir,
                 include_num_input_tokens_seen=True,
                 gradient_checkpointing=True)
@@ -186,7 +206,8 @@ class TestRun(unittest.TestCase):
             # ignore citest error in github
             return
         train_dataset_fnames = [
-            'alpaca.csv', 'chatml.jsonl', 'swift_pre.jsonl', 'swift_single.csv', 'swift_multi.jsonl', 'swift_multi.json'
+            'alpaca.csv', 'chatml.jsonl', 'swift_pre.jsonl', 'swift_single.csv', 'swift_multi.jsonl',
+            'swift_multi.json', 'sharegpt.jsonl'
         ]
         val_dataset_fnames = [
             'alpaca.jsonl', 'alpaca2.csv', 'conversations.jsonl', 'swift_pre.csv', 'swift_single.jsonl'
@@ -310,7 +331,26 @@ class TestRun(unittest.TestCase):
                 lora_target_modules='ALL',
                 train_dataset_sample=100,
                 eval_steps=5,
-                custom_train_dataset_path=[os.path.join(folder, 'multi_modal.jsonl')],
+                custom_train_dataset_path=[os.path.join(folder, 'multi_modal_2.jsonl')],
+                lazy_tokenize=False))
+        best_model_checkpoint = output['best_model_checkpoint']
+        torch.cuda.empty_cache()
+        infer_main(InferArguments(ckpt_dir=best_model_checkpoint, load_dataset_config=True, val_dataset_sample=2))
+
+    def test_glm4v_9b_chat(self):
+        if not __name__ == '__main__':
+            # ignore citest error in github
+            return
+        folder = os.path.join(os.path.dirname(__file__), 'data')
+        torch.cuda.empty_cache()
+        output = sft_main(
+            SftArguments(
+                model_type=ModelType.glm4v_9b_chat,
+                #   dataset=DatasetName.capcha_images,
+                lora_target_modules='ALL',
+                train_dataset_sample=100,
+                eval_steps=5,
+                custom_train_dataset_path=[os.path.join(folder, 'multi_modal_3.jsonl')],
                 lazy_tokenize=False))
         best_model_checkpoint = output['best_model_checkpoint']
         torch.cuda.empty_cache()
@@ -389,7 +429,7 @@ class TestRun(unittest.TestCase):
                 lora_target_modules='ALL',
                 train_dataset_sample=100,
                 eval_steps=5,
-                custom_train_dataset_path=[os.path.join(folder, 'multi_modal2.jsonl')],
+                custom_train_dataset_path=[os.path.join(folder, 'multi_modal_1.jsonl')],
                 lazy_tokenize=False))
 
 
@@ -481,6 +521,7 @@ class TestTrainer(unittest.TestCase):
                 metric_for_best_model='loss',
                 greater_is_better=False,
                 gradient_accumulation_steps=1,
+                logging_steps=5,
                 eval_steps=10,
                 save_only_model=save_only_model)
         trainer_args._n_gpu = 1

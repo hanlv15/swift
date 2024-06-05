@@ -31,6 +31,8 @@ def save_checkpoint(model: Optional[PreTrainedModel],
                     save_safetensors: bool = True) -> None:
     if model is not None:
         model.save_pretrained(target_dir, safe_serialization=save_safetensors)
+    if hasattr(tokenizer, 'processor'):
+        tokenizer.processor.save_pretrained(target_dir)
     tokenizer.save_pretrained(target_dir)
     model_type = getattr(tokenizer, 'model_type')
     fname_list = ['generation_config.json', 'preprocessor_config.json']
@@ -82,7 +84,7 @@ def merge_lora(args: InferArguments,
                **kwargs) -> Optional[str]:
     logger.info(f'replace_if_exists: {replace_if_exists}')
     assert args.ckpt_dir is not None, 'args.ckpt_dir is not specified.'
-    assert args.sft_type == 'lora', "Only supports sft_type == 'lora'"
+    assert args.sft_type in ('lora', 'adalora', 'longlora'), 'Only supports lora series models'
     for s in ['int4', 'int8', 'awq']:
         assert s not in args.model_type, f'{s} model is not supported'
     if args.quantization_bit != 0:
@@ -136,7 +138,9 @@ def prepare_model_template(args: InferArguments,
     model_kwargs['device_map'] = device_map
 
     # Loading Model and Tokenizer
-    if args.load_in_8bit or args.load_in_4bit:
+    if hasattr(args, 'quant_config'):
+        model_kwargs['quantization_config'] = args.quant_config
+    elif args.load_in_8bit or args.load_in_4bit:
         quantization_config = BitsAndBytesConfig(
             args.load_in_8bit,
             args.load_in_4bit,
@@ -157,7 +161,11 @@ def prepare_model_template(args: InferArguments,
         model_id_or_path = args.model_id_or_path
     if automodel_class is not None:
         kwargs['automodel_class'] = automodel_class
-
+    if args.local_repo_path:
+        kwargs['local_repo_path'] = args.local_repo_path
+    if args.rope_scaling:
+        kwargs['rope_scaling'] = args.rope_scaling
+        kwargs['max_length'] = args.max_length
     model, tokenizer = get_model_tokenizer(
         args.model_type,
         args.torch_dtype,
@@ -191,7 +199,7 @@ def prepare_model_template(args: InferArguments,
                              f'args.max_model_len: {args.max_model_len}, model.max_model_len: {model.max_model_len}')
     # Preparing LoRA
     if is_adapter(args.sft_type) and args.ckpt_dir is not None:
-        if isinstance(args, DeployArguments):
+        if isinstance(args, DeployArguments) and args.lora_request_list is not None:
             for lora_request in args.lora_request_list:
                 model = Swift.from_pretrained(
                     model, lora_request.lora_local_path, lora_request.lora_name, inference_mode=True)
@@ -241,6 +249,22 @@ def llm_infer(args: InferArguments) -> None:
                 cwd, args.device_map_config_path)
             with open(config_path, 'r') as json_file:
                 device_map = json.load(json_file)
+        if args.quant_method == 'hqq':
+            from transformers import HqqConfig
+            if args.hqq_dynamic_config_path is not None:
+                cwd = os.getcwd()
+                config_path = args.hqq_dynamic_config_path if os.path.isabs(
+                    args.hqq_dynamic_config_path) else os.path.join(cwd, args.hqq_dynamic_config_path)
+                with open(config_path, 'r') as json_file:
+                    args.quant_config = HqqConfig(dynamic_config=json.load(json_file))
+            else:
+                if args.quantization_bit == 0:
+                    logger.info("You haven't set the quantization_bit parameter; set it to 8.")
+                    args.quantization_bit = 8
+                args.quant_config = HqqConfig(nbits=args.quantization_bit, axis=args.hqq_axis)
+        elif args.quant_method == 'eetq':
+            from transformers import EetqConfig
+            args.quant_config = EetqConfig('int8')
         model, template = prepare_model_template(args, device_map=device_map)
         if args.overwrite_generation_config:
             assert args.ckpt_dir is not None, 'args.ckpt_dir is not specified.'
@@ -320,6 +344,8 @@ def llm_infer(args: InferArguments) -> None:
                 infer_kwargs = {}
 
             read_media_file(infer_kwargs, args.infer_media_type)
+            if args.truncation_strategy:
+                infer_kwargs['truncation_strategy'] = args.truncation_strategy
             if system is None and template.use_default_system:
                 system = template.default_system
             if args.infer_backend == 'vllm':
@@ -360,25 +386,32 @@ def llm_infer(args: InferArguments) -> None:
                 'response': response,
                 'history': history,
             }
+            images = infer_kwargs.get('images')
+            if images is not None:
+                obj['images'] = images
             history = new_history
             if jsonl_path is not None:
                 append_to_jsonl(jsonl_path, obj)
             result.append(obj)
     else:
-        _, val_dataset = get_dataset(
-            args.dataset,
-            args.dataset_test_ratio,
-            args.dataset_seed,
-            check_dataset_strategy=args.check_dataset_strategy,
-            model_name=args.model_name,
-            model_author=args.model_author)
+        dataset_kwargs = {
+            'dataset_seed': args.dataset_seed,
+            'check_dataset_strategy': args.check_dataset_strategy,
+            'model_name': args.model_name,
+            'model_author': args.model_author
+        }
+        if len(args.val_dataset) > 0:
+            _, val_dataset = get_dataset(args.val_dataset, 1.0, **dataset_kwargs)
+        else:
+            _, val_dataset = get_dataset(args.dataset, args.dataset_test_ratio, **dataset_kwargs)
         _, val_dataset = args._handle_dataset_compat(_, val_dataset)
+        assert val_dataset is not None
         if args.show_dataset_sample >= 0 and val_dataset.shape[0] > args.show_dataset_sample:
             random_state = np.random.RandomState(args.dataset_seed)
             logger.info(f'show_dataset_sample: {args.show_dataset_sample}')
             val_dataset = sample_dataset(val_dataset, args.show_dataset_sample, random_state)
-
         logger.info(f'val_dataset: {val_dataset}')
+
         if args.verbose is None:
             if len(val_dataset) >= 100:
                 args.verbose = False
@@ -411,6 +444,8 @@ def llm_infer(args: InferArguments) -> None:
                 request['system'] = system
                 if images is not None:
                     request['images'] = images
+                if args.truncation_strategy:
+                    request['truncation_strategy'] = args.truncation_strategy
                 request_list.append(request)
             resp_list = inference_vllm(llm_engine, template, request_list, use_tqdm=True)
             result = []
@@ -425,6 +460,9 @@ def llm_infer(args: InferArguments) -> None:
                     'label': request.pop('label', None),
                     'history': request['history'],
                 }
+                images = request.get('images')
+                if images is not None:
+                    obj['images'] = images
                 if jsonl_path is not None:
                     append_to_jsonl(jsonl_path, obj)
                 result.append(obj)
@@ -446,6 +484,8 @@ def llm_infer(args: InferArguments) -> None:
                 kwargs['system'] = system
                 if images is not None:
                     kwargs['images'] = images
+                if args.truncation_strategy:
+                    kwargs['truncation_strategy'] = args.truncation_strategy
                 if args.infer_backend == 'vllm':
                     assert args.stream is True
                     if args.verbose:
@@ -469,6 +509,8 @@ def llm_infer(args: InferArguments) -> None:
                     'label': label,
                     'history': kwargs['history'],
                 }
+                if images is not None:
+                    obj['images'] = images
                 if jsonl_path is not None:
                     append_to_jsonl(jsonl_path, obj)
                 result.append(obj)

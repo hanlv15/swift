@@ -20,7 +20,8 @@ from transformers.utils import strtobool
 
 from swift.utils import get_logger, get_seed, is_dist, is_local_master, read_from_jsonl, transform_jsonl_to_df
 from .preprocess import (AlpacaPreprocessor, ClsPreprocessor, ComposePreprocessor, ConversationsPreprocessor,
-                         PreprocessFunc, RenameColumnsPreprocessor, SmartPreprocessor, TextGenerationPreprocessor)
+                         PreprocessFunc, RenameColumnsPreprocessor, SmartPreprocessor, TextGenerationPreprocessor,
+                         preprocess_sharegpt)
 from .template import History
 from .utils import download_dataset
 
@@ -213,21 +214,26 @@ def register_local_dataset(
 
 
 def register_dataset_info(dataset_name: str, d_info: Dict[str, Any], **kwargs) -> None:
+    preprocess_func = None
+    if 'columns' in d_info:
+        preprocess_func = RenameColumnsPreprocessor(d_info['columns'])
+        d_info.pop('columns')
+        d_info['preprocess_func'] = preprocess_func
+    elif 'conversations' in d_info:
+        preprocess_func = ConversationsPreprocessor(**d_info['conversations'])
+        d_info.pop('conversations')
+        d_info['preprocess_func'] = preprocess_func
+
     if 'dataset_path' in d_info:
         base_dir = kwargs.pop('base_dir', None)
         register_local_dataset(dataset_name, d_info.pop('dataset_path', None), base_dir, **d_info)
         return
 
     assert 'dataset_id' in d_info or 'hf_dataset_id' in d_info
-    preprocess_func = None
-    if 'columns' in d_info:
-        preprocess_func = RenameColumnsPreprocessor(d_info['columns'])
-        d_info.pop('columns')
-    elif 'conversations' in d_info:
-        preprocess_func = ConversationsPreprocessor(**d_info['conversations'])
-        d_info.pop('conversations')
+
     dataset_id = d_info.pop('dataset_id', None)
     subsets = d_info.pop('subsets', None)
+    preprocess_func = d_info.pop('preprocess_func', None)
     register_dataset(dataset_name, dataset_id, subsets, preprocess_func, get_dataset_from_repo, **d_info, exist_ok=True)
 
 
@@ -323,7 +329,6 @@ def get_dataset_from_repo(dataset_id: str,
                           preprocess_func: PreprocessFunc,
                           split: List[str],
                           dataset_sample: int = -1,
-                          val_sample: int = -1,
                           *,
                           random_state: Optional[RandomState] = None,
                           dataset_test_ratio: float = 0.,
@@ -460,7 +465,6 @@ register_dataset(
     get_dataset_from_repo,
     split=['validation', 'test'],
     tags=['chat', 'multi-modal', 'audio', '🔥'],
-    val_sample=200,  # default val sample
     is_main=False)
 
 
@@ -504,10 +508,11 @@ def long_alpaca_preprocessor(dataset: HfDataset):
         response = row['response']
         if response and response.startswith('Answer:'):
             response = response[len('Answer:') + 1:].strip()
-        return {'query': row['query'], 'response': response}
+            row['response'] = response
+        return response
 
-    return dataset.rename_columns({'instruction': 'query', 'output': 'response'}) \
-        .remove_columns(['input', 'file']).map(map_row).filter(lambda row: row['response'] is not None)
+    dataset = AlpacaPreprocessor()(dataset)
+    return dataset.map(map_row)
 
 
 register_dataset(
@@ -810,30 +815,10 @@ register_dataset(
     get_dataset_from_repo,
     tags=['rlhf', 'dpo', 'pairwise'])
 
-
-def _preprocess_sharegpt(dataset: HfDataset) -> HfDataset:
-    query = []
-    response = []
-    history: List[History] = []
-    for d in tqdm(dataset):
-        if isinstance(d['conversation'], str):
-            try:
-                conversation = ast.literal_eval(d['conversation'])
-            except SyntaxError:
-                continue
-        query.append(conversation[-1]['human'])
-        response.append(conversation[-1]['assistant'])
-        h = []
-        for c in conversation[:-1]:
-            h.append([c['human'], c['assistant']])
-        history.append(h)
-    return HfDataset.from_dict({'query': query, 'response': response, 'history': history})
-
-
 register_dataset(
     DatasetName.sharegpt,
     'huangjintao/sharegpt', ['common-zh', 'computer-zh', 'unknow-zh', 'common-en', 'computer-en'],
-    _preprocess_sharegpt,
+    preprocess_sharegpt,
     get_dataset_from_repo,
     tags=['chat', 'general', 'multi-round'])
 
@@ -987,20 +972,27 @@ def _preprocess_msagent_multirole_dataset(dataset: HfDataset) -> HfDataset:
     只根据对话历史进行回复\n3. 长话短说，不要说太多话，不要超过50字 """
     history_prompt = '\n\n【chat history】'
     conv_prompt = '\n {name}:{content}'
-    query = []
-    response = []
+    system, query, response = [], [], []
+
+    def process_conversation(conv):
+        query, response = '', conv[-1]['value']
+        system = conv[0]['value'] if conv[0]['from'] != 'user' else ''
+        if conv[0]['from'] == 'user':
+            query = conv[0]['value']
+        elif 'next_speakers:' not in system:
+            if '【注意事项】' not in system and system:
+                system += res_prompt
+            system += history_prompt
+            system += ''.join([conv_prompt.format(name=c['from'], content=c['value']) for c in conv[1:-1]])
+
+        return system, query, response
 
     for d in dataset:
-        conv = d['conversations']
-        system = conv[0]['value']
-        if '【注意事项】' not in system:
-            system += res_prompt
-        system += history_prompt
-        response.append(conv[-1]['value'])
-        for i in range(1, len(conv) - 1):
-            system += conv_prompt.format(name=conv[i]['from'], content=conv[i]['value'])
-        query.append(system)
-    return HfDataset.from_dict({'query': query, 'response': response})
+        sys, qry, resp = process_conversation(d['conversations'])
+        system.append(sys)
+        query.append(qry)
+        response.append(resp)
+    return HfDataset.from_dict({'system': system, 'query': query, 'response': response})
 
 
 register_dataset(
@@ -1157,9 +1149,9 @@ def _preprocess_self_cognition_dataset(
     # model_name: Tuple[zh, en]
     assert model_name[0] is not None
     assert model_author[0] is not None
-    if model_name[1] is None:
+    if len(model_name) == 1 or model_name[1] is None:
         model_name = (model_name[0], model_name[0])
-    if model_author[1] is None:
+    if len(model_author) == 1 or model_author[1] is None:
         model_author = (model_author[0], model_author[0])
     res_d_list = []
     for dataset in dataset_list:
