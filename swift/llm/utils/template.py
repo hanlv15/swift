@@ -12,7 +12,7 @@ from torch import Tensor
 from torch.nn.utils.rnn import pad_sequence
 from transformers import PreTrainedTokenizerBase, StoppingCriteria
 
-from swift.llm.agent.utils import calculate_loss_scale
+from swift.llm.agent.utils import calculate_loss_scale, get_tools_prompt
 from swift.torchacc_utils import pad_and_split_batch
 from swift.utils import get_dist_setting, upper_bound, use_torchacc
 
@@ -117,7 +117,9 @@ class StopWordsCriteria(StoppingCriteria):
             self.start_idx = len(input_ids[0]) - 1
         tokenizer = self.tokenizer
         stop_words = self.stop_words
-        text = tokenizer.decode(input_ids[0, self.start_idx:], **self.tokenizer_kwargs)
+        # [-20:]: Assuming the end tokens do not exceed 20 tokens,
+        #   to avoid input_ids being too long and affecting efficiency.
+        text = tokenizer.decode(input_ids[0, self.start_idx:][-20:], **self.tokenizer_kwargs)
         for stop_word in stop_words:
             if isinstance(stop_word, str):
                 if stop_word in text:
@@ -153,11 +155,17 @@ class Template:
                  suffix: Prompt,
                  default_system: Optional[str] = None,
                  prefix_has_system: Optional[Prompt] = None,
-                 auto_add_bos: bool = False) -> None:
+                 auto_add_bos: bool = False,
+                 tools_prompt: str = 'react_en',
+                 tool_prompt: Optional[Prompt] = None) -> None:
         """
         auto_add_bos: By default, the bos_token is not added. The auto_add_bos option will determine
             whether to add it based on `tokenizer.encode('')`.
         """
+        # check
+        for x in [prefix, prompt, chat_sep, suffix, prefix_has_system]:
+            assert x is None or isinstance(x, list)
+
         if default_system == '':
             default_system = None
         if _has_system(prefix):
@@ -176,6 +184,8 @@ class Template:
         self.use_default_system = True
         self.auto_add_bos = auto_add_bos
         self._is_init = False
+        self.tools_prompt = tools_prompt
+        self.tool_prompt = tool_prompt if tool_prompt is not None else self.prompt  # default as user
 
     @staticmethod
     def _preprocess_prompt(tokenizer: PreTrainedTokenizerBase, value: Optional[Prompt]) -> Optional[Prompt]:
@@ -227,10 +237,13 @@ class Template:
             raise ValueError(
                 'Template is not initialized, please use the `get_template` function to obtain the template.')
         query: Optional[str] = example.get('query', None)
+        query_role: Optional[str] = example.get('query_role', None)
         response: Optional[str] = example.get('response', None)
         history: Optional[History] = example.get('history', None)
+        history_roles: Optional[History] = example.get('history_roles', None)
         system: Optional[str] = example.get('system', None)
         template_type = getattr(self, 'template_type', None)
+        tools: Optional[list] = example.get('tools', None)
         if history is None:
             history = []
         if len(history) > 0:
@@ -244,10 +257,21 @@ class Template:
         else:
             assert self.prefix_has_system is not None, (
                 f'The template does not support `system`, template_type: {template_type}')
+        if tools:
+            if system is None:
+                system = ''
+            system += get_tools_prompt(tools, self.tools_prompt)
         if query is None:
             query = ''
         inputs, tokenizer_kwargs = self._encode(
-            query, response, history, system, self.truncation_strategy, auto_add_bos=self.auto_add_bos)
+            query,
+            query_role,
+            response,
+            history,
+            history_roles,
+            system,
+            self.truncation_strategy,
+            auto_add_bos=self.auto_add_bos)
         if inputs.get('labels') is None:
             inputs.pop('loss_scale', None)
         return inputs, tokenizer_kwargs
@@ -336,15 +360,26 @@ class Template:
 
     def _encode(self,
                 query: str,
+                query_role: str,
                 response: Optional[str],
                 history: History,
+                history_roles: History,
                 system: Optional[str],
                 truncation_strategy: str,
                 auto_add_bos: bool = False) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """
         return: inputs, tokenizer_kwargs
         """
+        if history_roles is None:
+            history_roles = [('user', 'assistant') for _ in range(len(history))]
+
+        if query is not None:
+            if query_role is None:
+                query_role = 'user'
+            history_roles.append([query_role, 'assistant'])
+
         history = history.copy()
+
         res_context_list: List[Context] = []
         loss_scale_list: List[float] = []
         if auto_add_bos:
@@ -357,12 +392,15 @@ class Template:
         else:
             prefix = self.prefix_has_system
         self._concat_context_list(prefix, res_context_list, loss_scale_list, system=system)
+
         history.append([query, response])
-        for i, (q, r) in enumerate(history):
-            context_list = self.prompt.copy()
+
+        for i, ((q, r), (qr, rr)) in enumerate(zip(history, history_roles)):
+            context_list = self.tool_prompt.copy() if qr == 'tool' else self.prompt.copy()
             if i < len(history) - 1:
                 context_list.append('{{RESPONSE}}')
-                context_list += self.chat_sep
+                if history[i + 1][0]:
+                    context_list += self.chat_sep
             elif r is not None:
                 # last response
                 context_list.append('{{RESPONSE}}')
@@ -686,11 +724,22 @@ class YiVLTemplate(Template):
         return res
 
 
-class GLM4VTemplate(Template):
+class GLMTemplate(Template):
+
+    def _init_template(self, tokenizer: PreTrainedTokenizerBase, *args, **kwargs) -> None:
+        res = super()._init_template(tokenizer, *args, **kwargs)
+        token_list = tokenizer.encode('')
+        self.prefix.insert(0, token_list)
+        if self.prefix_has_system is not None:
+            self.prefix_has_system.insert(0, token_list)
+        return res
+
+
+class GLM4VTemplate(GLMTemplate):
 
     def __init__(self):
-        return super().__init__('[gMASK]<sop>', ['<|user|>\n', [-100], '{{QUERY}}<|assistant|>'], [], ['<|endoftext|>'],
-                                None, ['[gMASK]<sop><|system|>\n{{SYSTEM}}'])
+        return super().__init__([], ['<|user|>\n', [-100], '{{QUERY}}<|assistant|>'], [], ['<|endoftext|>'], None,
+                                ['<|system|>\n{{SYSTEM}}'])
 
     def encode(self, example: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         from .utils import history_to_messages
@@ -735,19 +784,17 @@ register_template(
     lazy_tokenize=True)
 
 register_template(TemplateType.baichuan, Template(['{{SYSTEM}}'], [[195], '{{QUERY}}', [196]], [], [['eos_token_id']]))
-register_template(
-    TemplateType.chatglm2,
-    Template([[64790, 64792], '{{SYSTEM}}'], ['[Round {{ROUND1}}]\n\n问：{{QUERY}}\n\n答：'], ['\n\n'], [['eos_token_id']]))
 
 register_template(
-    TemplateType.chatglm_generation,
-    Template(['[gMASK]<sop>'], ['{{QUERY}}'], None, [['eos_token_id']]),
-    is_generation=True)
+    TemplateType.chatglm2,
+    GLMTemplate(['{{SYSTEM}}'], ['[Round {{ROUND1}}]\n\n问：{{QUERY}}\n\n答：'], ['\n\n'], [['eos_token_id']]))
+
+register_template(
+    TemplateType.chatglm_generation, GLMTemplate([], ['{{QUERY}}'], None, [['eos_token_id']]), is_generation=True)
 
 register_template(
     TemplateType.chatglm3,
-    Template(['[gMASK]<sop>'], ['<|user|>\n{{QUERY}}<|assistant|>\n'], [], ['<|user|>'], None,
-             ['[gMASK]<sop><|system|>\n{{SYSTEM}}']))
+    GLMTemplate([], ['<|user|>\n{{QUERY}}<|assistant|>\n'], [], ['<|user|>'], None, ['<|system|>\n{{SYSTEM}}']))
 
 register_template(
     TemplateType.deepseek,
@@ -998,6 +1045,7 @@ class InternvlTemplate(Template):
             inputs['image_flags'] = torch.ones(image_bs)
         else:
             input_ids = _remove_idx(input_ids, idx_list)
+            labels = inputs['labels']
             if labels is not None:
                 labels = _remove_idx(labels, idx_list)
 
@@ -1660,7 +1708,7 @@ _default_phi3_system = ('You are a helpful digital assistant. '
 register_template(
     TemplateType.phi3,
     Template(['<s>'], ['<|user|>\n{{QUERY}}<|end|>\n<|assistant|>\n'], ['<|end|>\n'], ['<|end|>'], _default_phi3_system,
-             '<s><|system|>\n{{SYSTEM}}<|end|>\n'))
+             ['<s><|system|>\n{{SYSTEM}}<|end|>\n']))
 
 register_template(TemplateType.atom,
                   Template(['{{SYSTEM}}'], ['<s>Human: {{QUERY}}\n</s><s>Assistant: '], ['</s>'], ['</s>']))
