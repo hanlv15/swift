@@ -31,6 +31,8 @@ class CustomModelType:
     c4ai_command_r_4bit = "c4ai-command-r-v01-4bit"
     llama_3_8b_instruct = "meta-llama-3-8B-instruct"
     llama_3_70b_instruct_gptq_int4 = "meta-llama3-70B-instruct-gptq-int4"
+    llama_3_70b_instruct_awq = "meta-llama-3-70b-instruct-awq"
+
 
 class CustomTemplateType:
     tigerbot = 'tigerbot'
@@ -174,6 +176,12 @@ def get_model_tokenizer(
                 '/home/css/models/Meta-Llama-3-70B-Instruct-GPTQ-Int4', LoRATM.llama2,
                 CustomTemplateType.llama3,
                 function_kwargs={'gptq_bits': 4})
+@register_model(CustomModelType.llama_3_70b_instruct_awq,
+                '/home/css/models/llama-3-70b-instruct-awq', LoRATM.llama2,
+                CustomTemplateType.llama3,
+                requires=['autoawq'],
+                # torch_dtype=torch.float16,
+                function_kwargs={'is_awq': True})
 def get_model_tokenizer_llama(
     model_dir: str,
     torch_dtype: Dtype,
@@ -263,9 +271,8 @@ register_template(
     Template(['<|begin_of_text|>'], [
         '<|start_header_id|>user<|end_header_id|>\n\n{{QUERY}}<|eot_id|>'
         '<|start_header_id|>assistant<|end_header_id|>\n\n'
-    ], ['<|eot_id|>'], ['<|eot_id|>'], None, [
-        '<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n{{SYSTEM}}<|eot_id|>'
-    ]))
+    ], ['<|eot_id|>'], ['<|eot_id|>'], None, 
+    ['<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n{{SYSTEM}}<|eot_id|>']))
 
 register_template(
     CustomTemplateType.gemma, Template(

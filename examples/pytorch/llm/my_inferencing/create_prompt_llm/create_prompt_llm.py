@@ -17,12 +17,13 @@ from swift.llm import (
 )
 from custom import CustomModelType
 
-model_type = CustomModelType.mixtral_moe_7b_instruct_gptq_int4
+# model_type = CustomModelType.mixtral_moe_7b_instruct_gptq_int4
+model_type = CustomModelType.llama_3_70b_instruct_awq
 llm_engine = get_vllm_engine(
     model_type, 
-    torch_dtype=torch.float16,  # 检查正确的数据类型！！！！
+    # torch_dtype=torch.float16,  # 检查正确的数据类型！！！！
     tensor_parallel_size=2,
-    # max_model_len=4096,
+    max_model_len=4096,
     # gpu_memory_utilization=0.95,
     # model_id_or_path="/home/css/models/Mixtral-8x7B-Instruct-v0.1-GPTQ-int4",
     engine_kwargs = {
@@ -43,15 +44,15 @@ generation_config = VllmGenerationConfig(
 get_resp_list = lambda request_list : inference_vllm(
     llm_engine, template, request_list, 
     generation_config=generation_config, 
-    use_tqdm=True,
+    use_tqdm=True, 
 )
 
 search_engine = "brave"
-model_name = 'mixtral'
+model_name = 'llama3'
 K = 5
 sort = False
 
-with open(f"/home/hanlv/workspace/data/machine_learning/dataset/research/misinformation_dataset/COVMIS-main/data/train_{search_engine}_search.json", "r") as f:
+with open(f"/home/hanlv/workspace/data/machine_learning/dataset/research/misinformation_dataset/COVMIS-2024/train_{search_engine}_search.json", "r") as f:
     data_search = json.load(f)
 
 # data_search = data_search[:10] + [data_search[9690]]

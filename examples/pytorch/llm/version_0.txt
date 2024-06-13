@@ -5,3 +5,5 @@ transformers 4.40.1
 peft 0.10.0
 accelerate 0.28.0 (重要)
 vllm 0.4.1
+
+dataset: COVMIS
