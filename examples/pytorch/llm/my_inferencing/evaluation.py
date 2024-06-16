@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 def cal_metric_single_llm(
         inference_prepare, inference_functions, 
-        sft_args, ckpt_dir, train_loss, save=True
+        sft_args, ckpt_dir, train_loss, save=True, use_vllm=False
 ):
     def load_metrics(file_dir, model_name, template_type):
         os.makedirs(file_dir, exist_ok=True)
@@ -55,10 +55,12 @@ def cal_metric_single_llm(
         return new_item
     
     def get_with_or_without_info(train_dataset_path: str):
-        with_or_without_info_list = ["with_info", "with_solar_info", "with_mixtral_info", "without_info"]
+        with_or_without_info_list = [
+            "with_info", "with_solar_info", "with_mixtral_info", 
+            "with_llama3_info", "without_info"]
         search_engines = ["brave"]
         for with_or_without_info in with_or_without_info_list:
-            if with_or_without_info in ["with_solar_info", "with_mixtral_info"]:
+            if with_or_without_info in ["with_solar_info", "with_mixtral_info", "with_llama3_info"]:
                 for search_engine in search_engines:
                     info_search = with_or_without_info + '/' + search_engine
                     if info_search in train_dataset_path:
@@ -149,11 +151,11 @@ def cal_metric_single_llm(
             title = f'{model_name}, sft_type={sft_type}, lr={lr}, cnt_wrong={cnt_wrong}\n'
             f.writelines(('\n').join([title] + wrong_claims))
 
-        
-    with_or_without_info = get_with_or_without_info(sft_args["custom_train_dataset_path"][0])
-    split_type = get_split_type(sft_args["custom_train_dataset_path"][0])
-    train_ratio = get_train_ratio(sft_args["custom_train_dataset_path"][0])
-    data_version = get_data_version(sft_args["custom_train_dataset_path"][0])
+    
+    with_or_without_info = get_with_or_without_info(sft_args["dataset"][0])
+    split_type = get_split_type(sft_args["dataset"][0])
+    train_ratio = get_train_ratio(sft_args["dataset"][0])
+    data_version = get_data_version(sft_args["dataset"][0])
     model_name = get_model_name(sft_args)
     template_type = sft_args["template_type"]
     sft_type = get_sft_type(sft_args)
@@ -208,7 +210,7 @@ test_data{data_version}.jsonl", 'r') as f:
     wrong_queries = []
     wrong_claims = []
     cnt_wrong = 0
-    if model_name in [] or sft_type in ["adalora", "dora"]:
+    if (not use_vllm) or model_name in [] or sft_type in ["adalora", "dora"]:
         # 使用 非vllm 推理
         model, template = inference_prepare[0]()
         inference = inference_functions[0]

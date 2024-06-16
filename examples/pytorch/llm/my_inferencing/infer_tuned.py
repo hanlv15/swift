@@ -38,9 +38,10 @@ with jsonlines.open(f"{ckpt_dir}/../logging.jsonl", 'r') as f:
 def get_engine_config_request(ckpt_dir):
     # 检查checkpoint是否为peft格式
     if os.path.exists(ckpt_dir + '/default'):
-        if not os.path.exists(ckpt_dir + '-peft'):
-            subprocess.run(["python", "../llm_export.py", "--ckpt", ckpt_dir, "--to_peft_format", "true"])
-        ckpt_dir = ckpt_dir + '-peft'
+        raise Exception("只支持peft格式！")
+        # if not os.path.exists(ckpt_dir + '-peft'):
+        #     subprocess.run(["python", "../llm_export.py", "--ckpt", ckpt_dir, "--to_peft_format", "true"])
+        # ckpt_dir = ckpt_dir + '-peft'
 
 
     lora_request = LoRARequest('default-lora', 1, ckpt_dir)
@@ -49,7 +50,7 @@ def get_engine_config_request(ckpt_dir):
     vllm_engine = get_vllm_engine(
         model_type, 
         tensor_parallel_size=1,
-        max_model_len=8192,
+        max_model_len=4096,
         enable_lora=True,
         max_loras=1, 
         max_lora_rank=8,
@@ -86,6 +87,6 @@ def get_model_template():
 evaluation.cal_metric_single_llm(
     (get_model_template, get_engine_config_request), 
     (inference, inference_vllm), 
-    sft_args, ckpt_dir, train_loss, save=True, 
+    sft_args, ckpt_dir, train_loss, save=True, use_vllm=False
 )
 

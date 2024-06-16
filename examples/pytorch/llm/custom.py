@@ -13,6 +13,9 @@ from swift.utils import get_logger
 
 logger = get_logger()
 
+_default_phi3_system = ('You are a helpful digital assistant. '
+                        'Please provide safe, ethical and accurate information to the user.')
+
 class CustomModelType:
     tigerbot_7b = 'tigerbot-7b'
     tigerbot_13b = 'tigerbot-13b'
@@ -33,6 +36,9 @@ class CustomModelType:
     llama_3_70b_instruct_gptq_int4 = "meta-llama3-70B-instruct-gptq-int4"
     llama_3_70b_instruct_awq = "meta-llama-3-70b-instruct-awq"
 
+    phi_3_mini_4k_instruct = "phi-3-mini-4k-instruct"
+    phi_3_small_8k_instruct = "phi-3-small-8k-instruct"
+    phi_3_medium_4k_instruct = "phi-3-medium-4k-instruct"
 
 class CustomTemplateType:
     tigerbot = 'tigerbot'
@@ -48,6 +54,8 @@ class CustomTemplateType:
     c4ai_command_r = "c4ai_command_r" # 用于RAG的Template
     llama3 = "_llama3"
     gemma = '_gemma'
+    phi3 = '_phi3'
+
 
 class CustomDatasetName:
     stsb_en = 'stsb-en'
@@ -135,9 +143,33 @@ def get_orca2_model_tokenizer(model_dir: str,
 @register_model(CustomModelType.merlinite_7b,
                 '/home/css/models/merlinite-7b', LoRATM.llama2,
                 CustomTemplateType.merlinite)
-@register_model(CustomModelType.c4ai_command_r_4bit,
-                '/home/css/models/c4ai-command-r-v01-4bit', LoRATM.llama2,
-                CustomTemplateType.c4ai_command_r)
+@register_model(
+    CustomModelType.phi_3_mini_4k_instruct,
+    '/home/css/models/Phi-3-mini-4k-instruct',
+    LoRATM.phi3,
+    CustomTemplateType.phi3,
+    requires=['transformers>=4.36'],
+    support_flash_attn=True,
+    support_vllm=False,
+    tags=['general'])
+@register_model(
+    CustomModelType.phi_3_small_8k_instruct,
+    '/home/css/models/Phi-3-small-8k-instruct',
+    LoRATM.phi3,
+    CustomTemplateType.phi3,
+    requires=['transformers>=4.36'],
+    support_flash_attn=True,
+    support_vllm=True,
+    tags=['general'])
+@register_model(
+    CustomModelType.phi_3_medium_4k_instruct,
+    '/home/css/models/Phi-3-medium-4k-instruct',
+    LoRATM.phi3,
+    CustomTemplateType.phi3,
+    requires=['transformers>=4.36'],
+    support_flash_attn=True,
+    support_vllm=True,
+    tags=['general'])
 def get_model_tokenizer(
     model_dir: str,
     torch_dtype: Dtype, 
@@ -153,15 +185,19 @@ def get_model_tokenizer(
     if model_config is None:
         model_config = AutoConfig.from_pretrained(model_dir, trust_remote_code=True)
     model_config.torch_dtype = torch_dtype
+    use_flash_attn = kwargs.pop('use_flash_attn', False)
+    if use_flash_attn:
+        model_config._attn_implementation = 'flash_attention_2'
     # model_config._attn_implementation = 'eager'
     logger.info(f'model_config: {model_config}')
-    tokenizer = AutoTokenizer.from_pretrained(model_dir)
+    tokenizer = AutoTokenizer.from_pretrained(model_dir, trust_remote_code=True)
     model = None
     if load_model:
         model = AutoModelForCausalLM.from_pretrained(
             model_dir,
             config=model_config,
             torch_dtype=torch_dtype,
+            trust_remote_code=True,
             **model_kwargs)
         if load_model and is_awq:
             model.is_awq = is_awq
@@ -281,6 +317,10 @@ register_template(
     ['<end_of_turn>\n'], ['<end_of_turn>'], None,
     ['<bos><start_of_turn>system\n{{SYSTEM}}<end_of_turn>\n']))
 
+register_template(
+    CustomTemplateType.phi3,
+    Template(['<s>'], ['<|user|>\n{{QUERY}}<|end|>\n<|assistant|>\n'], ['<|end|>\n'], ['<|end|>'], _default_phi3_system,
+             ['<s><|system|>\n{{SYSTEM}}<|end|>\n']))
 
 def _preprocess_stsb(dataset: HfDataset) -> HfDataset:
     prompt = """Task: Based on the given two sentences, provide a similarity score between 0.0 and 5.0.

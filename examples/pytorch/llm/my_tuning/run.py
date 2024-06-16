@@ -80,13 +80,20 @@ lrs = [value for value in lrs2 if value not in lr_del]
 #     model_name = "mixtral"
 #     subprocess.run(["bash", f"my_tuning/Meta-Llama-3-8B-Instruct/lora/qlora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
 
+# dora
+# for lr in ["2.5e-4", "5e-4"]: # "3e-5" "7e-5"
+#     data_version = "1"
+#     rank = "8"
+#     model_name = "llama3"
+#     subprocess.run(["bash", f"my_tuning/Meta-Llama-3-8B-Instruct/lora/dora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
+
 
 # lora
-for lr in ["3.7e-4", "3.9e-4", "4.7e-4", "4.3e-4", "4.1e-4", "4.4e-4", "4.6e-4", "4.8e-4", "4.9e-4"]:
-    data_version = "1"
-    rank = "2"
-    model_name = "mixtral"
-    subprocess.run(["bash", f"my_tuning/Meta-Llama-3-8B-Instruct/lora/lora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
+# for lr in ["3.5e-4"]:
+#     data_version = "1"
+#     rank = "8"
+#     model_name = "llama3"
+#     subprocess.run(["bash", f"my_tuning/Meta-Llama-3-8B-Instruct/lora/lora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
 
 # rslora
 # for lr in ["3e-4"]:
@@ -97,10 +104,11 @@ for lr in ["3.7e-4", "3.9e-4", "4.7e-4", "4.3e-4", "4.1e-4", "4.4e-4", "4.6e-4",
 
 
 
-# Mistral-7B-Instruct-v0.2
-# for sft_type in ["adalora"]:
-#     for lr in ["1e-3", "1.1e-3"]:
-#         data_version = "1"
-#         for i in [1.0]:
-#             subprocess.run(["bash", f"my_tuning/Mistral-7B-Instruct-v0.2/lora/sft.sh", "0.2", f"{i}", sft_type, lr, data_version])
 
+# Phi-3-small-8k-instruct
+# lora
+for lr in ["1e-4"]:
+    data_version = "1"
+    rank = "8"
+    model_name = "llama3"
+    subprocess.run(["bash", f"my_tuning/Phi-3-small-8k-instruct/lora/lora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])

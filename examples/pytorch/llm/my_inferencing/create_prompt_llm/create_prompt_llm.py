@@ -33,30 +33,30 @@ llm_engine = get_vllm_engine(
     }
 )
 
-# template_type = get_default_template_type(model_type)
-# template = get_template(template_type, llm_engine.hf_tokenizer)
+template_type = get_default_template_type(model_type)
+template = get_template(template_type, llm_engine.hf_tokenizer)
 
-# generation_config = VllmGenerationConfig(
-#     max_new_tokens=2048,
-#     temperature=0,
-# )
+generation_config = VllmGenerationConfig(
+    max_new_tokens=2048,
+    temperature=0,
+)
 
-# get_resp_list = lambda request_list : inference_vllm(
-#     llm_engine, template, request_list, 
-#     generation_config=generation_config, 
-#     use_tqdm=True, 
-# )
+get_resp_list = lambda request_list : inference_vllm(
+    llm_engine, template, request_list, 
+    generation_config=generation_config, 
+    use_tqdm=True, 
+)
 
-# search_engine = "brave"
-# model_name = 'llama3'
-# K = 5
-# sort = False
+search_engine = "brave"
+model_name = 'llama3'
+K = 5
+sort = False
 
-# with open(f"/home/hanlv/workspace/data/machine_learning/dataset/research/misinformation_dataset/COVMIS-2024/train_{search_engine}_search.json", "r") as f:
-#     data_search = json.load(f)
+with open(f"/home/hanlv/workspace/data/machine_learning/dataset/research/misinformation_dataset/COVMIS-2024/train_{search_engine}_search.json", "r") as f:
+    data_search = json.load(f)
 
-# # data_search = data_search[:10] + [data_search[9690]]
-# prompt_rag.update_train_search_llm(
-#     model_name, get_resp_list, search_engine, data_search,
-#     K=K, sort=sort
-# )
+# data_search = data_search[:10] + [data_search[9690]]
+prompt_rag.update_train_search_llm(
+    model_name, get_resp_list, search_engine, data_search,
+    K=K, sort=sort
+)

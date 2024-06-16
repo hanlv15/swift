@@ -303,7 +303,7 @@ def get_prompt_for_generating_prior_knowledge_by_summary(claim, claim_date, summ
     return pre + text + info
 
 
-def get_prompt_with_prior_knowledge(
+def get_prompt_with_prior_knowledge_old(
         claim, search_engine, search_results, 
         prior_knowledge, K=5, claim_date=None, sort=False, known_info=True, ids=None):
     """
@@ -339,9 +339,43 @@ def get_claim_id(claim, data_search):
         if claim.strip() in data_search[i]["claim"].strip():
             return i
 
-def save_search_llm(x, search_engine):
-    with open(f"/home/hanlv/workspace/data/machine_learning/dataset/research/misinformation_dataset/COVMIS-2024/train_{search_engine}_search_llm.json", "w") as f:
-        json.dump(x, f, indent=4)
+def get_prompt_with_prior_knowledge(
+        claim, search_engine, search_results, 
+        prior_knowledge, K=5, claim_date=None, known_info=True, ids=None):
+    """
+    task + claim(with date) + prior knowledge
+
+    sort: 对search result 按时间进行排序
+    
+    known_info: prompt是否包含已知信息
+    """
+    claim = claim.strip()
+    pre = "Below is a CLAIM and the PRIOR KNOWLEDGE associated with it. Please classify the CLAIM as TRUE or FALSE based on the PRIOR KNOWLEDGE. If the content described by the CLAIM is correct, then classify it as TRUE; if the content described by the CLAIM is incorrect, then classify it as FALSE.\n\n"
+    text = "CLAIM: " + get_claim_with_date(claim, claim_date) +'\n\n'
+
+    if search_engine == "brave":
+        if ids is None:
+            ids = slice(0, K)
+        snippet = get_brave_snippet(search_results, ids=ids)
+    else:
+        raise Exception("Select search engines in [\"brave\"].")
+
+    if known_info:
+        return pre + text + "PRIOR KNOWLEDGE:\n" + snippet + '\n' + prior_knowledge.strip()
+    else:
+        return pre + text + "PRIOR KNOWLEDGE:\n" + prior_knowledge.strip()
+
+def get_claim_id(claim, data_search):
+    """
+    非原始数据中的claim id，获取的是claim的位次编号
+    """
+    for i in range(len(data_search)):
+        if claim.strip() in data_search[i]["claim"].strip():
+            return i
+        
+# def save_search_llm(x, search_engine):
+#     with open(f"/home/hanlv/workspace/data/machine_learning/dataset/research/misinformation_dataset/COVMIS-2024/train_{search_engine}_search_llm.json", "w") as f:
+#         json.dump(x, f, indent=4)
 
 # def save_search_summary(x, search_engine):
 #     with open(f"/home/hanlv/workspace/data/machine_learning/dataset/research/misinformation_dataset/COVMIS-main/data/train_{search_engine}_search_summary.json", "w") as f:
@@ -370,23 +404,23 @@ def load_search_llm_tmp():
 #         return []
     
 def update_train_search_llm(
-        model_name, get_resp_list, search_engine, data_search, 
+        model_name, get_resp_list, search_engine, data_train, data_search, 
         K=5, sort=False, use_random=False):
     data_search_llm = load_search_llm_tmp()
 
     len_data_search_llm = len(data_search_llm)
     prompt_list = []
     for i in range(len_data_search_llm, len(data_search)):
-        item = data_search[i]
+        # item = data_search[i]
         if use_random:
             if K != 5 or sort:
                 raise Exception()
-            ids = item["random_ids"]
+            ids = data_search[i]["random_ids"]
         else:
             ids = None
         
         prompt = get_prompt_for_generating_prior_knowledge(
-            item["claim"], item["date"], 
+            data_train[i]["claim"], data_train[i]["date"], 
             search_engine, item[f"{search_engine}_search_results"], 
             model_name, K=K, sort=sort, ids=ids
         )
@@ -410,9 +444,8 @@ def update_train_search_llm(
     #     resp_list.append(resp)
 
     for i in range(len_data_search_llm, len(data_search)):
-        item = data_search[i]
         item_llm = {}
-        item_llm["claim"] = item["claim"]
+        item_llm["id"] = data_search[i]["id"]
         item_llm[f"prior_knowledge_{model_name}"] = resp_list[i - len_data_search_llm].strip()
         data_search_llm.append(item_llm)
 
