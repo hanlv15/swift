@@ -5,9 +5,11 @@ from datasets import Dataset as HfDataset
 from modelscope import AutoConfig, AutoModelForCausalLM, AutoTokenizer, MsDataset
 from torch import dtype as Dtype
 from transformers.utils.versions import require_version
+from types import MethodType
 
 from swift.llm import (LoRATM, Template, TemplateType, dataset_map, get_dataset, get_dataset_from_repo,
-                       get_model_tokenizer, get_template, print_example, register_dataset, register_model,
+                       # get_model_tokenizer, 
+                       get_template, print_example, register_dataset, register_model,
                        register_template)
 from swift.utils import get_logger
 
@@ -153,15 +155,6 @@ def get_orca2_model_tokenizer(model_dir: str,
     support_vllm=False,
     tags=['general'])
 @register_model(
-    CustomModelType.phi_3_small_8k_instruct,
-    '/home/css/models/Phi-3-small-8k-instruct',
-    LoRATM.phi3,
-    CustomTemplateType.phi3,
-    requires=['transformers>=4.36'],
-    support_flash_attn=True,
-    support_vllm=True,
-    tags=['general'])
-@register_model(
     CustomModelType.phi_3_medium_4k_instruct,
     '/home/css/models/Phi-3-medium-4k-instruct',
     LoRATM.phi3,
@@ -230,6 +223,39 @@ def get_model_tokenizer_llama(
     return get_model_tokenizer(
         model_dir, torch_dtype, model_kwargs, load_model, model_config=model_config, **kwargs)
 
+@register_model(
+    CustomModelType.phi_3_small_8k_instruct,
+    '/home/css/models/Phi-3-small-8k-instruct',
+    LoRATM.phi3_small,
+    CustomTemplateType.phi3,
+    requires=['transformers>=4.36'],
+    support_flash_attn=True,
+    support_vllm=True,
+    support_gradient_checkpointing=False,
+    tags=['general'])
+def get_model_tokenizer_phi_3_small(model_dir: str,
+                                   torch_dtype: Dtype,
+                                   model_kwargs: Dict[str, Any],
+                                   load_model: bool = True,
+                                   model_config=None,
+                                   **kwargs):
+ 
+    model, tokenizer = get_model_tokenizer(
+        model_dir, torch_dtype, model_kwargs, load_model, model_config=model_config, **kwargs)
+
+    def rotary_emb(self, query_states, key_states, **kwargs):
+        q_type = query_states.dtype
+        k_type = key_states.dtype
+        query_states, key_states = self.rotory_emb_origin(query_states, key_states, **kwargs)
+        query_states = query_states.to(q_type)
+        key_states = key_states.to(k_type)
+        return query_states, key_states
+
+    for i in range(32):
+        re = model.model.layers[i].self_attn.rotary_emb
+        re.rotory_emb_origin = re.forward
+        re.forward = MethodType(rotary_emb, re)
+    return model, tokenizer
 
 # Ref: https://github.com/TigerResearch/TigerBot/blob/main/infer.py
 register_template(

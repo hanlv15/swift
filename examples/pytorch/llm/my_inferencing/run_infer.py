@@ -1,5 +1,6 @@
 ckpt_list = [
-
+    # "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/lora-r=8/lr=7e-5-20240617-08:48:03/checkpoint-609",
+    # "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/lora-r=8/lr=9e-5-20240617-15:41:54/checkpoint-609"
 ]
 
 path = "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/dora-r=8"

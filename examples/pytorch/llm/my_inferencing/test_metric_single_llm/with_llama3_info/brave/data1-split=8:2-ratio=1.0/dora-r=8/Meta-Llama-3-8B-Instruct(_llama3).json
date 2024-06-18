@@ -3,55 +3,33 @@
         "model": "Meta-Llama-3-8B-Instruct",
         "train_test_split": "8:2",
         "train_ratio": "1.0",
-        "train_loss": 0.091994,
-        "lr": "5e-5",
+        "train_loss": 0.08407748,
+        "lr": "7e-5",
         "ACC": 0.9872898728987289,
-        "F1": 0.982742466305595,
-        "Precision": 0.9892937838993165,
-        "Recall": 0.9765954378723289
+        "F1": 0.9827817664214726,
+        "Precision": 0.988134728481993,
+        "Recall": 0.9777030741638653
     },
     {
         "model": "Meta-Llama-3-8B-Instruct",
         "train_test_split": "8:2",
         "train_ratio": "1.0",
-        "train_loss": 0.07798804,
+        "train_loss": 0.07790358,
+        "lr": "9e-5",
+        "ACC": 0.9872898728987289,
+        "F1": 0.9828013024870315,
+        "Precision": 0.98756463687582,
+        "Recall": 0.9782568923096335
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07516276,
         "lr": "1e-4",
-        "ACC": 0.986469864698647,
-        "F1": 0.9817124251764013,
-        "Precision": 0.9858828867642611,
-        "Recall": 0.9777116360391863
-    },
-    {
-        "model": "Meta-Llama-3-8B-Instruct",
-        "train_test_split": "8:2",
-        "train_ratio": "1.0",
-        "train_loss": 0.06978296,
-        "lr": "1.5e-4",
-        "ACC": 0.988519885198852,
-        "F1": 0.9844568783752781,
-        "Precision": 0.9895315529783171,
-        "Recall": 0.9796285948610723
-    },
-    {
-        "model": "Meta-Llama-3-8B-Instruct",
-        "train_test_split": "8:2",
-        "train_ratio": "1.0",
-        "train_loss": 0.06994772,
-        "lr": "2e-4",
-        "ACC": 0.986469864698647,
-        "F1": 0.981691709099098,
-        "Precision": 0.9864441724826073,
-        "Recall": 0.9771578178934182
-    },
-    {
-        "model": "Meta-Llama-3-8B-Instruct",
-        "train_test_split": "8:2",
-        "train_ratio": "1.0",
-        "train_loss": 0.07430889,
-        "lr": "3e-4",
-        "ACC": 0.986059860598606,
-        "F1": 0.9811475946507784,
-        "Precision": 0.9856031753315284,
-        "Recall": 0.9768851897581946
+        "ACC": 0.9872898728987289,
+        "F1": 0.9827817664214726,
+        "Precision": 0.988134728481993,
+        "Recall": 0.9777030741638653
     }
 ]
