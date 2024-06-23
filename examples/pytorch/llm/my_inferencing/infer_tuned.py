@@ -72,7 +72,8 @@ def get_model_template():
     model_type, template_type = sft_args["model_type"], sft_args["template_type"]
     model, tokenizer = get_model_tokenizer(
         model_type, model_kwargs={'device_map': 'auto'},
-        model_dir=sft_args["model_cache_dir"]
+        model_dir=sft_args["model_cache_dir"],
+        use_flash_attn=sft_args["use_flash_attn"]
     )
     model = Swift.from_pretrained(model, ckpt_dir, inference_mode=True)
     if sft_args["sft_type"] == 'adalora':
@@ -87,6 +88,6 @@ def get_model_template():
 evaluation.cal_metric_single_llm(
     (get_model_template, get_engine_config_request), 
     (inference, inference_vllm), 
-    sft_args, ckpt_dir, train_loss, save=True, use_vllm=False
+    sft_args, ckpt_dir, train_loss, use_vllm=False, save=True, 
 )
 

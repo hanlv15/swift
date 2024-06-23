@@ -58,7 +58,7 @@ python llm_sft.py \
     --lora_dropout_p 0.05 \
     --lora_target_modules ALL \
     --lora_dtype AUTO \
-    --gradient_checkpointing true \
+    --gradient_checkpointing false \
     --batch_size 1 \
     --weight_decay 0.1 \
     --learning_rate $learning_rate \

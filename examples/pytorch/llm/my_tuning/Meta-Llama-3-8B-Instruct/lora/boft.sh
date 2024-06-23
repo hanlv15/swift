@@ -1,20 +1,21 @@
 #!/bin/bash
 
 # 检查是否提供了足够的参数
-if [ "$#" -ne 8 ]; then
-    echo "错误：需要提供8个参数"
-    echo "用法: bash $0 <test_size> <train_ratio> <sft_type> <lora_rank> <learning_rate> <with_or_without_info> <data_version>"
+if [ "$#" -ne 9 ]; then
+    echo "错误：需要提供9个参数"
+    echo "用法: bash $0 <test_size> <train_ratio> <sft_type> <block_size> <n_butterfly_factor> <learning_rate> <with_or_without_info> <data_version> <device>"
     exit 1
 fi
 
 test_size=$1
 train_ratio=$2
 sft_type=$3
-lora_rank=$4
-learning_rate=$5 # 1e-4
-with_or_without_info=$6
-data_version=$7
-device=$8
+block_size=$4
+n_butterfly_factor=$5
+learning_rate=$6 # 1e-4
+with_or_without_info=$7
+data_version=$8
+device=$9
 
 num_epochs=1
 
@@ -28,8 +29,6 @@ if [ "$train_ratio" = "1" ] || [ -z "$train_ratio" ]; then
     train_ratio=1.0
     custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/train_data$data_version.jsonl
 fi
-
-lora_alpha=$(expr $lora_rank \* 4)
 
 max_length=8192
 
@@ -45,18 +44,17 @@ python llm_sft.py \
     --template_type _llama3 \
     --dtype AUTO \
     --add_output_dir_suffix false \
-    --output_dir output/Llama-3-8B-Instruct/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/rslora-r=$lora_rank/"$output_name" \
+    --output_dir output/Llama-3-8B-Instruct/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/$sft_type-b=$block_size-m=$n_butterfly_factor/"$output_name" \
     --dataset $custom_train_dataset_path#-1 \
     --dataset_test_ratio 0 \
     --num_train_epochs $num_epochs \
     --max_length $max_length \
     --max_new_tokens 512 \
     --check_dataset_strategy warning \
-    --lora_rank $lora_rank \
-    --lora_alpha $lora_alpha \
-    --lora_dropout_p 0.05 \
-    --lora_target_modules ALL \
-    --use_rslora true \
+    --boft_block_size $block_size \
+    --boft_n_butterfly_factor $n_butterfly_factor \
+    --boft_target_modules ALL \
+    --boft_dropout 0.1 \
     --lora_dtype AUTO \
     --gradient_checkpointing true \
     --batch_size 1 \

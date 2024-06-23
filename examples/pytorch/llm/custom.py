@@ -40,7 +40,7 @@ class CustomModelType:
 
     phi_3_mini_4k_instruct = "phi-3-mini-4k-instruct"
     phi_3_small_8k_instruct = "phi-3-small-8k-instruct"
-    phi_3_medium_4k_instruct = "phi-3-medium-4k-instruct"
+    phi_3_medium_128k_instruct = "phi-3-medium-128k-instruct"
 
 class CustomTemplateType:
     tigerbot = 'tigerbot'
@@ -155,8 +155,8 @@ def get_orca2_model_tokenizer(model_dir: str,
     support_vllm=False,
     tags=['general'])
 @register_model(
-    CustomModelType.phi_3_medium_4k_instruct,
-    '/home/css/models/Phi-3-medium-4k-instruct',
+    CustomModelType.phi_3_medium_128k_instruct,
+    '/home/css/models/Phi-3-medium-128k-instruct',
     LoRATM.phi3,
     CustomTemplateType.phi3,
     requires=['transformers>=4.36'],

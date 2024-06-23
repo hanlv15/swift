@@ -3,7 +3,7 @@
 # 检查是否提供了足够的参数
 if [ "$#" -ne 8 ]; then
     echo "错误：需要提供8个参数"
-    echo "用法: bash $0 <test_size> <train_ratio> <sft_type> <lora_rank> <learning_rate> <with_or_without_info> <data_version>"
+    echo "用法: bash $0 <test_size> <train_ratio> <sft_type> <lora_rank> <learning_rate> <with_or_without_info> <data_version> <device>"
     exit 1
 fi
 
@@ -45,7 +45,7 @@ python llm_sft.py \
     --template_type _llama3 \
     --dtype AUTO \
     --add_output_dir_suffix false \
-    --output_dir output/Llama-3-8B-Instruct/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/rslora-r=$lora_rank/"$output_name" \
+    --output_dir output/Llama-3-8B-Instruct/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/pissa-r=$lora_rank/"$output_name" \
     --dataset $custom_train_dataset_path#-1 \
     --dataset_test_ratio 0 \
     --num_train_epochs $num_epochs \
@@ -56,8 +56,8 @@ python llm_sft.py \
     --lora_alpha $lora_alpha \
     --lora_dropout_p 0.05 \
     --lora_target_modules ALL \
-    --use_rslora true \
     --lora_dtype AUTO \
+    --init_lora_weights pissa \
     --gradient_checkpointing true \
     --batch_size 1 \
     --weight_decay 0.1 \

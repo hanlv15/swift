@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # 检查是否提供了足够的参数
-if [ "$#" -ne 8 ]; then
-    echo "错误：需要提供8个参数"
+if [ "$#" -ne 7 ]; then
+    echo "错误：需要提供7个参数"
     echo "用法: bash $0 <test_size> <train_ratio> <sft_type> <lora_rank> <learning_rate> <with_or_without_info> <data_version>"
     exit 1
 fi
@@ -14,7 +14,6 @@ lora_rank=$4
 learning_rate=$5 # 1e-4
 with_or_without_info=$6
 data_version=$7
-device=$8
 
 num_epochs=1
 
@@ -29,40 +28,50 @@ if [ "$train_ratio" = "1" ] || [ -z "$train_ratio" ]; then
     custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/train_data$data_version.jsonl
 fi
 
+nproc_per_node=2
+
+gradient_accumulation_steps=$(expr 16 / $nproc_per_node)
 lora_alpha=$(expr $lora_rank \* 4)
+
 
 max_length=8192
 
-NCCL_P2P_DISABLE="1" NCCL_IB_DISABLE="1" \
 PYTHONPATH=../../.. \
-CUDA_VISIBLE_DEVICES=$device \
-python llm_sft.py \
+CUDA_VISIBLE_DEVICES=1,2 \
+PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512 \
+torchrun \
+    --nproc_per_node=$nproc_per_node \
+    --master_port 29507 \
+    llm_sft.py \
     --model_type meta-llama-3-8B-instruct \
     --model_id_or_path /home/css/models/Meta-Llama-3-8B-Instruct \
     --check_model_is_latest false \
+    --lora_lr_ratio 16.0 \
     --sft_type $sft_type \
     --tuner_backend peft \
     --template_type _llama3 \
     --dtype AUTO \
     --add_output_dir_suffix false \
-    --output_dir output/Llama-3-8B-Instruct/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/rslora-r=$lora_rank/"$output_name" \
-    --dataset $custom_train_dataset_path#-1 \
+    --output_dir output/Llama-3-8B-Instruct/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/"$sft_type"_plus-r=$lora_rank/"$output_name" \
+    --ddp_backend nccl \
+    --custom_train_dataset_path $custom_train_dataset_path \
     --dataset_test_ratio 0 \
+    --train_dataset_sample -1 \
+    --val_dataset_sample -1 \
     --num_train_epochs $num_epochs \
     --max_length $max_length \
-    --max_new_tokens 512 \
+    --max_new_tokens $max_length \
     --check_dataset_strategy warning \
     --lora_rank $lora_rank \
     --lora_alpha $lora_alpha \
     --lora_dropout_p 0.05 \
     --lora_target_modules ALL \
-    --use_rslora true \
     --lora_dtype AUTO \
     --gradient_checkpointing true \
     --batch_size 1 \
     --weight_decay 0.1 \
     --learning_rate $learning_rate \
-    --gradient_accumulation_steps 16 \
+    --gradient_accumulation_steps $gradient_accumulation_steps \
     --max_grad_norm 0.5 \
     --warmup_ratio 0.03 \
     --save_total_limit 1 \

@@ -1,20 +1,32 @@
-import run_base
+from run_base import SFTModels, run_lora, run_vera, run_dora, run_pissa, run_lora_plus, run_rslora
 
 DEVICE = "2"
 
+for lr in ["9e-5", "2e-4", "1e-4"]:
+    run_dora(SFTModels.openchat_35, lr, DEVICE)
+
 # Llama-3
+# for lr in ["9e-5", "2e-4"]:
+#     run_dora(SFTModels.llama_3_8b_instruct, lr, DEVICE)
 
-# dora
-for lr in ["1.7e-4", "8e-5", "1.4e-4", "1.6e-4"]:
-    run_base.run_llama3_8b_dora(lr=lr, device=DEVICE)
+# for lr in ["9e-5", "2e-4"]:
+#     run_lora(SFTModels.llama_3_8b_instruct, lr, DEVICE)
 
-# lora
-for lr in ["1.5e-4", "2e-4"]:
-    run_base.run_llama3_8b_lora(lr=lr, device=DEVICE)
+for lr in ["5.1e-2", "5.2e-2", "2.6e-2", "2.7e-2", "2.8e-2", "2.9e-2"]:
+    run_vera(SFTModels.llama_3_8b_instruct, lr, DEVICE)
 
-# rslora
+# for lr in ["5e-5", "1e-4"]:
+#     run_lora_plus(SFTModels.llama_3_8b_instruct, lr, DEVICE)
 
-# Phi-3-small-8k-instruct
-# lora
-# for lr in ["3.5e-4"]:
-#     run_base.run_phi3_small_lora(lr=lr, device=DEVICE)
+# for lr in ["4e-5", "3e-5"]:
+#     run_rslora(SFTModels.llama_3_8b_instruct, lr, DEVICE)
+
+# for lr in ["7.5e-5"]:
+#     run_pissa(SFTModels.llama_3_8b_instruct, lr, DEVICE)
+
+
+
+# openchat-3.5
+# for lr in ["9e-5", "2e-4"]:
+#     run_lora(SFTModels.openchat_35, lr, DEVICE)
+

@@ -283,6 +283,7 @@ def llm_sft(args: SftArguments) -> Dict[str, Union[str, Any]]:
     if args.check_model_is_latest is False:
         trainer_kwargs['check_model'] = False
 
+    training_args.full_determinism = True
     trainer = Seq2SeqTrainer(
         model=model,
         args=training_args,

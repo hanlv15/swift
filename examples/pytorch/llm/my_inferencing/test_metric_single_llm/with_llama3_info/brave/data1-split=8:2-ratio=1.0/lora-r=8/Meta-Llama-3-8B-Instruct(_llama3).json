@@ -3,44 +3,66 @@
         "model": "Meta-Llama-3-8B-Instruct",
         "train_test_split": "8:2",
         "train_ratio": "1.0",
-        "train_loss": 0.09221308,
-        "lr": "5e-5",
-        "ACC": 0.9872898728987289,
-        "F1": 0.9827817664214726,
-        "Precision": 0.988134728481993,
-        "Recall": 0.9777030741638653
-    },
-    {
-        "model": "Meta-Llama-3-8B-Instruct",
-        "train_test_split": "8:2",
-        "train_ratio": "1.0",
-        "train_loss": 0.08412942,
+        "train_loss": 0.08323586,
         "lr": "7e-5",
         "ACC": 0.988109881098811,
-        "F1": 0.983874273548916,
-        "Precision": 0.9898367979913598,
-        "Recall": 0.9782483304343124
+        "F1": 0.9838926202007325,
+        "Precision": 0.9892578035065358,
+        "Recall": 0.9788021485800806
     },
     {
         "model": "Meta-Llama-3-8B-Instruct",
         "train_test_split": "8:2",
         "train_ratio": "1.0",
-        "train_loss": 0.07933918,
+        "train_loss": 0.07906567,
         "lr": "9e-5",
-        "ACC": 0.9868798687986879,
-        "F1": 0.9822565596713208,
-        "Precision": 0.9867223420364337,
-        "Recall": 0.9779842641744099
+        "ACC": 0.9872898728987289,
+        "F1": 0.9828207630444983,
+        "Precision": 0.9870007608326993,
+        "Recall": 0.9788107104554016
     },
     {
         "model": "Meta-Llama-3-8B-Instruct",
         "train_test_split": "8:2",
         "train_ratio": "1.0",
-        "train_loss": 0.07532951,
+        "train_loss": 0.07489509,
         "lr": "1e-4",
+        "ACC": 0.988929889298893,
+        "F1": 0.9850374387806919,
+        "Precision": 0.9892365089695758,
+        "Recall": 0.9810088592878323
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07274428,
+        "lr": "1.3e-4",
+        "ACC": 0.9876998769987699,
+        "F1": 0.9833843210847675,
+        "Precision": 0.9872794295383128,
+        "Recall": 0.9796371567363933
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07242045,
+        "lr": "1.5e-4",
+        "ACC": 0.986469864698647,
+        "F1": 0.981650035417732,
+        "Precision": 0.9875853856662851,
+        "Recall": 0.9760501816018818
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.06989574,
+        "lr": "2e-4",
         "ACC": 0.9872898728987289,
-        "F1": 0.9827817664214726,
-        "Precision": 0.988134728481993,
-        "Recall": 0.9777030741638653
+        "F1": 0.9828401484558993,
+        "Precision": 0.9864430449670027,
+        "Recall": 0.9793645286011698
     }
 ]

@@ -9,12 +9,16 @@ lr_del = ["1.1e-4", "1.5e-4"]
 
 lrs = [value for value in lrs2 if value not in lr_del]
 
+class SFTModels:
+	llama_3_8b_instruct = "Meta-Llama-3-8B-Instruct"
+	openchat_35 = "openchat_3.5"
+	phi_3_medium_instruct = "Phi-3-medium-128k-instruct"
+
 # openchat 3.5
 # for sft_type in ["adalora"]:
 #     for lr in ["3.7e-4", "3.9e-4", "3.2e-4", "3.4e-4", "3.8e-4", "4e-4"]:
 #         for j in ["with_solar_info/brave"]:
 #             data_version = "1"
-
 
 #             # if j == "without_info":
 #             #     for i in test_sizes:
@@ -24,53 +28,35 @@ lrs = [value for value in lrs2 if value not in lr_del]
 #             for i in [1.0]:
 #                 subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/sft2.sh", "0.2", f"{i}", sft_type, "3", lr, j, data_version])
 
+def run_lora(sft_model, lr, device, rank="8", rag_model="llama3", data_version="1"):
+	subprocess.run(
+		["bash", f"my_tuning/{sft_model}/lora/lora.sh",
+			"0.2", "1.0", "lora", rank, lr, f"with_{rag_model}_info/brave", data_version, device])
 
-# dora
-# for lr in []:
-#     data_version = "1"
-#     rank = "2"
-#     model_name = "mixtral"
-#     subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/dora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
+def run_pissa(sft_model, lr, device, rank="8", rag_model="llama3", data_version="1"):
+	subprocess.run(
+		["bash", f"my_tuning/{sft_model}/lora/pissa.sh", 
+   			"0.2", "1.0", "lora", rank, lr, f"with_{rag_model}_info/brave", data_version, device])
 
+def run_vera(sft_model, lr, device, vera_rank="256", rag_model="llama3", data_version="1"):
+	subprocess.run(
+		["bash", f"my_tuning/{sft_model}/lora/vera.sh", 
+   			"0.2", "1.0", "vera", vera_rank, lr, f"with_{rag_model}_info/brave", data_version, device])
 
-# lora+ OK
-# for lr in ["1.7e-5"]:
-#     data_version = "1"
-#     rank = "2"
-#     model_name = "mixtral"
-#     subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/lora_plus.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
+def run_rslora(sft_model, lr, device, rank="8", rag_model="llama3", data_version="1"):
+	subprocess.run(
+		["bash", f"my_tuning/{sft_model}/lora/rslora.sh", 
+   			"0.2", "1.0", "lora", rank, lr, f"with_{rag_model}_info/brave", data_version, device])
 
-# adalora OK
-# for lr in ["1e-4"]:
-#     data_version = "1"
-#     rank = "2"
-#     model_name = "mixtral"
-#     subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/adalora.sh", "0.2", "1.0", "adalora", rank, lr, f"with_{model_name}_info/brave", data_version])
+def run_lora_plus(sft_model, lr, device, rank="8", rag_model="llama3", data_version="1"):
+	subprocess.run(
+		["bash", f"my_tuning/{sft_model}/lora/lora_plus.sh",
+			"0.2", "1.0", "lora", rank, lr, f"with_{rag_model}_info/brave", data_version, device])
 
-
-# lora OK
-# for rank in ["2"]:
-#     for test_size in ["0.95", "0.98", "0.99"]:
-#         for lr in ["1e-4", "2e-4"]:
-#             data_version = "1"
-#             model_name = "mixtral"
-#             # test_size = 0.2
-#             subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/lora.sh", test_size, "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
-
-# rslora OK
-# for lr in ["1e-4"]:
-#     data_version = "1"
-#     rank = "2"
-#     model_name = "mixtral"
-#     subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/rslora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
-
-# qlora OK
-# for lr in ["1e-4"]:
-#     data_version = "1"
-#     rank = "2"
-#     model_name = "mixtral"
-#     subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/qlora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
-
+def run_dora(sft_model, lr, device, rank="8", rag_model="llama3", data_version="1"):
+	subprocess.run(
+		["bash", f"my_tuning/{sft_model}/lora/dora.sh", 
+   			"0.2", "1.0", "lora", rank, lr, f"with_{rag_model}_info/brave", data_version, device])
 
 # Llama-3
 # qlora
@@ -80,33 +66,8 @@ lrs = [value for value in lrs2 if value not in lr_del]
 #     model_name = "mixtral"
 #     subprocess.run(["bash", f"my_tuning/Meta-Llama-3-8B-Instruct/lora/qlora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
 
-
-def run_llama3_8b_dora(lr, device, rank="8", model_name="llama3", data_version="1"):
-	subprocess.run(
-		["bash", f"my_tuning/Meta-Llama-3-8B-Instruct/lora/dora.sh", 
-   			"0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version, device])
-
-
-# lora
-def run_llama3_8b_lora(lr, device, rank="8", model_name="llama3", data_version="1"):
-	subprocess.run(
-		["bash", f"my_tuning/Meta-Llama-3-8B-Instruct/lora/lora.sh",
-			"0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version, device])
-
-# rslora
-# for lr in ["3e-4"]:
-#     data_version = "1"
-#     rank = "2"
-#     model_name = "mixtral"
-#     subprocess.run(["bash", f"my_tuning/Meta-Llama-3-8B-Instruct/lora/rslora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
-
-
-
-
-# Phi-3-small-8k-instruct
-# lora
-def run_phi3_small_lora(lr, device, rank="8", model_name="llama3", data_version="1"):
-	subprocess.run(
-		["bash", f"my_tuning/Phi-3-small-8k-instruct/lora/lora.sh", 
-   			"0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version, device])
-
+# boft
+# def run_llama3_8b_boft(lr, device, block_size="8", n_butterfly_factor="2", model_name="llama3", data_version="1"):
+# 	subprocess.run(
+# 		["bash", f"my_tuning/Meta-Llama-3-8B-Instruct/lora/boft.sh", 
+#    			"0.2", "1.0", "boft", block_size, n_butterfly_factor, lr, f"with_{model_name}_info/brave", data_version, device])

@@ -111,6 +111,9 @@ def cal_metric_single_llm(
                 sft_type += "_plus"
             elif quantization_bit != 0:
                 sft_type = f"qlora-int{quantization_bit}"
+            elif sft_args.get("init_lora_weights") == "pissa":
+                sft_type = "pissa"
+
         return sft_type
     
     def get_label(response):

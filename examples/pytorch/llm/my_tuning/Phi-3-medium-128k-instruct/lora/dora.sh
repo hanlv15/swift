@@ -35,17 +35,17 @@ max_length=8192
 
 NCCL_P2P_DISABLE="1" NCCL_IB_DISABLE="1" \
 PYTHONPATH=../../.. \
-CUDA_VISIBLE_DEVICES=$device \
+CUDA_VISIBLE_DEVICES=0,1 \
 python llm_sft.py \
-    --model_type meta-llama-3-8B-instruct \
-    --model_id_or_path /home/css/models/Meta-Llama-3-8B-Instruct \
+    --model_type phi-3-medium-128k-instruct \
+    --model_id_or_path /home/css/models/Phi-3-medium-128k-instruct \
     --check_model_is_latest false \
     --sft_type $sft_type \
     --tuner_backend peft \
-    --template_type _llama3 \
+    --template_type _phi3 \
     --dtype AUTO \
     --add_output_dir_suffix false \
-    --output_dir output/Llama-3-8B-Instruct/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/rslora-r=$lora_rank/"$output_name" \
+    --output_dir output/Phi-3-medium-128k-instruct/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/dora-r=$lora_rank/"$output_name" \
     --dataset $custom_train_dataset_path#-1 \
     --dataset_test_ratio 0 \
     --num_train_epochs $num_epochs \
@@ -56,7 +56,7 @@ python llm_sft.py \
     --lora_alpha $lora_alpha \
     --lora_dropout_p 0.05 \
     --lora_target_modules ALL \
-    --use_rslora true \
+    --use_dora true \
     --lora_dtype AUTO \
     --gradient_checkpointing true \
     --batch_size 1 \

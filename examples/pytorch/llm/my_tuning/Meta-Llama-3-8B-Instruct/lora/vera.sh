@@ -3,14 +3,14 @@
 # 检查是否提供了足够的参数
 if [ "$#" -ne 8 ]; then
     echo "错误：需要提供8个参数"
-    echo "用法: bash $0 <test_size> <train_ratio> <sft_type> <lora_rank> <learning_rate> <with_or_without_info> <data_version>"
+    echo "用法: bash $0 <test_size> <train_ratio> <sft_type> <vera_rank> <learning_rate> <with_or_without_info> <data_version> <device>"
     exit 1
 fi
 
 test_size=$1
 train_ratio=$2
 sft_type=$3
-lora_rank=$4
+vera_rank=$4
 learning_rate=$5 # 1e-4
 with_or_without_info=$6
 data_version=$7
@@ -29,8 +29,6 @@ if [ "$train_ratio" = "1" ] || [ -z "$train_ratio" ]; then
     custom_train_dataset_path=my_data/$with_or_without_info/train_test_split/$split_type/train_data$data_version.jsonl
 fi
 
-lora_alpha=$(expr $lora_rank \* 4)
-
 max_length=8192
 
 NCCL_P2P_DISABLE="1" NCCL_IB_DISABLE="1" \
@@ -45,18 +43,16 @@ python llm_sft.py \
     --template_type _llama3 \
     --dtype AUTO \
     --add_output_dir_suffix false \
-    --output_dir output/Llama-3-8B-Instruct/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/rslora-r=$lora_rank/"$output_name" \
+    --output_dir output/Llama-3-8B-Instruct/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/$sft_type-r=$vera_rank/"$output_name" \
     --dataset $custom_train_dataset_path#-1 \
     --dataset_test_ratio 0 \
     --num_train_epochs $num_epochs \
     --max_length $max_length \
     --max_new_tokens 512 \
     --check_dataset_strategy warning \
-    --lora_rank $lora_rank \
-    --lora_alpha $lora_alpha \
-    --lora_dropout_p 0.05 \
-    --lora_target_modules ALL \
-    --use_rslora true \
+    --vera_rank $vera_rank \
+    --vera_target_modules ALL \
+    --vera_dropout 0.05 \
     --lora_dtype AUTO \
     --gradient_checkpointing true \
     --batch_size 1 \

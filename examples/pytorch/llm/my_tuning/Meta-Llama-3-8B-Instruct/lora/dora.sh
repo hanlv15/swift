@@ -2,8 +2,8 @@
 
 # 检查是否提供了足够的参数
 if [ "$#" -ne 8 ]; then
-    echo "错误：需要提供7个参数"
-    echo "用法: bash $0 <test_size> <train_ratio> <sft_type> <lora_rank> <learning_rate> <with_or_without_info> <data_version>"
+    echo "错误：需要提供8个参数"
+    echo "用法: bash $0 <test_size> <train_ratio> <sft_type> <lora_rank> <learning_rate> <with_or_without_info> <data_version> "
     exit 1
 fi
 
