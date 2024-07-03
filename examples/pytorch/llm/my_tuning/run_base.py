@@ -12,7 +12,7 @@ lrs = [value for value in lrs2 if value not in lr_del]
 class SFTModels:
 	llama_3_8b_instruct = "Meta-Llama-3-8B-Instruct"
 	openchat_35 = "openchat_3.5"
-	phi_3_medium_instruct = "Phi-3-medium-128k-instruct"
+	phi_3_medium_instruct = "Phi-3-medium-4k-instruct"
 
 # openchat 3.5
 # for sft_type in ["adalora"]:

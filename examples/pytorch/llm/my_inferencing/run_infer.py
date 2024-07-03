@@ -1,21 +1,11 @@
 ckpt_list = [
-    # "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/vera-r=256/lr=4.6e-2-20240623-01:48:03/checkpoint-609",
-    # "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/vera-r=256/lr=4.7e-2-20240623-03:45:41/checkpoint-609",
-    # "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/rslora-r=8/lr=1.8e-4-20240623-05:43:01/checkpoint-609",
-    # "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/rslora-r=8/lr=1.9e-4-20240623-08:09:44/checkpoint-609",
-
-    # "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/vera-r=256/lr=4.8e-2-20240623-01:48:10/checkpoint-609",
-    # "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/vera-r=256/lr=4.9e-2-20240623-03:44:50/checkpoint-609",
-    # "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/rslora-r=8/lr=1.6e-4-20240623-05:41:25/checkpoint-609",
-    # "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/rslora-r=8/lr=2.1e-4-20240623-08:07:37/checkpoint-609",
-
-    "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/vera-r=256/lr=2.5e-2-20240623-01:48:18/checkpoint-609",
-    "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/vera-r=256/lr=5.3e-2-20240623-03:45:28/checkpoint-609",
-    "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/rslora-r=8/lr=4e-5-20240623-05:42:51/checkpoint-609",
-    "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/rslora-r=8/lr=3e-5-20240623-08:10:13/checkpoint-609"
+    # "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/pissa-r=8/lr=8e-5-20240703-17:56:39/checkpoint-609",
+    # "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/pissa-r=8/lr=1.2e-4-20240703-17:56:43/checkpoint-609",
+    "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/pissa-r=8/lr=1.3e-4-20240703-17:56:46/checkpoint-609",
 ]
-
-path = "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/rslora-r=8"
+# path = "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Phi-3-medium-4k-instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/lora-r=8"
+# path = "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/pissa-r=8"
+path = "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/vera-r=256"
 
 path = ""
 

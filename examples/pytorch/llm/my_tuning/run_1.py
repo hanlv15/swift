@@ -3,23 +3,23 @@ from run_base import SFTModels, run_lora, run_vera, run_dora, run_pissa, run_lor
 DEVICE = "1"
 
 # Llama-3
-for lr in ["1e-4", "1.3e-4"]:
-    run_dora(SFTModels.llama_3_8b_instruct, lr, DEVICE)
+# for lr in ["1.2e-4", "1.4e-4"]:
+#     run_dora(SFTModels.llama_3_8b_instruct, lr, DEVICE)
 
-for lr in ["1e-4", "1.3e-4"]:
-    run_lora(SFTModels.llama_3_8b_instruct, lr, DEVICE)
+# for lr in ["1.1e-4", "1.2e-4"]:
+#     run_lora(SFTModels.llama_3_8b_instruct, lr, DEVICE)
 
-# for lr in ["4.8e-2", "4.9e-2"]:
+# for lr in ["4.6e-2", "4.7e-2"]:
 #     run_vera(SFTModels.llama_3_8b_instruct, lr, DEVICE)
 
 # for lr in ["1e-5", "3e-5"]:
 #     run_lora_plus(SFTModels.llama_3_8b_instruct, lr, DEVICE)
 
-for lr in ["9e-5", "1e-4", "1.1e-4", "1.3e-4"]:
-    run_rslora(SFTModels.llama_3_8b_instruct, lr, DEVICE)
+# for lr in ["7e-5", "8e-5", "9e-5", "1e-4"]:
+#     run_rslora(SFTModels.llama_3_8b_instruct, lr, DEVICE)
 
-# for lr in ["6.9e-5"]:
-#     run_pissa(SFTModels.llama_3_8b_instruct, lr, DEVICE)
+for lr in ["1.2e-4",]:
+    run_pissa(SFTModels.llama_3_8b_instruct, lr, DEVICE)
 
 
 
