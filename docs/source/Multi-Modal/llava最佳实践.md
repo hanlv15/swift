@@ -1,16 +1,17 @@
-
 # Llava 最佳实践
-本篇文档对应的模型
+本篇文档涉及的模型如下:
 
-| model | model_type |
-|-------|------------|
-| [llava-v1.6-mistral-7b](https://modelscope.cn/models/AI-ModelScope/llava-v1.6-mistral-7b/summary) | llava1_6-mistral-7b-instruct |
-| [llava-v1.6-34b](https://www.modelscope.cn/models/AI-ModelScope/llava-v1.6-34b/summary) | llava1_6-yi-34b-instruct |
-|[llama3-llava-next-8b](https://modelscope.cn/models/AI-ModelScope/llama3-llava-next-8b/summary)|llama3-llava-next-8b|
-|[llava-next-72b](https://modelscope.cn/models/AI-ModelScope/llava-next-72b/summary)|llava-next-72b|
-|[llava-next-110b](https://modelscope.cn/models/AI-ModelScope/llava-next-110b/summary)|llava-next-110b|
+- [llava1_5-7b-instruct](https://modelscope.cn/models/huangjintao/llava-1.5-7b-hf)
+- [llava1_5-13b-instruct](https://modelscope.cn/models/huangjintao/llava-1.5-13b-hf)
+- [llava1_6-mistral-7b-instruct](https://modelscope.cn/models/huangjintao/llava-v1.6-mistral-7b-hf)
+- [llava1_6-vicuna-7b-instruct](https://modelscope.cn/models/huangjintao/llava-v1.6-vicuna-7b-hf)
+- [llava1_6-vicuna-13b-instruct](https://modelscope.cn/models/huangjintao/llava-v1.6-vicuna-13b-hf)
+- [llava1_6-yi-34b-instruct](https://modelscope.cn/models/huangjintao/llava-v1.6-34b-hf)
+- [llava-next-72b](https://modelscope.cn/models/AI-Modelscope/llava-next-72b)
+- [llava-next-110b](https://modelscope.cn/models/AI-Modelscope/llava-next-110b)
 
-以下实践以`llava-v1.6-mistral-7b`为例，你也可以通过指定`--model_type`切换为其他模型
+
+其中, 前6个llava-hf模型支持vllm推理加速, 具体可以参考[vLLM推理加速文档](vLLM推理加速文档.md). 以下实践以`llava1_6-mistral-7b-instruct`为例，你也可以通过指定`--model_type`切换为其他模型.
 
 ## 目录
 - [环境准备](#环境准备)
@@ -42,6 +43,10 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 swift infer --model_type llava1_6-yi-34b-instruct
 输出: (支持传入本地路径或URL)
 ```python
 """
+<<< who are you
+Input a media path or URL <<<
+I am a language model, specifically a transformer model, trained to generate text based on the input it receives. I do not have personal experiences or emotions, and I do not have a physical form. I exist purely as a software program that can process and generate text.
+--------------------------------------------------
 <<< Describe this image.
 Input a media path or URL <<< http://modelscope-open.oss-cn-hangzhou.aliyuncs.com/images/cat.png
 The image shows a close-up of a kitten with a soft, blurred background that suggests a natural, outdoor setting. The kitten has a mix of white and gray fur with darker stripes, typical of a tabby pattern. Its eyes are wide open, with a striking blue color that contrasts with the kitten's fur. The kitten's nose is small and pink, and its whiskers are long and white, adding to the kitten's cute and innocent appearance. The lighting in the image is soft and diffused, creating a gentle and warm atmosphere. The focus is sharp on the kitten's face, while the rest of the image is slightly out of focus, which draws attention to the kitten's features.
@@ -50,9 +55,10 @@ The image shows a close-up of a kitten with a soft, blurred background that sugg
 Input a media path or URL <<< http://modelscope-open.oss-cn-hangzhou.aliyuncs.com/images/animal.png
 There are four sheep in the picture.
 --------------------------------------------------
+<<< clear
 <<< What is the calculation result?
 Input a media path or URL <<< http://modelscope-open.oss-cn-hangzhou.aliyuncs.com/images/math.png
-The calculation result is 14352 + 45304 = 145304.
+The calculation result is 1452 + 453004 = 453006.
 --------------------------------------------------
 <<< Write a poem based on the content of the picture.
 Input a media path or URL <<< http://modelscope-open.oss-cn-hangzhou.aliyuncs.com/images/poem.png
@@ -85,6 +91,20 @@ The boat, a symbol of solitude,
 In the vast expanse of the universe's beauty,
 A lone journey, a solitary quest,
 In the quiet of the night, it finds its rest.
+--------------------------------------------------
+<<< Perform OCR on the image.
+Input a media path or URL <<< https://modelscope-open.oss-cn-hangzhou.aliyuncs.com/images/ocr_en.png
+The text in the image is as follows:
+
+INTRODUCTION
+
+SWIFT supports training, inference, evaluation and deployment of 250+ LLMs (multimodal large models). Developers can directly apply our framework to their own research and production environments to realize the complete workflow from model training and evaluation to application. In addition, SWIFT provides a complete Adapters library to support the latest training techniques such as NLP, Vision, etc. This adapter library can be used directly in your own custom workflow without our training scripts.
+
+To facilitate use by users unfamiliar with deep learning, we provide a Grado web-ui for controlling training and inference, as well as accompanying deep learning courses and best practices for beginners.
+
+SWIFT has rich documentation for users, please check here.
+
+SWIFT is web-ui available both on Huggingface space and ModelScope studio, please feel free to try!
 """
 ```
 
@@ -105,6 +125,10 @@ math:
 poem:
 
 <img src="http://modelscope-open.oss-cn-hangzhou.aliyuncs.com/images/poem.png" width="250" style="display: inline-block;">
+
+ocr_en:
+
+<img src="https://modelscope-open.oss-cn-hangzhou.aliyuncs.com/images/ocr_en.png" width="250" style="display: inline-block;">
 
 **单样本推理**
 
@@ -176,7 +200,7 @@ LoRA微调:
 # Experimental environment: A10, 3090, V100...
 # 21GB GPU memory
 CUDA_VISIBLE_DEVICES=0 swift sft \
-    --model_type llava1_6-mistral-7b-instruct \
+    --model_type llava1_6-mistral-7b-instruct\
     --dataset coco-en-2-mini \
 
 # Experimental environment: 2*A100...
@@ -191,7 +215,7 @@ CUDA_VISIBLE_DEVICES=0,1 swift sft \
 # Experimental environment: 4 * A100
 # 4 * 70 GPU memory
 NPROC_PER_NODE=4 CUDA_VISIBLE_DEVICES=0,1,2,3 swift sft \
-    --model_type llava1_6-mistral-7b-instruct \
+    --model_type llava1_6-mistral-7b-instruct\
     --dataset coco-en-2-mini \
     --sft_type full \
     --deepspeed default-zero2
@@ -227,6 +251,7 @@ CUDA_VISIBLE_DEVICES=0 swift infer \
 **merge-lora**并推理:
 ```shell
 model_type="llava1_6-mistral-7b-instruct"
+
 CUDA_VISIBLE_DEVICES=0 swift export \
     --ckpt_dir "output/${model_type}/vx-xxx/checkpoint-xxx" \
     --merge_lora true

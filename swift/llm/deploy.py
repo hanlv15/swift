@@ -94,7 +94,7 @@ def is_generation_template(template_type: str) -> bool:
 @torch.inference_mode()
 async def inference_vllm_async(request: Union[ChatCompletionRequest, CompletionRequest], raw_request: Request):
     global llm_engine, template, _args
-    from .utils import VllmGenerationConfig
+    from .utils import VllmGenerationConfig, vllm_context
     error_msg = await check_model(request)
     if error_msg is not None:
         return create_error_response(HTTPStatus.BAD_REQUEST, error_msg)
@@ -124,8 +124,8 @@ async def inference_vllm_async(request: Union[ChatCompletionRequest, CompletionR
                 example['tools'] = [tool]
             elif request.tool_choice == 'auto':
                 example['tools'] = request.tools
-
-        input_ids = template.encode(example)[0]['input_ids']
+        with vllm_context(template):
+            inputs = template.encode(example)[0]
         request_id = f'chatcmpl-{random_uuid()}'
         _request['messages'] = request.messages
     else:
@@ -135,13 +135,15 @@ async def inference_vllm_async(request: Union[ChatCompletionRequest, CompletionR
                 f'the model `{llm_engine.model_type}` is in chat format. '
                 'Please use the `chat.completions` API.')
         example = {'query': request.prompt}
-        input_ids = template.encode(example)[0]['input_ids']
+        with vllm_context(template):
+            inputs = template.encode(example)[0]
         request_id = f'cmpl-{random_uuid()}'
         _request['prompt'] = request.prompt
 
     request_info = {'request_id': request_id}
     request_info.update(_request)
 
+    input_ids = inputs['input_ids']
     error_msg = await check_length(request, input_ids)
     if error_msg is not None:
         return create_error_response(HTTPStatus.BAD_REQUEST, error_msg)
@@ -157,7 +159,7 @@ async def inference_vllm_async(request: Union[ChatCompletionRequest, CompletionR
             kwargs[key] = new_value
 
     generation_config = VllmGenerationConfig(**kwargs)
-    if generation_config.use_beam_search is True and request.stream is True:
+    if generation_config.use_beam_search and request.stream:
         error_msg = 'Streaming generation does not support beam search.'
         raise ValueError(error_msg)
     tokenizer = template.tokenizer
@@ -185,9 +187,11 @@ async def inference_vllm_async(request: Union[ChatCompletionRequest, CompletionR
         generate_kwargs['lora_request'] = lora_request
 
     import vllm
+    from .utils.vllm_utils import _prepare_request_inputs
+
     if version.parse(vllm.__version__) >= version.parse('0.4.3'):
-        result_generator = llm_engine.generate({'prompt_token_ids': input_ids}, generation_config, request_id,
-                                               **generate_kwargs)
+        request_inputs = _prepare_request_inputs(inputs)
+        result_generator = llm_engine.generate(request_inputs, generation_config, request_id, **generate_kwargs)
     else:
         result_generator = llm_engine.generate(None, generation_config, request_id, input_ids, **generate_kwargs)
 
@@ -338,7 +342,7 @@ async def inference_pt_async(request: Union[ChatCompletionRequest, CompletionReq
             elif request.tool_choice == 'auto':
                 example['tools'] = request.tools
 
-        input_ids = template.encode(example)[0]['input_ids']
+        inputs = template.encode(example)[0]
         request_id = f'chatcmpl-{random_uuid()}'
         _request['messages'] = messages
     else:
@@ -355,16 +359,18 @@ async def inference_pt_async(request: Union[ChatCompletionRequest, CompletionReq
         example = {'query': prompt}
         if len(images) > 0:
             example['images'] = images
-        input_ids = template.encode(example)[0]['input_ids']
+        inputs = template.encode(example)[0]
         request_id = f'cmpl-{random_uuid()}'
         _request['prompt'] = prompt
 
     request_info = {'request_id': request_id}
     request_info.update(_request)
 
-    error_msg = await check_length(request, input_ids)
-    if error_msg is not None:
-        return create_error_response(HTTPStatus.BAD_REQUEST, error_msg)
+    if 'input_ids' in inputs:
+        input_ids = inputs['input_ids']
+        error_msg = await check_length(request, input_ids)
+        if error_msg is not None:
+            return create_error_response(HTTPStatus.BAD_REQUEST, error_msg)
 
     kwargs = {'max_new_tokens': request.max_tokens}
     # not use: 'n', 'best_of', 'frequency_penalty', 'presence_penalty'
@@ -391,16 +397,17 @@ async def inference_pt_async(request: Union[ChatCompletionRequest, CompletionReq
 
     created_time = int(time.time())
     adapter_kwargs = {}
-    if request.model != _args.model_type:
-        adapter_names = None
-        for lora_req in _args.lora_request_list:
-            if lora_req.lora_name == request.model:
-                adapter_names = request.model
-                break
-        assert adapter_names is not None
-        adapter_kwargs['adapter_names'] = [adapter_names]
-    elif isinstance(model, PeftModel):
-        adapter_kwargs['adapter_names'] = ['-']
+    if _args.lora_request_list is not None:
+        if request.model != _args.model_type:
+            adapter_names = None
+            for lora_req in _args.lora_request_list:
+                if lora_req.lora_name == request.model:
+                    adapter_names = request.model
+                    break
+            assert adapter_names is not None
+            adapter_kwargs['adapter_names'] = [adapter_names]
+        elif isinstance(model, PeftModel):
+            adapter_kwargs['adapter_names'] = ['-']  # use base model
 
     async def _generate_full():
         generation_info = {}
@@ -510,6 +517,8 @@ async def inference_pt_async(request: Union[ChatCompletionRequest, CompletionReq
 async def create_chat_completion(request: ChatCompletionRequest, raw_request: Request) -> ChatCompletionResponse:
     global _args
     assert _args is not None
+    if request.stop is None:
+        request.stop = []
     if _args.infer_backend == 'vllm':
         return await inference_vllm_async(request, raw_request)
     else:
@@ -520,6 +529,8 @@ async def create_chat_completion(request: ChatCompletionRequest, raw_request: Re
 async def create_completion(request: CompletionRequest, raw_request: Request) -> CompletionResponse:
     global _args
     assert _args is not None
+    if request.stop is None:
+        request.stop = []
     if _args.infer_backend == 'vllm':
         return await inference_vllm_async(request, raw_request)
     else:

@@ -1,6 +1,7 @@
 import asyncio
 import inspect
 import os
+from contextlib import contextmanager
 from copy import deepcopy
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 
@@ -11,11 +12,12 @@ from packaging import version
 from torch import dtype as Dtype
 from tqdm import tqdm
 from transformers import PreTrainedTokenizerBase
+from transformers.utils.versions import require_version
 from vllm import AsyncEngineArgs, AsyncLLMEngine, EngineArgs, LLMEngine, SamplingParams
 
 from swift.utils import get_logger
 from .argument import InferArguments
-from .model import get_model_tokenizer
+from .model import MODEL_MAPPING, get_model_tokenizer
 from .template import Template, get_template
 
 try:
@@ -24,6 +26,15 @@ except ImportError:
     pass
 
 logger = get_logger()
+
+
+@contextmanager
+def vllm_context(self: Template):
+    assert isinstance(self.model,
+                      (AsyncLLMEngine, LLMEngine)), 'Please pass `model=vllm_engine` when calling get_template.'
+    self._is_vllm = True
+    yield
+    self._is_vllm = False
 
 
 def get_vllm_engine(
@@ -39,9 +50,13 @@ def get_vllm_engine(
         enforce_eager: bool = False,
         engine_kwargs: Optional[Dict[str, Any]] = None,
         use_async: bool = False,
+        # lora
         enable_lora: bool = False,
         max_loras: int = 1,
         max_lora_rank: int = 16,
+        # multimodal
+        image_input_shape: Optional[str] = None,
+        image_feature_size: Optional[int] = None,
         **kwargs) -> LLMEngine:
     model_dir = kwargs.pop('model_dir', None)  # compat with swift<1.7
     tokenizer = get_model_tokenizer(
@@ -75,6 +90,13 @@ def get_vllm_engine(
     else:
         assert not enable_lora, 'The current version of VLLM does not support `enable_lora`. Please upgrade VLLM.'
 
+    vllm_config = MODEL_MAPPING[model_type].get('vllm_config') or {}
+    if len(vllm_config) > 0:
+        require_version('vllm>=0.5')
+        if image_input_shape is not None:
+            vllm_config['image_input_shape'] = image_input_shape
+        if image_feature_size is not None:
+            vllm_config['image_feature_size'] = image_feature_size
     engine_args = engine_args_cls(
         model=model_dir,
         trust_remote_code=True,
@@ -85,6 +107,7 @@ def get_vllm_engine(
         disable_log_stats=disable_log_stats,
         disable_custom_all_reduce=disable_custom_all_reduce,
         enforce_eager=enforce_eager,
+        **vllm_config,
         **engine_kwargs)
     try:
         from vllm.model_executor.parallel_utils.parallel_state import destroy_model_parallel
@@ -102,6 +125,8 @@ def get_vllm_engine(
         _engine = llm_engine.engine
     else:
         _engine = llm_engine
+    llm_engine.dtype = _engine.model_config.dtype  # compat with pt
+    llm_engine.vllm_config = vllm_config
     # compatible with vllm==0.3.*
     if version.parse(vllm.__version__) >= version.parse('0.3'):
         assert isinstance(_engine.tokenizer.tokenizer, PreTrainedTokenizerBase)
@@ -206,6 +231,103 @@ class VllmGenerationConfig(SamplingParams):
             super().__setattr__(key, value)
 
 
+def _patch_vllm_multimodal(image_sizes: torch.Tensor) -> None:
+    from vllm.multimodal import MultiModalPlugin
+
+    if hasattr(MultiModalPlugin, '_old_map_input'):
+        map_input = MultiModalPlugin._old_map_input
+    else:
+        map_input = getattr(MultiModalPlugin, 'map_input', None)
+        if map_input is None:
+            map_input = MultiModalPlugin.process_input
+
+    def new_map_input(*args, **kwargs):
+        res = map_input(*args, **kwargs)
+        res['image_sizes'] = image_sizes
+        return res
+
+    MultiModalPlugin.map_input = new_map_input
+    MultiModalPlugin.process_input = new_map_input
+    MultiModalPlugin._old_map_input = map_input
+
+
+def _prepare_request_inputs(inputs: Dict[str, Any]) -> Dict[str, Any]:
+    input_ids = inputs['input_ids']
+    request_inputs = {'prompt_token_ids': input_ids}
+    if 'pixel_values' in inputs:
+        from vllm.multimodal.image import ImagePixelData
+        request_inputs['multi_modal_data'] = ImagePixelData(inputs['pixel_values'])
+    if 'image_sizes' in inputs:
+        _patch_vllm_multimodal(inputs['image_sizes'])
+    return request_inputs
+
+
+def _add_vllm_request(llm_engine: LLMEngine, inputs: Dict[str, Any], *, request_id: str,
+                      generation_config: VllmGenerationConfig, **kwargs) -> None:
+    if version.parse(vllm.__version__) >= version.parse('0.4.3'):
+        request_inputs = _prepare_request_inputs(inputs)
+        llm_engine.add_request(request_id, request_inputs, generation_config, **kwargs)
+    else:
+        input_ids = inputs['input_ids']
+        llm_engine.add_request(request_id, None, generation_config, input_ids, **kwargs)
+
+
+def _prepare_vllm_request(llm_engine: LLMEngine,
+                          template: Template,
+                          request_list: List[Dict[str, Any]],
+                          *,
+                          generation_config: VllmGenerationConfig,
+                          lora_request: Optional['LoRARequest'] = None,
+                          use_tqdm: bool = False,
+                          **kwargs) -> Tuple[List[Optional[Dict[str, Any]]], List[Tuple[bool, int]]]:
+    tokenizer = template.tokenizer
+    if tokenizer.eos_token is not None and tokenizer.eos_token not in generation_config.stop:
+        generation_config.stop.append(tokenizer.eos_token)
+    if isinstance(template.suffix[-1], str) and template.suffix[-1] not in generation_config.stop:
+        generation_config.stop.append(template.suffix[-1])
+    if isinstance(template.suffix[-1], list):
+        token_str = tokenizer.decode(template.suffix[-1])
+        if token_str not in generation_config.stop:
+            generation_config.stop.append(token_str)
+
+    parameters = inspect.signature(llm_engine.add_request).parameters
+    add_request_kwargs = {}
+    if 'lora_request' in parameters:
+        add_request_kwargs['lora_request'] = lora_request
+    else:
+        assert lora_request is None, (
+            'The current version of VLLM does not support `lora_request`. Please upgrade VLLM.')
+
+    resp_list: List[Optional[Dict[str, Any]]] = [None] * len(request_list)
+    agent_state = []
+    for i, request in enumerate(tqdm(request_list, dynamic_ncols=True, disable=not use_tqdm)):
+        history = request.get('history', None)
+        if history is None:
+            history = []
+
+        # agent support
+        is_observation = history[-1][-1].endswith('Observation:') if history and history[-1][-1] else False
+        act_length = None
+        if is_observation:
+            history[-1][-1] = history[-1][-1] + request['query']
+            act_length = len(history[-1][-1])
+            request['query'] = None
+        agent_state.append((is_observation, act_length))
+
+        request['history'] = history
+        with vllm_context(template):
+            inputs = template.encode(request)[0]
+        truncation_strategy = kwargs.pop('truncation_strategy', 'delete')
+        if len(inputs) == 0 and truncation_strategy == 'delete':
+            # input_ids exceeds `max_length`. Please increase the value of `max_length`.
+            resp_list[i] = {'response': '', 'history': history}
+            continue
+
+        _add_vllm_request(
+            llm_engine, inputs, request_id=str(i), generation_config=generation_config, **add_request_kwargs)
+    return resp_list, agent_state
+
+
 @torch.inference_mode()
 def inference_stream_vllm(llm_engine: LLMEngine,
                           template: Template,
@@ -227,55 +349,18 @@ def inference_stream_vllm(llm_engine: LLMEngine,
     assert isinstance(generation_config, VllmGenerationConfig)
     request_list = deepcopy(request_list)
     generation_config = deepcopy(generation_config)
-    if generation_config.use_beam_search is True:
+    resp_list, agent_state = _prepare_vllm_request(
+        llm_engine,
+        template,
+        request_list,
+        generation_config=generation_config,
+        lora_request=lora_request,
+        use_tqdm=use_tqdm,
+        **kwargs)
+
+    if generation_config.use_beam_search:
         error_msg = 'Streaming generation does not support beam search.'
         raise ValueError(error_msg)
-
-    tokenizer = template.tokenizer
-    if tokenizer.eos_token is not None and tokenizer.eos_token not in generation_config.stop:
-        generation_config.stop.append(tokenizer.eos_token)
-    if isinstance(template.suffix[-1], str) and template.suffix[-1] not in generation_config.stop:
-        generation_config.stop.append(template.suffix[-1])
-    if isinstance(template.suffix[-1], list):
-        token_str = tokenizer.decode(template.suffix[-1])
-        if token_str not in generation_config.stop:
-            generation_config.stop.append(token_str)
-
-    parameters = inspect.signature(llm_engine.add_request).parameters
-    add_request_kwargs = {}
-    if 'lora_request' in parameters:
-        add_request_kwargs['lora_request'] = lora_request
-    else:
-        assert lora_request is None, (
-            'The current version of VLLM does not support `lora_request`. Please upgrade VLLM.')
-    request_temp = []
-    resp_list: List[Optional[Dict[str, Any]]] = [None] * len(request_list)
-    for i, request in enumerate(request_list):
-        history = request.get('history', None)
-        if history is None:
-            history = []
-
-        # agent support
-        is_observation = history[-1][-1].endswith('Observation:') if history and history[-1][-1] else False
-        act_length = None
-        if is_observation:
-            history[-1][-1] = history[-1][-1] + request['query']
-            act_length = len(history[-1][-1])
-            request['query'] = None
-        request_temp.append((is_observation, act_length))
-
-        request['history'] = history
-        inputs = template.encode(request)[0]
-        truncation_strategy = kwargs.pop('truncation_strategy', 'delete')
-        if len(inputs) == 0 and truncation_strategy == 'delete':
-            # input_ids exceeds `max_length`. Please increase the value of `max_length`.
-            resp_list[i] = {'response': '', 'history': history}
-            continue
-        input_ids = inputs['input_ids']
-        if version.parse(vllm.__version__) >= version.parse('0.4.3'):
-            llm_engine.add_request(str(i), {'prompt_token_ids': input_ids}, generation_config, **add_request_kwargs)
-        else:
-            llm_engine.add_request(str(i), None, generation_config, input_ids, **add_request_kwargs)
 
     print_idx_list = [[0] for _ in range(len(request_list))]
     prog_bar = tqdm(total=len(request_list), dynamic_ncols=True, disable=not use_tqdm)
@@ -289,12 +374,12 @@ def inference_stream_vllm(llm_engine: LLMEngine,
                 generate_ids, output.finished, print_idx=print_idx_list[i])
             query = request['query']
             history = request['history']
-            if resp_list[i] is None and not request_temp[i][0]:
+            if resp_list[i] is None and not agent_state[i][0]:
                 history.append(None)
-            if not request_temp[i][0]:
+            if not agent_state[i][0]:
                 history[-1] = [query, safe_response]
             else:
-                history[-1][-1] = history[-1][-1][:request_temp[i][1]] + safe_response
+                history[-1][-1] = history[-1][-1][:agent_state[i][1]] + safe_response
             resp_list[i] = {'response': safe_response, 'history': history}
             if output.finished:
                 prog_bar.update()
@@ -326,49 +411,17 @@ def inference_vllm(llm_engine: LLMEngine,
     assert isinstance(generation_config, VllmGenerationConfig)
     request_list = deepcopy(request_list)
     generation_config = deepcopy(generation_config)
+    resp_list, agent_state = _prepare_vllm_request(
+        llm_engine,
+        template,
+        request_list,
+        generation_config=generation_config,
+        lora_request=lora_request,
+        use_tqdm=use_tqdm,
+        **kwargs)
 
     tokenizer = template.tokenizer
-    if tokenizer.eos_token is not None and tokenizer.eos_token not in generation_config.stop:
-        generation_config.stop.append(tokenizer.eos_token)
-    if isinstance(template.suffix[-1], str) and template.suffix[-1] not in generation_config.stop:
-        generation_config.stop.append(template.suffix[-1])
-    if isinstance(template.suffix[-1], list):
-        token_str = tokenizer.decode(template.suffix[-1])
-        if token_str not in generation_config.stop:
-            generation_config.stop.append(token_str)
-
-    parameters = inspect.signature(llm_engine.add_request).parameters
-    add_request_kwargs = {}
-    if 'lora_request' in parameters:
-        add_request_kwargs['lora_request'] = lora_request
-    else:
-        assert lora_request is None, (
-            'The current version of VLLM does not support `lora_request`. Please upgrade VLLM.')
-
-    resp_list: List[Optional[Dict[str, Any]]] = [None] * len(request_list)
-    for i, request in enumerate(request_list):
-        history = request.get('history', None)
-        if history is None:
-            history = []
-
-        is_observation = history[-1][-1].endswith('Observation:') if history and history[-1][-1] else False
-        if is_observation:
-            history[-1][-1] = history[-1][-1] + request['query']
-            request['query'] = None
-        request['history'] = history
-        inputs = template.encode(request)[0]
-        truncation_strategy = kwargs.pop('truncation_strategy', 'delete')
-        if len(inputs) == 0 and truncation_strategy == 'delete':
-            # input_ids exceeds `max_length`. Please increase the value of `max_length`.
-            resp_list[i] = {'response': '', 'history': history}
-            continue
-        input_ids = inputs['input_ids']
-        if version.parse(vllm.__version__) >= version.parse('0.4.3'):
-            llm_engine.add_request(str(i), {'prompt_token_ids': input_ids}, generation_config, **add_request_kwargs)
-        else:
-            llm_engine.add_request(str(i), None, generation_config, input_ids, **add_request_kwargs)
-
-    if use_tqdm is True:
+    if use_tqdm:
         assert verbose is False
     prog_bar = tqdm(total=len(request_list), dynamic_ncols=True, disable=not use_tqdm)
     outputs = []
@@ -386,7 +439,7 @@ def inference_vllm(llm_engine: LLMEngine,
         response = template.generate_ids_to_response(generate_ids)
         query = request['query']
         history = request['history']
-        if not is_observation:
+        if not agent_state[i][0]:
             history.append([query, response])
         else:
             history[-1][-1] = history[-1][-1] + response
@@ -420,7 +473,9 @@ def prepare_vllm_engine_template(args: InferArguments, use_async: bool = False) 
         model_id_or_path=model_id_or_path,
         enable_lora=args.vllm_enable_lora,
         max_loras=min(len(args.lora_modules), 1),
-        max_lora_rank=args.vllm_max_lora_rank)
+        max_lora_rank=args.vllm_max_lora_rank,
+        image_input_shape=args.image_input_shape,
+        image_feature_size=args.image_feature_size)
     tokenizer = llm_engine.hf_tokenizer
     if use_async:
         model_config = asyncio.run(llm_engine.get_model_config())
@@ -447,6 +502,7 @@ def prepare_vllm_engine_template(args: InferArguments, use_async: bool = False) 
         args.system,
         args.max_length,
         args.truncation_strategy,
+        model=llm_engine,
         tools_prompt=args.tools_prompt)
     args.system = template.default_system
     logger.info(f'system: {args.system}')

@@ -11,13 +11,50 @@ from .template import History
 PreprocessFunc = Callable[[HfDataset], HfDataset]
 
 
-def parse_medias(d, media_key=None):
+def _reduce_columns(cls: type) -> type:
+    # Remove unnecessary columns from the output dataset.
+    if getattr(cls, '_patching', False):
+        return cls
+
+    call_func = cls.__call__
+    preprocess = cls.preprocess
+    cls._patching = True
+
+    def new_call_func(self, dataset: HfDataset) -> HfDataset:
+        self.column_state = set()
+        dataset = call_func(self, dataset)
+        for k in dataset.features.keys():
+            if k not in self.column_state:
+                dataset = dataset.remove_columns([k])
+        return dataset
+
+    def new_preprocess(self, row: Dict[str, Any]) -> Dict[str, Any]:
+        row = preprocess(self, row)
+        for k, v in row.items():
+            if k == 'query_role':
+                if k not in self.column_state and v and v != 'user':
+                    self.column_state.add(k)
+            elif k == 'history_roles':
+                if k not in self.column_state and v and any(_v[0] != 'user' or _v[1] != 'assistant' for _v in v):
+                    self.column_state.add(k)
+            else:
+                if v:
+                    self.column_state.add(k)
+        return row
+
+    cls.__call__ = new_call_func
+    cls.preprocess = new_preprocess
+
+    return cls
+
+
+def parse_medias(d: Dict[str, Any], media_key=None):
     if isinstance(media_key, str):
         if media_key in d:
             medias = d[media_key]
         else:
             medias = None
-    elif media_key:
+    elif media_key:  # function
         medias = media_key(d)
     else:
         medias = None
@@ -41,14 +78,14 @@ class MediaMixin:
             return None
         return self.media_replacer.media_keys[self.media_type]
 
-    def parse_medias(self, d):
+    def parse_medias(self, d: Dict[str, Any]):
         return parse_medias(d, self.media_key)
 
     @property
     def empty_row(self):
         empty_row = {
-            'query': '',
-            'response': '',
+            'query': None,
+            'response': None,
             'tools': None,
             'system': None,
             'history': None,
@@ -90,6 +127,7 @@ class SwiftPreprocessor:
         return dataset
 
 
+@_reduce_columns
 class AlpacaPreprocessor(MediaMixin, RowPreprocessMixin):
 
     def __init__(self, concat_inst_inp: Optional[Callable[[str, str], str]] = None, **kwargs):
@@ -125,7 +163,8 @@ class AlpacaPreprocessor(MediaMixin, RowPreprocessMixin):
         return row
 
     def __call__(self, dataset: HfDataset) -> HfDataset:
-        dataset = dataset.map(self.preprocess, load_from_cache_file=False).filter(lambda row: row.get('response'))
+        dataset = dataset.map(
+            self.preprocess, load_from_cache_file=False).filter(lambda row: row.get('response') is not None)
         if self.media_type and isinstance(self.media_key, str) and self.media_key != self.media_name:
             dataset = dataset.rename_columns({self.media_key: self.media_name})
         return dataset
@@ -137,6 +176,7 @@ def _default_repair_conversations(s: Union[str, Any]) -> Any:
     return s
 
 
+@_reduce_columns
 class ConversationsPreprocessor(MediaMixin, RowPreprocessMixin):
 
     def __init__(self,
@@ -197,7 +237,7 @@ class ConversationsPreprocessor(MediaMixin, RowPreprocessMixin):
             response = conversations[-1][self.value_key]
             system = sys
             history = h
-            tools = d.get('tools', [])
+            tools = d.get('tools') or []
             row = {'system': system, 'history': history, 'history_roles': hr}
             row.update({
                 'query': query,
@@ -218,7 +258,8 @@ class ConversationsPreprocessor(MediaMixin, RowPreprocessMixin):
                 return self.empty_row
 
     def __call__(self, dataset: HfDataset) -> HfDataset:
-        dataset = dataset.map(self.preprocess, load_from_cache_file=False).filter(lambda row: row.get('response'))
+        dataset = dataset.map(
+            self.preprocess, load_from_cache_file=False).filter(lambda row: row.get('response') is not None)
         if self.media_type and isinstance(self.media_key, str) and self.media_key != self.media_name:
             dataset = dataset.rename_columns({self.media_key: self.media_name})
         return dataset

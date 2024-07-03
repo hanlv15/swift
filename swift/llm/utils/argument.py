@@ -1,5 +1,4 @@
 # Copyright (c) Alibaba, Inc. and its affiliates.
-import datetime as dt
 import inspect
 import math
 import os
@@ -30,7 +29,7 @@ from .dataset import (DATASET_MAPPING, _dataset_name_exists, get_dataset, parse_
 from .model import (MODEL_MAPPING, dtype_mapping, get_additional_saved_files, get_default_lora_target_modules,
                     get_default_template_type)
 from .template import TEMPLATE_MAPPING
-from .utils import is_vllm_available
+from .utils import is_quant_model, is_vllm_available
 
 logger = get_logger()
 
@@ -55,6 +54,12 @@ class ArgumentsBase:
                 res.append(cls._check_path(k, v, check_exist_path_set))
             value = res
         return value
+
+    @staticmethod
+    def _is_multimodal(model_type: str) -> bool:
+        model_info = MODEL_MAPPING[model_type]
+        tags = model_info.get('tags') or []
+        return 'multi-modal' in tags
 
     def handle_path(self: Union['SftArguments', 'InferArguments']) -> None:
         check_exist_path = ['ckpt_dir', 'resume_from_checkpoint', 'custom_register_path']
@@ -615,7 +620,7 @@ class SftArguments(ArgumentsBase):
     acc_strategy: Literal['token', 'sentence'] = 'token'
     save_on_each_node: bool = True
     evaluation_strategy: Literal['steps', 'epoch', 'no'] = 'steps'
-    save_strategy: Literal['steps', 'epoch', 'no'] = 'steps'
+    save_strategy: Literal['steps', 'epoch', 'no', None] = None
     save_safetensors: bool = True
     gpu_memory_fraction: Optional[float] = None
     include_num_input_tokens_seen: Optional[bool] = False
@@ -675,15 +680,15 @@ class SftArguments(ArgumentsBase):
         with open(sft_args_path, 'r', encoding='utf-8') as f:
             sft_args = json.load(f)
         imported_keys = [
-            'model_type', 'model_revision', 'quantization_bit', 'dtype', 'bnb_4bit_comp_dtype', 'bnb_4bit_quant_type',
-            'bnb_4bit_use_double_quant', 'model_id_or_path'
+            'model_type', 'model_revision', 'quant_method', 'quantization_bit', 'dtype', 'bnb_4bit_comp_dtype',
+            'bnb_4bit_quant_type', 'bnb_4bit_use_double_quant', 'model_id_or_path'
         ]
 
         for key in imported_keys:
             value = getattr(self, key)
             if key in {'dtype', 'bnb_4bit_comp_dtype'} and value != 'AUTO':
                 continue
-            if key in {'model_type', 'model_revision', 'model_id_or_path'} and value is not None:
+            if key in {'model_type', 'model_revision', 'model_id_or_path', 'quant_method'} and value is not None:
                 continue
             setattr(self, key, sft_args.get(key))
 
@@ -775,6 +780,7 @@ class SftArguments(ArgumentsBase):
         self.set_model_type()
         self.check_flash_attn()
         self.handle_generation_config()
+        self.is_multimodal = self._is_multimodal(self.model_type)
 
         self.lora_use_embedding = False
         self.lora_use_all = False
@@ -820,8 +826,9 @@ class SftArguments(ArgumentsBase):
                 'lora does not support `freeze_parameters`, please set `--sft_type full`')
             assert len(self.additional_trainable_parameters) == 0, (
                 'lora does not support `additional_trainable_parameters`, please set `--sft_type full`')
-            if 'int4' in self.model_type or 'int8' in self.model_type or 'awq' in self.model_type:
-                assert self.quantization_bit == 0, 'int4, int8 or awq models do not need to be quantized again.'
+            if is_quant_model(self.model_type):
+                assert self.quantization_bit == 0, (
+                    f'{self.model_type} is already a quantized model and does not need to be quantized again.')
             if self.learning_rate is None:
                 self.learning_rate = 1e-4
             if self.save_only_model is None:
@@ -849,6 +856,8 @@ class SftArguments(ArgumentsBase):
 
         if self.save_steps is None:
             self.save_steps = self.eval_steps
+        if self.save_strategy is None:
+            self.save_strategy = self.evaluation_strategy
 
         # compatibility
         if self.quantization_bit > 0 and self.quant_method is None:
@@ -1026,7 +1035,7 @@ class SftArguments(ArgumentsBase):
         self.training_args = training_args
 
     def _handle_pai_compat(self) -> None:
-        assert is_pai_training_job() is True
+        assert is_pai_training_job()
         logger.info('Handle pai compat...')
         pai_tensorboard_dir = get_pai_tensorboard_dir()
         if self.logging_dir is None and pai_tensorboard_dir is not None:
@@ -1075,7 +1084,8 @@ class InferArguments(ArgumentsBase):
     model_name: List[str] = field(default_factory=lambda: [None, None], metadata={'help': "e.g. ['小黄', 'Xiao Huang']"})
     model_author: List[str] = field(
         default_factory=lambda: [None, None], metadata={'help': "e.g. ['魔搭', 'ModelScope']"})
-    quant_method: Literal['bnb', 'hqq', 'eetq'] = None
+    # 'awq', 'gptq', 'aqlm' are used for inference on pre-quantized models.
+    quant_method: Literal['bnb', 'hqq', 'eetq', 'awq', 'gptq', 'aqlm'] = None
     quantization_bit: Literal[0, 1, 2, 3, 4, 8] = 0  # hqq: 1,2,3,4,8. bnb: 4,8
     hqq_axis: Literal[0, 1] = 0
     hqq_dynamic_config_path: Optional[str] = None
@@ -1119,6 +1129,8 @@ class InferArguments(ArgumentsBase):
     vllm_enable_lora: bool = False
     vllm_max_lora_rank: int = 16
     lora_modules: List[str] = field(default_factory=list)
+    image_input_shape: Optional[str] = None
+    image_feature_size: Optional[int] = None
 
     # compatibility. (Deprecated)
     self_cognition_sample: int = 0
@@ -1155,6 +1167,7 @@ class InferArguments(ArgumentsBase):
         self.set_model_type()
         self.check_flash_attn()
         self.handle_generation_config()
+        self.is_multimodal = self._is_multimodal(self.model_type)
 
         self.torch_dtype, _, _ = self.select_dtype()
         self.prepare_template()
@@ -1199,7 +1212,7 @@ class InferArguments(ArgumentsBase):
         self.lora_request_list = None
         if self.infer_backend == 'AUTO':
             self.infer_backend = 'pt'
-            if is_vllm_available() and support_vllm:
+            if is_vllm_available() and support_vllm and not self.is_multimodal:
                 if ((self.sft_type == 'full' or self.sft_type == 'lora' and self.merge_lora)
                         and self.quantization_bit == 0):
                     self.infer_backend = 'vllm'
@@ -1211,14 +1224,13 @@ class InferArguments(ArgumentsBase):
             if not support_vllm:
                 logger.warning(f'vllm not support `{self.model_type}`')
             if self.sft_type == 'lora' and not self.vllm_enable_lora:
-                assert self.merge_lora is True, ('To use VLLM, you need to provide the complete weight parameters. '
-                                                 'Please set `--merge_lora true`.')
+                assert self.merge_lora, ('To use VLLM, you need to provide the complete weight parameters. '
+                                         'Please set `--merge_lora true`.')
         if (self.infer_backend == 'vllm' and self.vllm_enable_lora
                 or self.infer_backend == 'pt' and isinstance(self, DeployArguments) and self.sft_type == 'lora'):
             assert self.ckpt_dir is not None
             self.lora_modules.append(f'default-lora={self.ckpt_dir}')
             self.lora_request_list = _parse_lora_modules(self.lora_modules, self.infer_backend == 'vllm')
-            logger.info(f'args.lora_request_list: {self.lora_request_list}')
 
         template_info = TEMPLATE_MAPPING[self.template_type]
         if self.num_beams != 1:
@@ -1236,7 +1248,7 @@ class InferArguments(ArgumentsBase):
         with open(sft_args_path, 'r', encoding='utf-8') as f:
             sft_args = json.load(f)
         imported_keys = [
-            'model_type', 'model_revision', 'sft_type', 'template_type', 'system', 'quantization_bit',
+            'model_type', 'model_revision', 'sft_type', 'template_type', 'system', 'quant_method', 'quantization_bit',
             'bnb_4bit_comp_dtype', 'bnb_4bit_quant_type', 'bnb_4bit_use_double_quant', 'rope_scaling'
         ]
         if self.load_dataset_config:
@@ -1248,7 +1260,7 @@ class InferArguments(ArgumentsBase):
             value = getattr(self, key)
             if key in {'dataset', 'val_dataset'} and len(value) > 0:
                 continue
-            if key in {'dataset_test_ratio', 'system'} and value is not None:
+            if key in {'dataset_test_ratio', 'system', 'quant_method'} and value is not None:
                 continue
             setattr(self, key, sft_args.get(key))
 
@@ -1297,26 +1309,25 @@ class DeployArguments(InferArguments):
 
     def __post_init__(self):
         super().__post_init__()
-        model_info = MODEL_MAPPING[self.model_type]
-        tags = model_info.get('tags', [])
-        self.is_multimodal = 'multi-modal' in tags
 
 
 @dataclass
 class EvalArguments(InferArguments):
 
-    eval_dataset: List[str] = field(
-        default_factory=lambda: ['ceval', 'gsm8k', 'arc'],
-        metadata={'help': f"dataset choices: {['arc', 'gsm8k', 'mmlu', 'cmmlu', 'ceval', 'bbh', 'general_qa']}"})
+    eval_dataset: List[str] = field(default_factory=list)
     eval_few_shot: Optional[int] = None
-    eval_limit: Optional[int] = None
+    eval_limit: Optional[str] = None
 
-    name: str = field(default_factory=lambda: dt.datetime.now().strftime('%Y%m%d-%H%M%S'))
+    name: str = ''
     eval_url: Optional[str] = None
     eval_token: str = 'EMPTY'
     eval_is_chat_model: Optional[bool] = None
     custom_eval_config: Optional[str] = None  # path
     eval_use_cache: bool = False
+    eval_output_dir: str = 'eval_outputs'
+    eval_backend: Literal['Native', 'OpenCompass'] = 'OpenCompass'
+    eval_batch_size: int = 8
+    deploy_timeout: int = 60
 
     def __post_init__(self):
         super().__post_init__()
@@ -1379,22 +1390,24 @@ class ExportArguments(InferArguments):
 
     def __post_init__(self):
         if self.merge_device_map is None:
-            self.merge_device_map = 'cpu' if self.quant_bits != 0 else 'auto'
+            self.merge_device_map = 'cpu' if self.quant_bits > 0 else 'auto'
         if self.quant_bits > 0 and self.dtype == 'AUTO':
             self.dtype = 'fp16'
             logger.info(f'Setting args.dtype: {self.dtype}')
         super().__post_init__()
-        if len(self.dataset) == 0 and self.quant_bits > 0:
-            self.dataset = ['alpaca-zh#10000', 'alpaca-en#10000']
-            logger.info(f'Setting args.dataset: {self.dataset}')
-        if self.quant_output_dir is None:
-            if self.ckpt_dir is None:
-                self.quant_output_dir = f'{self.model_type}-{self.quant_method}-int{self.quant_bits}'
-            else:
-                ckpt_dir, ckpt_name = os.path.split(self.ckpt_dir)
-                self.quant_output_dir = os.path.join(ckpt_dir, f'{ckpt_name}-{self.quant_method}-int{self.quant_bits}')
-            logger.info(f'Setting args.quant_output_dir: {self.quant_output_dir}')
-        assert not os.path.exists(self.quant_output_dir), f'args.quant_output_dir: {self.quant_output_dir}'
+        if self.quant_bits > 0:
+            if len(self.dataset) == 0:
+                self.dataset = ['alpaca-zh#10000', 'alpaca-en#10000']
+                logger.info(f'Setting args.dataset: {self.dataset}')
+            if self.quant_output_dir is None:
+                if self.ckpt_dir is None:
+                    self.quant_output_dir = f'{self.model_type}-{self.quant_method}-int{self.quant_bits}'
+                else:
+                    ckpt_dir, ckpt_name = os.path.split(self.ckpt_dir)
+                    self.quant_output_dir = os.path.join(ckpt_dir,
+                                                         f'{ckpt_name}-{self.quant_method}-int{self.quant_bits}')
+                logger.info(f'Setting args.quant_output_dir: {self.quant_output_dir}')
+            assert not os.path.exists(self.quant_output_dir), f'args.quant_output_dir: {self.quant_output_dir}'
 
 
 @dataclass
@@ -1445,6 +1458,9 @@ class RLHFArguments(SftArguments):
             'cpo': 'trl.trainer.cpo_config.CPOConfig',
             'dpo': 'trl.trainer.dpo_config.DPOConfig'
         }
+        import trl
+        if version.parse(trl.__version__) <= version.parse('0.9.4'):
+            CONFIG_MAPPING['simpo'] = 'trl.trainer.dpo_config.DPOConfig'
 
         if self.rlhf_type in CONFIG_MAPPING:
             config_path = CONFIG_MAPPING[self.rlhf_type]
