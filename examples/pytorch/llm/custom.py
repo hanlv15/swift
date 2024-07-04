@@ -26,7 +26,7 @@ class CustomModelType:
     orca2_7b = "orca-2-13b"
     openchat_35 = "openchat_3.5"
     fusechat_7b = "fusechat-7b-varm"
-    mistral_7b_instruct = "mistral-7b-instruct-v0.2"
+    mistral_7b_instruct_v3 = "mistral-7b-instruct-v0.3"
     neural_chat_7b = "neural-chat-7b-v3"
     solar_instruct_10_7b = "solar-10.7b-instruct"
     mixtral_moe_7b_instruct_gptq_int4 = "mixtral-8x7B-instruct-v0.1-gptq-int4"
@@ -119,8 +119,8 @@ def get_orca2_model_tokenizer(model_dir: str,
 @register_model(CustomModelType.fusechat_7b,
                 '/home/css/models/FuseChat-7B-VaRM', LoRATM.llama2,
                 CustomTemplateType.openchat_35)
-@register_model(CustomModelType.mistral_7b_instruct,
-                '/home/css/models/Mistral-7B-Instruct-v0.2', LoRATM.llama2,
+@register_model(CustomModelType.mistral_7b_instruct_v3,
+                '/home/css/models/Mistral-7B-Instruct-v0.3', LoRATM.llama2,
                 CustomTemplateType.llama)
 @register_model(CustomModelType.neural_chat_7b,
                 '/home/css/models/neural-chat-7b-v3-3', LoRATM.llama2,

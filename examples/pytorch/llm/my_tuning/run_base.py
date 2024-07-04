@@ -13,7 +13,8 @@ class SFTModels:
 	llama_3_8b_instruct = "Meta-Llama-3-8B-Instruct"
 	openchat_35 = "openchat_3.5"
 	phi_3_medium_instruct = "Phi-3-medium-4k-instruct"
-
+	mistral_7b_instruct_v3 = "Mistral-7B-Instruct-v0.3"
+	
 # openchat 3.5
 # for sft_type in ["adalora"]:
 #     for lr in ["3.7e-4", "3.9e-4", "3.2e-4", "3.4e-4", "3.8e-4", "4e-4"]:
