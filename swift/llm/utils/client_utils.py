@@ -14,7 +14,7 @@ from requests.exceptions import HTTPError
 
 from .protocol import (ChatCompletionResponse, ChatCompletionStreamResponse, CompletionResponse,
                        CompletionStreamResponse, ModelList, XRequestConfig)
-from .template import History
+from .template import TEMPLATE_MAPPING, History
 from .utils import Messages, history_to_messages
 
 
@@ -137,6 +137,32 @@ def decode_base64(*,
     return res
 
 
+def compat_openai(messages: Messages, images: List[str], template_type: str) -> None:
+    infer_media_type = TEMPLATE_MAPPING[template_type].get('infer_media_type', 'interleave')
+    for message in messages:
+        content = message['content']
+        if isinstance(content, list):
+            text = ''
+            for line in content:
+                _type = line['type']
+                value = line[_type]
+                if _type == 'text':
+                    text += value
+                elif _type == 'image_url':
+                    value = value['url']
+                    if value.startswith('data:'):
+                        match_ = re.match(r'data:(.+?);base64,(.+)', value)
+                        assert match_ is not None
+                        value = match_.group(2)
+                    if infer_media_type == 'interleave':
+                        text += f'<img>{value}</img>'
+                    else:
+                        images.append(value)
+                else:
+                    raise ValueError(f'line: {line}')
+            message['content'] = text
+
+
 def _pre_inference_client(model_type: str,
                           query: str,
                           history: Optional[History] = None,
@@ -169,7 +195,7 @@ def _pre_inference_client(model_type: str,
         url = f'http://{host}:{port}/v1'
     url = url.rstrip('/')
     if is_chat_request:
-        messages = history_to_messages(history, query, system)
+        messages = history_to_messages(history, query, system, kwargs.get('roles'))
         if is_multimodal:
             messages = convert_to_base64(messages=messages)['messages']
             images = convert_to_base64(images=images)['images']
