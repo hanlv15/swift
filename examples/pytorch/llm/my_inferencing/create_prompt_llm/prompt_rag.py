@@ -199,8 +199,8 @@ def get_prompt_for_generating_prior_knowledge(
     claim = claim.strip()
 
     if model_name == "solar":
-        # pre = "Below is some INFORMATION searched online and a CLAIM. These pieces of INFORMATION are relevant to the CLAIM. This CLAIM and all INFORMATION include their respective publication dates and contents. To classify the CLAIM more accurately (if the content described by the CLAIM is correct, it will be classified as TRUE; if the content described by the CLAIM is incorrect, it will be classified as FALSE), please first expand on the given INFORMATION and provide a detailed summary of it. Then analyze, reason, and provide reasonable evidence to judge the correctness of the CLAIM based on the available information and your knowledge, and finally generate prior knowledge that helps classify the CLAIM.\n\n"
-        pre = "Below is some INFORMATION searched online and a CLAIM. These pieces of INFORMATION are relevant to the CLAIM. This CLAIM and all INFORMATION include their respective publication dates and contents. To classify the CLAIM more accurately (if the content described by the CLAIM is correct, it will be classified as TRUE; if the content described by the CLAIM is incorrect, it will be classified as FALSE), please first provide a clear summary of the given INFORMATION, and provide reasonable evidence to judge the correctness of the CLAIM based on the available information and your knowledge.\n\n"
+        pre = "Below is some INFORMATION searched online and a CLAIM. These pieces of INFORMATION are relevant to the CLAIM. This CLAIM and all INFORMATION include their respective publication dates and contents. To classify the CLAIM more accurately (if the content described by the CLAIM is correct, it will be classified as TRUE; if the content described by the CLAIM is incorrect, it will be classified as FALSE), please first expand on the given INFORMATION and provide a detailed summary of it. Then analyze, reason, and provide reasonable evidence to judge the correctness of the CLAIM based on the available information and your knowledge, and finally generate prior knowledge that helps classify the CLAIM.\n\n"
+        # pre = "Below is some INFORMATION searched online and a CLAIM. These pieces of INFORMATION are relevant to the CLAIM. This CLAIM and all INFORMATION include their respective publication dates and contents. To classify the CLAIM more accurately (if the content described by the CLAIM is correct, it will be classified as TRUE; if the content described by the CLAIM is incorrect, it will be classified as FALSE), please first provide a clear summary of the given INFORMATION, and provide reasonable evidence to judge the correctness of the CLAIM based on the available information and your knowledge.\n\n"
     elif model_name == "mixtral":
         # pre = "Below is a CLAIM and some INFORMATION searched online. These pieces of INFORMATION are relevant to the CLAIM. This CLAIM and all INFORMATION include their respective publication dates and contents. To classify the CLAIM more accurately (if the content described by the CLAIM is correct, it will be classified as TRUE; if the content described by the CLAIM is incorrect, it will be classified as FALSE), please first provide a detailed summary of the given INFORMATION and restate the CLAIM. Then reason, and provide reasonable evidence to judge the correctness of the CLAIM based on the available information and your knowledge. In reasoning, it is necessary to consider the sequential relationship between the date of publication of the CLAIM and the date of publication of the INFORMATION.\n\n"
         pre = "Below is some INFORMATION searched online and a CLAIM. These pieces of INFORMATION are relevant to the CLAIM. This CLAIM and all INFORMATION include their respective publication dates and contents. To classify the CLAIM more accurately (if the content described by the CLAIM is correct, it will be classified as TRUE; if the content described by the CLAIM is incorrect, it will be classified as FALSE), please first provide a clear summary of the given INFORMATION, and provide reasonable evidence to judge the correctness of the CLAIM based on the available information and your knowledge.\n\n"
@@ -210,6 +210,7 @@ def get_prompt_for_generating_prior_knowledge(
     elif model_name == "llama3":
         # pre = "Below is some INFORMATION searched online and a <CLAIM>. These pieces of INFORMATION are relevant to the <CLAIM>. This <CLAIM> and all INFORMATION include their respective publication dates and contents. To classify the <CLAIM> more accurately (if the content described by the <CLAIM> is correct, it will be classified as TRUE; if the content described by the <CLAIM> is incorrect, it will be classified as FALSE), please first provide a clear summary of the given INFORMATION, restate the <CLAIM>, and provide reasonable evidence to judge the correctness of the <CLAIM> based on the available information and your knowledge.\n\n"
         pre = "Below is some INFORMATION searched online and a <CLAIM>. These pieces of INFORMATION are relevant to the <CLAIM>. This <CLAIM> and all INFORMATION include their respective publication dates and contents. To classify the <CLAIM> more accurately (if the content described by the <CLAIM> is correct, it will be classified as TRUE; if the content described by the <CLAIM> is incorrect, it will be classified as FALSE), please first provide a clear summary of the given INFORMATION, and provide reasonable evidence to judge the correctness of the <CLAIM> based on the available information and your knowledge.\n\n"
+    
     else:
         raise Exception("model_name 只能从solar，mixtral中选择")
     
@@ -345,7 +346,7 @@ def get_claim_id(claim, data_search):
 
 def get_prompt_with_prior_knowledge(
         claim, search_engine, search_results, 
-        prior_knowledge, K=5, claim_date=None, known_info=True, ids=None):
+        prior_knowledge, K=5, claim_date=None, known_info=True, rag_info=True, ids=None):
     """
     task + claim(with date) + prior knowledge
 
@@ -364,10 +365,19 @@ def get_prompt_with_prior_knowledge(
     else:
         raise Exception("Select search engines in [\"brave\"].")
 
-    if known_info:
+    # if known_info:
+    #     return pre + text + "PRIOR KNOWLEDGE:\n" + snippet + '\n' + prior_knowledge.strip()
+    # else:
+    #     return pre + text + "PRIOR KNOWLEDGE:\n" + prior_knowledge.strip()
+    
+    if known_info and rag_info:
         return pre + text + "PRIOR KNOWLEDGE:\n" + snippet + '\n' + prior_knowledge.strip()
-    else:
+    elif rag_info:
         return pre + text + "PRIOR KNOWLEDGE:\n" + prior_knowledge.strip()
+    elif known_info:
+        return pre + text + "PRIOR KNOWLEDGE:\n" + snippet
+    else:
+        raise Exception()
 
 def get_claim_id(claim, data_search):
     """

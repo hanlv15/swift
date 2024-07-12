@@ -31,7 +31,7 @@ class CustomModelType:
     solar_instruct_10_7b = "solar-10.7b-instruct"
     mixtral_moe_7b_instruct_gptq_int4 = "mixtral-8x7B-instruct-v0.1-gptq-int4"
     mixtral_moe_7b_instruct_awq = "mixtral-8x7B-instruct-v0.1-awq"
-    gemma_7b_it = 'gemma-7b-it'
+    gemma_2_9b_it = 'gemma-2-9b-it'
     merlinite_7b = 'merlinite-7b'
     c4ai_command_r_4bit = "c4ai-command-r-v01-4bit"
     llama_3_8b_instruct = "meta-llama-3-8B-instruct"
@@ -139,8 +139,8 @@ def get_orca2_model_tokenizer(model_dir: str,
                 requires=['autoawq'],
                 torch_dtype=torch.float16,
                 function_kwargs={'is_awq': True})
-@register_model(CustomModelType.gemma_7b_it,
-                '/home/css/models/gemma-1.1-7b-it', LoRATM.llama2,
+@register_model(CustomModelType.gemma_2_9b_it,
+                '/home/css/models/gemma-2-9b-it', LoRATM.llama2,
                 CustomTemplateType.gemma)
 @register_model(CustomModelType.merlinite_7b,
                 '/home/css/models/merlinite-7b', LoRATM.llama2,
@@ -181,7 +181,9 @@ def get_model_tokenizer(
     use_flash_attn = kwargs.pop('use_flash_attn', False)
     if use_flash_attn:
         model_config._attn_implementation = 'flash_attention_2'
-    # model_config._attn_implementation = 'eager'
+    
+    if "gemma-2" in model_dir:
+        model_config._attn_implementation = 'eager'
     logger.info(f'model_config: {model_config}')
     tokenizer = AutoTokenizer.from_pretrained(model_dir, trust_remote_code=True)
     model = None
@@ -199,7 +201,7 @@ def get_model_tokenizer(
     return model, tokenizer
 
 @register_model(CustomModelType.llama_3_8b_instruct,
-                '/data/css/models/Meta-Llama-3-8B-Instruct', LoRATM.llama2,
+                '/home/css/models/Meta-Llama-3-8B-Instruct', LoRATM.llama2,
                 CustomTemplateType.llama3)
 @register_model(CustomModelType.llama_3_70b_instruct_gptq_int4,
                 '/home/css/models/Meta-Llama-3-70B-Instruct-GPTQ-Int4', LoRATM.llama2,

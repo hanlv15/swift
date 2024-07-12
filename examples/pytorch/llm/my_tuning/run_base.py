@@ -9,12 +9,16 @@ lr_del = ["1.1e-4", "1.5e-4"]
 
 lrs = [value for value in lrs2 if value not in lr_del]
 
+data_version = "1"
+
 class SFTModels:
 	llama_3_8b_instruct = "Meta-Llama-3-8B-Instruct"
 	openchat_35 = "openchat_3.5"
 	phi_3_medium_instruct = "Phi-3-medium-4k-instruct"
 	mistral_7b_instruct_v3 = "Mistral-7B-Instruct-v0.3"
-	
+	gemma_2_9b_it = "gemma-2-9b-it"
+
+
 # openchat 3.5
 # for sft_type in ["adalora"]:
 #     for lr in ["3.7e-4", "3.9e-4", "3.2e-4", "3.4e-4", "3.8e-4", "4e-4"]:
@@ -29,32 +33,32 @@ class SFTModels:
 #             for i in [1.0]:
 #                 subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/sft2.sh", "0.2", f"{i}", sft_type, "3", lr, j, data_version])
 
-def run_lora(sft_model, lr, device, rank="8", rag_model="llama3", data_version="1"):
+def run_lora(sft_model, lr, device, rank="8", rag_model="llama3", data_version=data_version):
 	subprocess.run(
 		["bash", f"my_tuning/{sft_model}/lora/lora.sh",
 			"0.2", "1.0", "lora", rank, lr, f"with_{rag_model}_info/brave", data_version, device])
 
-def run_pissa(sft_model, lr, device, rank="8", rag_model="llama3", data_version="1"):
+def run_pissa(sft_model, lr, device, rank="8", rag_model="llama3", data_version=data_version):
 	subprocess.run(
 		["bash", f"my_tuning/{sft_model}/lora/pissa.sh", 
    			"0.2", "1.0", "lora", rank, lr, f"with_{rag_model}_info/brave", data_version, device])
 
-def run_vera(sft_model, lr, device, vera_rank="256", rag_model="llama3", data_version="1"):
+def run_vera(sft_model, lr, device, vera_rank="256", rag_model="llama3", data_version=data_version):
 	subprocess.run(
 		["bash", f"my_tuning/{sft_model}/lora/vera.sh", 
    			"0.2", "1.0", "vera", vera_rank, lr, f"with_{rag_model}_info/brave", data_version, device])
 
-def run_rslora(sft_model, lr, device, rank="8", rag_model="llama3", data_version="1"):
+def run_rslora(sft_model, lr, device, rank="8", rag_model="llama3", data_version=data_version):
 	subprocess.run(
 		["bash", f"my_tuning/{sft_model}/lora/rslora.sh", 
    			"0.2", "1.0", "lora", rank, lr, f"with_{rag_model}_info/brave", data_version, device])
 
-def run_lora_plus(sft_model, lr, device, rank="8", rag_model="llama3", data_version="1"):
+def run_lora_plus(sft_model, lr, device, rank="8", rag_model="llama3", data_version=data_version):
 	subprocess.run(
 		["bash", f"my_tuning/{sft_model}/lora/lora_plus.sh",
 			"0.2", "1.0", "lora", rank, lr, f"with_{rag_model}_info/brave", data_version, device])
 
-def run_dora(sft_model, lr, device, rank="8", rag_model="llama3", data_version="1"):
+def run_dora(sft_model, lr, device, rank="8", rag_model="llama3", data_version=data_version):
 	subprocess.run(
 		["bash", f"my_tuning/{sft_model}/lora/dora.sh", 
    			"0.2", "1.0", "lora", rank, lr, f"with_{rag_model}_info/brave", data_version, device])
@@ -68,7 +72,7 @@ def run_dora(sft_model, lr, device, rank="8", rag_model="llama3", data_version="
 #     subprocess.run(["bash", f"my_tuning/Meta-Llama-3-8B-Instruct/lora/qlora.sh", "0.2", "1.0", "lora", rank, lr, f"with_{model_name}_info/brave", data_version])
 
 # boft
-# def run_llama3_8b_boft(lr, device, block_size="8", n_butterfly_factor="2", model_name="llama3", data_version="1"):
+# def run_llama3_8b_boft(lr, device, block_size="8", n_butterfly_factor="2", model_name="llama3", data_version=data_version):
 # 	subprocess.run(
 # 		["bash", f"my_tuning/Meta-Llama-3-8B-Instruct/lora/boft.sh", 
 #    			"0.2", "1.0", "boft", block_size, n_butterfly_factor, lr, f"with_{model_name}_info/brave", data_version, device])

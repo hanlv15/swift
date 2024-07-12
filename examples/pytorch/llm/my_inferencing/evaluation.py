@@ -163,7 +163,8 @@ def cal_metric_single_llm(
     template_type = sft_args["template_type"]
     sft_type = get_sft_type(sft_args)
     lora_rank = sft_args["lora_rank"]
-    
+    vera_rank = sft_args["vera_rank"]
+
     lr = get_lr(sft_args["output_dir"])
 
     # 判断metric是否已经存在，那么不用再计算
@@ -176,6 +177,8 @@ data{data_version}-split={split_type}-ratio={train_ratio}/{sft_type}"
         if sft_type == "adalora":
             r1, r2 = sft_args["adalora_target_r"], sft_args["adalora_init_r"]
             file_dir += f"-r={r1}_{r2}"
+        elif sft_type == "vera":
+            file_dir += f"-r={vera_rank}" 
         else:
             file_dir += f"-r={lora_rank}" 
         metrics = load_metrics(file_dir, model_name, template_type)

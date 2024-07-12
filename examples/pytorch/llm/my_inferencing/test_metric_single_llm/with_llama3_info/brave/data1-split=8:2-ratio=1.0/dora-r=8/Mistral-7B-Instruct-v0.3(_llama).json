@@ -1,0 +1,211 @@
+[
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07792857,
+        "lr": "5e-5",
+        "ACC": 0.984419844198442,
+        "F1": 0.9788335017237946,
+        "Precision": 0.9856336000622512,
+        "Recall": 0.9724717683426913
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07398318,
+        "lr": "6e-5",
+        "ACC": 0.984419844198442,
+        "F1": 0.9788092267958266,
+        "Precision": 0.9862165023121066,
+        "Recall": 0.9719179501969232
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07089997,
+        "lr": "7e-5",
+        "ACC": 0.985649856498565,
+        "F1": 0.9805379163521399,
+        "Precision": 0.9864596795037477,
+        "Recall": 0.9749511071856665
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07224969,
+        "lr": "7.5e-5",
+        "ACC": 0.986059860598606,
+        "F1": 0.9810615541739214,
+        "Precision": 0.9878929835905208,
+        "Recall": 0.9746699171751219
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07439487,
+        "lr": "8e-5",
+        "ACC": 0.986469864698647,
+        "F1": 0.9816290770349883,
+        "Precision": 0.9881654258892238,
+        "Recall": 0.9754963634561136
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07049918,
+        "lr": "8.1e-5",
+        "ACC": 0.984419844198442,
+        "F1": 0.9788092267958266,
+        "Precision": 0.9862165023121066,
+        "Recall": 0.9719179501969232
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.06936111,
+        "lr": "8.3e-5",
+        "ACC": 0.986059860598606,
+        "F1": 0.9811047412457391,
+        "Precision": 0.9867355406190358,
+        "Recall": 0.9757775534666583
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07277112,
+        "lr": "8.5e-5",
+        "ACC": 0.9872898728987289,
+        "F1": 0.982742466305595,
+        "Precision": 0.9892937838993165,
+        "Recall": 0.9765954378723289
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07047645,
+        "lr": "9e-5",
+        "ACC": 0.984829848298483,
+        "F1": 0.979355026154235,
+        "Precision": 0.9870772122737896,
+        "Recall": 0.9721905783321467
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07117374,
+        "lr": "9.5e-5",
+        "ACC": 0.98359983599836,
+        "F1": 0.9776682708154789,
+        "Precision": 0.9856707254643169,
+        "Recall": 0.9702650576349396
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.06895926,
+        "lr": "1e-4",
+        "ACC": 0.986059860598606,
+        "F1": 0.981126209455695,
+        "Precision": 0.9861662515039682,
+        "Recall": 0.9763313716124264
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.06704034,
+        "lr": "1.1e-4",
+        "ACC": 0.985649856498565,
+        "F1": 0.9805821157111645,
+        "Precision": 0.9853237080893946,
+        "Recall": 0.9760587434772028
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07159786,
+        "lr": "1.2e-4",
+        "ACC": 0.986469864698647,
+        "F1": 0.9816290770349883,
+        "Precision": 0.9881654258892238,
+        "Recall": 0.9754963634561136
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07137134,
+        "lr": "1.25e-4",
+        "ACC": 0.984009840098401,
+        "F1": 0.9782889092231679,
+        "Precision": 0.9847803518589455,
+        "Recall": 0.9721991402074677
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07332444,
+        "lr": "1.3e-4",
+        "ACC": 0.986469864698647,
+        "F1": 0.981691709099098,
+        "Precision": 0.9864441724826073,
+        "Recall": 0.9771578178934182
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07292815,
+        "lr": "1.35e-4",
+        "ACC": 0.984009840098401,
+        "F1": 0.978313678220956,
+        "Precision": 0.9842082671786729,
+        "Recall": 0.9727529583532359
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.06997728,
+        "lr": "1.4e-4",
+        "ACC": 0.9872898728987289,
+        "F1": 0.982762154483324,
+        "Precision": 0.9887110918288224,
+        "Recall": 0.9771492560180971
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.06991975,
+        "lr": "1.45e-4",
+        "ACC": 0.986059860598606,
+        "F1": 0.9810615541739214,
+        "Precision": 0.9878929835905208,
+        "Recall": 0.9746699171751219
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07247518,
+        "lr": "1.5e-4",
+        "ACC": 0.986059860598606,
+        "F1": 0.981126209455695,
+        "Precision": 0.9861662515039682,
+        "Recall": 0.9763313716124264
+    }
+]

@@ -4,7 +4,7 @@ import torch
 import os
 import sys
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '0,1'
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 
 dirs = ["../..", ".."]
 for _dir in dirs:
@@ -19,18 +19,20 @@ from swift.llm import (
 )
 from custom import CustomModelType
 
-model_type = CustomModelType.mixtral_moe_7b_instruct_awq
+# model_type = CustomModelType.mixtral_moe_7b_instruct_awq
 # model_type = CustomModelType.llama_3_70b_instruct_awq
+model_type = CustomModelType.solar_instruct_10_7b
+
 llm_engine = get_vllm_engine(
     model_type, 
     # torch_dtype=torch.float16,  # 检查正确的数据类型！！！！
-    tensor_parallel_size=2,
+    tensor_parallel_size=1,
     max_model_len=4096,
-    # gpu_memory_utilization=0.95,
+    gpu_memory_utilization=0.92,
     # model_id_or_path="/home/css/models/Mixtral-8x7B-Instruct-v0.1-GPTQ-int4",
     engine_kwargs = {
         # "enforce_eager": True,
-        "max_num_seqs": 64,
+        "max_num_seqs": 128,
         "seed": 42,
     }
 )
@@ -50,7 +52,7 @@ get_resp_list = lambda request_list : inference_vllm(
 )
 
 search_engine = "brave"
-model_name = 'mixtral'
+model_name = 'solar'
 K = 5
 sort = False
 
