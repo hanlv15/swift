@@ -25,6 +25,17 @@
         "model": "Mistral-7B-Instruct-v0.3",
         "train_test_split": "8:2",
         "train_ratio": "1.0",
+        "train_loss": 0.08268693,
+        "lr": "1e-2",
+        "ACC": 0.982779827798278,
+        "F1": 0.976551684356253,
+        "Precision": 0.9845356458737833,
+        "Recall": 0.9691659832187244
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
         "train_loss": 0.07682741,
         "lr": "1.5e-2",
         "ACC": 0.980319803198032,

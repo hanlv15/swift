@@ -32,7 +32,7 @@ DEVICE = "1"
 # for lr in ["6.5e-6"]:
 #     run_lora_plus(SFTModels.openchat_35, lr, DEVICE)
 
-for lr in ["1.5e-2"]:
+for lr in ["1.7e-2"]:
     run_vera(SFTModels.openchat_35, lr, DEVICE)
 
 # phi-3-medium
@@ -53,7 +53,7 @@ for lr in ["1.5e-2"]:
 # for lr in ["1.6e-5",]:
 #     run_rslora(SFTModels.mistral_7b_instruct_v3, lr, DEVICE)
 
-for lr in ["1.5e-2", "5e-2"]:
+for lr in ["3.7e-2", "3.9e-2" "4.1e-2", "2.1e-2", ]:
     run_vera(SFTModels.mistral_7b_instruct_v3, lr, DEVICE)
 
 
