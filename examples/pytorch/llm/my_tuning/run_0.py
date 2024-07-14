@@ -53,7 +53,7 @@ for lr in ["1.6e-2"]:
 #     run_rslora(SFTModels.mistral_7b_instruct_v3, lr, DEVICE)
 
 # "3.1e-2", "3.3e-2", "3.5e-2", "3.7e-2", "3.9e-2" "4.1e-2"
-# "2.3e-2", "2.5e-2", "2.7e-2",  
+# "2.3e-2", "2.5e-2", "2.7e-2" 
 
 for lr in ["3.1e-2", "3.3e-2", "3.5e-2", "2.9e-2", ]:
     run_vera(SFTModels.mistral_7b_instruct_v3, lr, DEVICE)
