@@ -26,14 +26,14 @@ DEVICE = "1"
 # for lr in ["3e-5"]: # "1.5e-4", "7e-5"
 #     run_lora(SFTModels.openchat_35, lr, DEVICE)
 
-for lr in ["7e-5"]:
-    run_rslora(SFTModels.openchat_35, lr, DEVICE)
+# for lr in ["4.5e-5"]:
+#     run_rslora(SFTModels.openchat_35, lr, DEVICE)
 
-for lr in ["1e-5"]:
-    run_lora_plus(SFTModels.openchat_35, lr, DEVICE)
+# for lr in ["6.5e-6"]:
+#     run_lora_plus(SFTModels.openchat_35, lr, DEVICE)
 
-# for lr in ["3e-2"]:
-#     run_vera(SFTModels.openchat_35, lr, DEVICE)
+for lr in ["1.5e-2"]:
+    run_vera(SFTModels.openchat_35, lr, DEVICE)
 
 # phi-3-medium
 # for lr in ["1.5e-4"]:
@@ -44,17 +44,17 @@ for lr in ["1e-5"]:
 # for lr in ["1e-4"]:
 #     run_lora(SFTModels.mistral_7b_instruct_v3, lr, DEVICE)
 
-# for lr in ["8.3e-5"]: # 8e-5
+# for lr in ["1.05e-4"]: # 8e-5
 #     run_dora(SFTModels.mistral_7b_instruct_v3, lr, DEVICE)
 
-# for lr in ["6e-6"]:
+# for lr in ["8.5e-6", "7.5e-6"]:
 #     run_lora_plus(SFTModels.mistral_7b_instruct_v3, lr, DEVICE)
 
 # for lr in ["1.6e-5",]:
 #     run_rslora(SFTModels.mistral_7b_instruct_v3, lr, DEVICE)
 
-# for lr in ["3e-2"]:
-#     run_vera(SFTModels.mistral_7b_instruct_v3, lr, DEVICE)
+for lr in ["1.5e-2", "5e-2"]:
+    run_vera(SFTModels.mistral_7b_instruct_v3, lr, DEVICE)
 
 
 

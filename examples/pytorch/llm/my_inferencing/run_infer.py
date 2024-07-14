@@ -1,16 +1,12 @@
 ckpt_list = [
-    # "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/openchat_3.5/with_llama3_info/brave/data1-split=8:2-ratio=1.0/rslora-r=8/lr=1e-5-20240711-10:28:24/checkpoint-609",
-    # "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/openchat_3.5/with_llama3_info/brave/data1-split=8:2-ratio=1.0/rslora-r=8/lr=3e-5-20240711-10:37:24/checkpoint-609",
-    "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/openchat_3.5/with_llama3_info/brave/data1-split=8:2-ratio=1.0/rslora-r=8/lr=5e-5-20240711-10:31:53/checkpoint-609",
-
 
 ]
 
-path = "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/openchat_3.5/with_llama3_info/brave/data1-split=8:2-ratio=1.0/lora-r=8"
+path = "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Mistral-7B-Instruct-v0.3/with_llama3_info/brave/data1-split=8:2-ratio=1.0/vera-r=256"
 # path = "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Mistral-7B-Instruct-v0.3/with_llama3_info/brave/data1-split=8:2-ratio=1.0/lora_plus-r=8"
 # path = "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/Mistral-7B-Instruct-v0.3/with_llama3_info/brave/data1-split=8:2-ratio=1.0/dora-r=8"
 
-path = ""
+# path = ""
 
 import subprocess
 import os

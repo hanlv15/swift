@@ -72,14 +72,16 @@ def get_model_template():
     model_type, template_type = sft_args["model_type"], sft_args["template_type"]
     model, tokenizer = get_model_tokenizer(
         model_type, model_kwargs={'device_map': 'auto'},
-        model_dir=sft_args["model_cache_dir"],
+        # model_dir=sft_args["model_cache_dir"],
         use_flash_attn=sft_args["use_flash_attn"]
     )
     model = Swift.from_pretrained(model, ckpt_dir, inference_mode=True)
     if sft_args["sft_type"] == 'adalora':
         model = model.to(model.dtype)
     model.generation_config.max_new_tokens = 512
+    # model.generation_config.temperature = None
     model.generation_config.do_sample = False
+
 
     template = get_template(template_type, tokenizer)
 
