@@ -341,12 +341,10 @@ def sample_dataset(dataset: HfDataset, dataset_sample: int, random_state: Option
         return dataset
     if random_state is None:
         random_state = RandomState()
-    # Sample the part that exceeds the length of the dataset.
-    idx = random_state.permutation(len(dataset))[:dataset_sample]
-    dataset_sample -= len(idx)
-    if dataset_sample > 0:
-        idx2 = random_state.choice(len(dataset), dataset_sample)
-        idx = np.concatenate([idx, idx2], axis=0)
+
+    idx_repeat = np.tile(range(len(dataset)), dataset_sample // len(dataset))
+    idx_random = random_state.permutation(len(dataset))[:dataset_sample % len(dataset)]
+    idx = np.concatenate([idx_repeat, idx_random])
     dataset = dataset.select(idx)
     return dataset
 
@@ -1977,7 +1975,7 @@ def _repair_conversations_agent_instruct(s: str) -> List[Dict[str, Any]]:
 
 register_dataset(
     DatasetName.agent_instruct_all_en,
-    'swift/AgentInstruct_copy', ['alfworld', 'db', 'kg', 'mind2web', 'os', 'webshop'],
+    'huangjintao/AgentInstruct_copy', ['alfworld', 'db', 'kg', 'mind2web', 'os', 'webshop'],
     ConversationsPreprocessor('human', 'gpt', repair_conversations=_repair_conversations_agent_instruct),
     get_dataset_from_repo,
     tags=['chat', 'agent', 'multi-round'])

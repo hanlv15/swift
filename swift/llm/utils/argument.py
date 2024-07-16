@@ -406,7 +406,7 @@ class ArgumentsBase:
                 if self.model_cache_dir is not None:
                     self.model_id_or_path = self.model_cache_dir
             else:
-                if (isinstance(self, InferArguments) and 'checkpoint' in model_id_or_path
+                if (isinstance(self, InferArguments) and 'checkpoint-' in model_id_or_path
                         and 'merged' not in model_id_or_path and self.ckpt_dir is None):
                     raise ValueError('Please use `--ckpt_dir vx-xxx/checkpoint-xxx` to use the checkpoint.')
                 if self.model_type is None:
@@ -635,6 +635,7 @@ class SftArguments(ArgumentsBase):
     custom_dataset_info: Optional[str] = None  # .json
 
     device_map_config_path: Optional[str] = None
+    device_max_memory: List[str] = field(default_factory=list)
 
     # generation config
     max_new_tokens: int = 2048
@@ -1116,7 +1117,7 @@ class InferArguments(ArgumentsBase):
     top_p: float = 0.7
     repetition_penalty: float = 1.
     num_beams: int = 1
-    stop_words: List[str] = None
+    stop_words: List[str] = field(default_factory=list)
 
     # rope-scaling
     rope_scaling: Literal['linear', 'dynamic'] = None
@@ -1134,6 +1135,7 @@ class InferArguments(ArgumentsBase):
     custom_register_path: Optional[str] = None  # .py
     custom_dataset_info: Optional[str] = None  # .json
     device_map_config_path: Optional[str] = None
+    device_max_memory: List[str] = field(default_factory=list)
 
     # vllm
     gpu_memory_utilization: float = 0.9
