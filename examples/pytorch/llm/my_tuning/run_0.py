@@ -34,8 +34,8 @@ DEVICE = "0"
 # for lr in ["5.5e-6"]:
 #     run_lora_plus(SFTModels.openchat_35, lr, DEVICE)
 
-for lr in ["1.6e-2"]:
-    run_vera(SFTModels.openchat_35, lr, DEVICE)
+# for lr in ["1.9e-2"]:
+#     run_vera(SFTModels.openchat_35, lr, DEVICE)
 
 # mistral-7b-instruct
 # for lr in ["7e-5"]:
@@ -55,7 +55,7 @@ for lr in ["1.6e-2"]:
 # "3.1e-2", "3.3e-2", "3.5e-2", "3.7e-2", "3.9e-2" "4.1e-2"
 # "2.3e-2", "2.5e-2", "2.7e-2" 
 
-for lr in ["3.1e-2", "3.3e-2", "3.5e-2", "2.9e-2", ]:
+for lr in ["5e-3", ]:
     run_vera(SFTModels.mistral_7b_instruct_v3, lr, DEVICE)
 
 # phi-3-medium
