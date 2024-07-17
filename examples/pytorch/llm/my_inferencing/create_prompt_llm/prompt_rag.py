@@ -4,12 +4,12 @@ from datetime import datetime
 import jsonlines
 
 import sys
-# if "../../../../../../autogen" not in sys.path:
-#     sys.path.append("../../../../../../autogen")
-# try:
-#     import autogen_label as al
-# except:
-#     pass
+dirs = ["../..", ".."]
+for _dir in dirs:
+    if _dir not in sys.path:
+        sys.path.append(_dir)
+
+import covmis, liar2
 
 def get_claim_with_date_old(claim, claim_date=None):
     if claim_date is None:
@@ -396,12 +396,12 @@ def get_claim_id(claim, data_search):
 #         json.dump(x, f, indent=4)
 
 def save_search_llm_tmp(x):
-    with open(f"train_search_llm_tmp.json", "w") as f:
+    with open(f"data_search_llm_tmp.json", "w") as f:
         json.dump(x, f, indent=4)
 
 def load_search_llm_tmp():
     try:
-        with open(f"train_search_llm_tmp.json", "r") as f:
+        with open(f"data_search_llm_tmp.json", "r") as f:
             return json.load(f)
     except:
         return []
@@ -418,11 +418,26 @@ def load_search_llm_tmp():
 #         return []
     
 def update_train_search_llm(
-        model_name, get_resp_list, search_engine, data_train, data_search, 
+        model_name, get_resp_list, search_engine, dataset, data_type=None, 
         K=5, sort=False, use_random=False):
     data_search_llm = load_search_llm_tmp()
-
     len_data_search_llm = len(data_search_llm)
+    
+    if dataset == "covmis":
+        data = covmis.load_train()
+        data_search =  covmis.load_train_search(search_engine=search_engine)    
+        claim_key = 'claim'
+        # save_search = lambda data: covmis.save_train_search(
+        #     data, search_engine=search_engine)
+    elif dataset == "liar2":
+        data = liar2.load_data(data_type)
+        data_search = liar2.load_data_search(data_type, search_engine)
+        claim_key = 'statement'
+        # save_search = lambda data: liar2.save_data_search(
+        #     data, data_type, search_engine)
+    else:
+        raise Exception("数据集错误")
+
     prompt_list = []
     for i in range(len_data_search_llm, len(data_search)):
         # item = data_search[i]
@@ -432,9 +447,12 @@ def update_train_search_llm(
             ids = data_search[i]["random_ids"]
         else:
             ids = None
+
+        if data[i]["id"] != data_search[i]["id"]:
+            raise Exception("data_train 与 data 的 id 不匹配！")
         
         prompt = get_prompt_for_generating_prior_knowledge(
-            data_train[i]["claim"], data_train[i]["date"], 
+            data[i][claim_key], data[i]["date"], 
             search_engine, data_search[i][f"{search_engine}_search_results"], 
             model_name, K=K, sort=sort, ids=ids
         )
