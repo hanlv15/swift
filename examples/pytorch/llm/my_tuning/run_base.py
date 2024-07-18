@@ -18,6 +18,10 @@ class SFTModels:
 	mistral_7b_instruct_v3 = "Mistral-7B-Instruct-v0.3"
 	gemma_2_9b_it = "gemma-2-9b-it"
 
+class DatasetName:
+	covmis = "covmis"
+	liar2 = "liar2"
+
 
 # openchat 3.5
 # for sft_type in ["adalora"]:
@@ -58,9 +62,9 @@ def run_lora_plus(sft_model, lr, device, rank="8", rag_model="llama3", data_vers
 		["bash", f"my_tuning/{sft_model}/lora/lora_plus.sh",
 			"0.2", "1.0", "lora", rank, lr, f"with_{rag_model}_info/brave", data_version, device])
 
-def run_dora(sft_model, lr, device, rank="8", rag_model="llama3", data_version=data_version):
+def run_dora(sft_model, lr, dataset_name, device, rank="8", rag_model="llama3", data_version=data_version):
 	subprocess.run(
-		["bash", f"my_tuning/{sft_model}/lora/dora.sh", 
+		["bash", f"my_tuning/{sft_model}/lora/dora.sh", dataset_name,
    			"0.2", "1.0", "lora", rank, lr, f"with_{rag_model}_info/brave", data_version, device])
 
 # Llama-3

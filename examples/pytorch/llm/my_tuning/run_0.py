@@ -1,10 +1,10 @@
-from run_base import SFTModels, run_lora, run_vera, run_dora, run_pissa, run_lora_plus, run_rslora
+from run_base import SFTModels, DatasetName, run_lora, run_vera, run_dora, run_pissa, run_lora_plus, run_rslora
 
 DEVICE = "0"
 
 # Llama-3
-# for lr in []: # 8e-5
-#     run_dora(SFTModels.llama_3_8b_instruct, lr, DEVICE)
+for lr in ["3e-4"]: # 8e-5
+    run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.liar2, DEVICE)
 
 # for lr in ["1.5e-4"]:
 #     run_lora(SFTModels.llama_3_8b_instruct, lr, DEVICE)
@@ -55,8 +55,8 @@ DEVICE = "0"
 # "3.1e-2", "3.3e-2", "3.5e-2", "3.7e-2", "3.9e-2" "4.1e-2"
 # "2.3e-2", "2.5e-2", "2.7e-2" 
 
-for lr in ["5e-3", ]:
-    run_vera(SFTModels.mistral_7b_instruct_v3, lr, DEVICE)
+# for lr in ["5e-3", ]:
+#     run_vera(SFTModels.mistral_7b_instruct_v3, lr, DEVICE)
 
 # phi-3-medium
 # for lr in ["8e-5", "1.2e-4", "1.4e-4"]:

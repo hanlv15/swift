@@ -2,8 +2,10 @@
 import argparse
 parser = argparse.ArgumentParser(description='manual to this script')
 parser.add_argument("--ckpt_dir", type=str)
+parser.add_argument("--data_dir", type=str)
 args = parser.parse_args()
 ckpt_dir = args.ckpt_dir
+data_dir = args.data_dir
 
 import sys
 import json
@@ -82,7 +84,6 @@ def get_model_template():
     # model.generation_config.temperature = None
     model.generation_config.do_sample = False
 
-
     template = get_template(template_type, tokenizer)
 
     return model, template
@@ -90,6 +91,7 @@ def get_model_template():
 evaluation.cal_metric_single_llm(
     (get_model_template, get_engine_config_request), 
     (inference, inference_vllm), 
-    sft_args, ckpt_dir, train_loss, use_vllm=False, save=True, 
+    sft_args, ckpt_dir, train_loss, save=True, use_vllm=False, 
+    data_dir=data_dir,
 )
 

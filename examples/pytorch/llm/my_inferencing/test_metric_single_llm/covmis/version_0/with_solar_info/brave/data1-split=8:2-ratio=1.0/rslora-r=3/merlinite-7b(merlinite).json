@@ -1,0 +1,123 @@
+[
+    {
+        "model": "merlinite-7b",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07687969,
+        "lr": "1e-4",
+        "ACC": 0.99179991799918,
+        "F1": 0.985805308663243,
+        "Precision": 0.9840239362627422,
+        "Recall": 0.9876090893159648
+    },
+    {
+        "model": "merlinite-7b",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07527923,
+        "lr": "1.5e-4",
+        "ACC": 0.991389913899139,
+        "F1": 0.9849984930835611,
+        "Precision": 0.986361777967842,
+        "Recall": 0.9836479934575617
+    },
+    {
+        "model": "merlinite-7b",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07234275,
+        "lr": "1.6e-4",
+        "ACC": 0.994669946699467,
+        "F1": 0.9907133528612522,
+        "Precision": 0.9920926861017841,
+        "Recall": 0.9893469244698873
+    },
+    {
+        "model": "merlinite-7b",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.13617762,
+        "lr": "1.7e-4",
+        "ACC": 0.993849938499385,
+        "F1": 0.9892846379168293,
+        "Precision": 0.9906599590682985,
+        "Recall": 0.987922191716806
+    },
+    {
+        "model": "merlinite-7b",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07476486,
+        "lr": "1.8e-4",
+        "ACC": 0.995079950799508,
+        "F1": 0.9914036377990869,
+        "Precision": 0.9941923249604196,
+        "Recall": 0.9886669782113442
+    },
+    {
+        "model": "merlinite-7b",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07228507,
+        "lr": "1.9e-4",
+        "ACC": 0.995079950799508,
+        "F1": 0.9914516034815117,
+        "Precision": 0.9914516034815117,
+        "Recall": 0.9914516034815117
+    },
+    {
+        "model": "merlinite-7b",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07890777,
+        "lr": "2e-4",
+        "ACC": 0.995079950799508,
+        "F1": 0.9914516034815117,
+        "Precision": 0.9914516034815117,
+        "Recall": 0.9914516034815117
+    },
+    {
+        "model": "merlinite-7b",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07166095,
+        "lr": "2.1e-4",
+        "ACC": 0.995079950799508,
+        "F1": 0.9914036377990869,
+        "Precision": 0.9941923249604196,
+        "Recall": 0.9886669782113442
+    },
+    {
+        "model": "merlinite-7b",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07554302,
+        "lr": "2.2e-4",
+        "ACC": 0.993849938499385,
+        "F1": 0.9893045736432069,
+        "Precision": 0.9897601713563369,
+        "Recall": 0.9888504001401951
+    },
+    {
+        "model": "merlinite-7b",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.08454011,
+        "lr": "2.3e-4",
+        "ACC": 0.993849938499385,
+        "F1": 0.9892242299749905,
+        "Precision": 0.9934283385299821,
+        "Recall": 0.9851375664466382
+    },
+    {
+        "model": "merlinite-7b",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.31823127,
+        "lr": "2.5e-4",
+        "ACC": 0.994259942599426,
+        "F1": 0.9899331352154532,
+        "Precision": 0.9946259345683128,
+        "Recall": 0.9853858286114843
+    }
+]

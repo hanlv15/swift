@@ -1,0 +1,79 @@
+[
+    {
+        "model": "merlinite-7b",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.0812061,
+        "lr": "1e-5",
+        "ACC": 0.993849938499385,
+        "F1": 0.9892846379168293,
+        "Precision": 0.9906599590682985,
+        "Recall": 0.987922191716806
+    },
+    {
+        "model": "merlinite-7b",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.06734867,
+        "lr": "2e-5",
+        "ACC": 0.994669946699467,
+        "F1": 0.9907306304907793,
+        "Precision": 0.9911875555971721,
+        "Recall": 0.9902751328932764
+    },
+    {
+        "model": "merlinite-7b",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.0639854,
+        "lr": "2.3e-5",
+        "ACC": 0.9958999589995899,
+        "F1": 0.9928630787958237,
+        "Precision": 0.9937837723741979,
+        "Recall": 0.9919481278112039
+    },
+    {
+        "model": "merlinite-7b",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.06662481,
+        "lr": "2.5e-5",
+        "ACC": 0.993439934399344,
+        "F1": 0.988602137975349,
+        "Precision": 0.988602137975349,
+        "Recall": 0.988602137975349
+    },
+    {
+        "model": "merlinite-7b",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.06325953,
+        "lr": "3e-5",
+        "ACC": 0.994259942599426,
+        "F1": 0.9899709107656014,
+        "Precision": 0.9927514827855101,
+        "Recall": 0.9872422454582628
+    },
+    {
+        "model": "merlinite-7b",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.06095347,
+        "lr": "4e-5",
+        "ACC": 0.994669946699467,
+        "F1": 0.9907306304907793,
+        "Precision": 0.9911875555971721,
+        "Recall": 0.9902751328932764
+    },
+    {
+        "model": "merlinite-7b",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.08023461,
+        "lr": "5e-5",
+        "ACC": 0.993439934399344,
+        "F1": 0.988580926073318,
+        "Precision": 0.9894936254643701,
+        "Recall": 0.9876739295519599
+    }
+]

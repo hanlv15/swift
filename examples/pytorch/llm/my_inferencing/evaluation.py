@@ -5,7 +5,8 @@ from tqdm import tqdm
 
 def cal_metric_single_llm(
         inference_prepare, inference_functions, 
-        sft_args, ckpt_dir, train_loss, save=True, use_vllm=False
+        sft_args, ckpt_dir, train_loss, save=True, use_vllm=False,
+        data_dir=None
 ):
     def load_metrics(file_dir, model_name, template_type):
         os.makedirs(file_dir, exist_ok=True)
@@ -38,6 +39,7 @@ def cal_metric_single_llm(
     def update_metrics(metrics, model_name, split_type, train_ratio, labels, preds, lr=None):
         new_item = {
             "model": model_name,
+            # "train_data": dataset_name,
             "train_test_split": split_type,
             "train_ratio": train_ratio,
             "train_loss": train_loss,
@@ -154,6 +156,17 @@ def cal_metric_single_llm(
             title = f'{model_name}, sft_type={sft_type}, lr={lr}, cnt_wrong={cnt_wrong}\n'
             f.writelines(('\n').join([title] + wrong_claims))
 
+    def get_dataset_name(dataset_dir):
+        pos_name = dataset_dir.find('my_data/')
+        if pos_name == -1:
+            raise Exception()
+        pos_name += len('my_data/')
+        pos_end = dataset_dir.find('/' + get_with_or_without_info(sft_args["dataset"][0]), pos_name)
+        if pos_end == -1:
+            dataset_name = "covmis"
+        else:
+            dataset_name = dataset_dir[pos_name:pos_end]
+        return dataset_name
     
     with_or_without_info = get_with_or_without_info(sft_args["dataset"][0])
     split_type = get_split_type(sft_args["dataset"][0])
@@ -166,14 +179,39 @@ def cal_metric_single_llm(
     vera_rank = sft_args["vera_rank"]
 
     lr = get_lr(sft_args["output_dir"])
+    dataset_name = get_dataset_name(sft_args["dataset"][0])
 
+    if data_dir is None or data_dir == "":
+        data_dir = f"../my_data/{dataset_name}/{with_or_without_info}/train_valid_split/{split_type}/\
+valid_data{data_version}.jsonl"
+    else:
+        dataset_name = get_dataset_name(data_dir)
+        # split_type = get_split_type(data_dir)
+    
+    assert dataset_name in ["liar2", "covmis"], "Error dataset name!!"
+    if dataset_name == "liar2":
+        if "valid_data" in data_dir:
+            data_type = "/valid"
+        elif "test_data" in data_dir:
+            data_type = "/test"
+        else:
+            raise Exception("data type error!!!")
+    else:
+        data_type = ""
+
+    data = []
+    labels, preds = [], []
+    with jsonlines.open(data_dir, 'r') as f:
+        for item in f.iter():
+            data.append(item)
+    
     # 判断metric是否已经存在，那么不用再计算
     exist = False
     do_update = False
 
     if train_ratio == "1.0":
-        file_dir = f"test_metric_single_llm/{with_or_without_info}/\
-data{data_version}-split={split_type}-ratio={train_ratio}/{sft_type}"
+        file_dir = f"test_metric_single_llm/{dataset_name}{data_type}/{with_or_without_info}/\
+{dataset_name}_data{data_version}-split={split_type}-ratio={train_ratio}/{sft_type}"
         if sft_type == "adalora":
             r1, r2 = sft_args["adalora_target_r"], sft_args["adalora_init_r"]
             file_dir += f"-r={r1}_{r2}"
@@ -190,8 +228,8 @@ data{data_version}-split={split_type}-ratio={train_ratio}/{sft_type}"
                 exist = True
                 break
     else:
-        file_dir = f"test_metric_single_llm/{with_or_without_info}/\
-data{data_version}-split={split_type}-sft={sft_type}-lr={lr}"
+        file_dir = f"test_metric_single_llm/{dataset_name}{data_type}/{with_or_without_info}/\
+{dataset_name}_data{data_version}-split={split_type}-sft={sft_type}-lr={lr}"
         metrics = load_metrics(file_dir, model_name, template_type)
         for item in metrics:
             if item["train_test_split"] == split_type and \
@@ -205,13 +243,7 @@ data{data_version}-split={split_type}-sft={sft_type}-lr={lr}"
             save_metrics(file_dir, model_name, template_type, metrics, save=save)
         return
 
-    data = []
-    labels, preds = [], []
-    with jsonlines.open(
-        f"../my_data/{with_or_without_info}/train_test_split/{split_type}/\
-test_data{data_version}.jsonl", 'r') as f:
-        for item in f.iter():
-            data.append(item)
+
     
     wrong_queries = []
     wrong_claims = []
