@@ -3,9 +3,12 @@ import argparse
 parser = argparse.ArgumentParser(description='manual to this script')
 parser.add_argument("--ckpt_dir", type=str)
 parser.add_argument("--data_dir", type=str)
+parser.add_argument("--data_type", type=str)
+
 args = parser.parse_args()
 ckpt_dir = args.ckpt_dir
 data_dir = args.data_dir
+data_type = args.data_type
 
 import sys
 import json
@@ -92,6 +95,6 @@ evaluation.cal_metric_single_llm(
     (get_model_template, get_engine_config_request), 
     (inference, inference_vllm), 
     sft_args, ckpt_dir, train_loss, save=True, use_vllm=False, 
-    data_dir=data_dir,
+    data_dir=data_dir, data_type=data_type,
 )
 

@@ -1,0 +1,123 @@
+[
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.08127822,
+        "lr": "4e-5",
+        "ACC": 0.9860655737704918,
+        "F1": 0.9809324351780941,
+        "Precision": 0.9884770942335055,
+        "Recall": 0.9739130434782608
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07925717,
+        "lr": "5e-5",
+        "ACC": 0.9860655737704918,
+        "F1": 0.9809766482395144,
+        "Precision": 0.9872908915888337,
+        "Recall": 0.975036231884058
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07135308,
+        "lr": "6e-5",
+        "ACC": 0.9860655737704918,
+        "F1": 0.9809766482395144,
+        "Precision": 0.9872908915888337,
+        "Recall": 0.975036231884058
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07035868,
+        "lr": "7e-5",
+        "ACC": 0.9852459016393442,
+        "F1": 0.9797872692932171,
+        "Precision": 0.9879381860109911,
+        "Recall": 0.9722463768115942
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07424616,
+        "lr": "8e-5",
+        "ACC": 0.9836065573770492,
+        "F1": 0.9775414103257969,
+        "Precision": 0.9856546023569578,
+        "Recall": 0.970036231884058
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.0699736,
+        "lr": "9e-5",
+        "ACC": 0.9860655737704918,
+        "F1": 0.9809324351780941,
+        "Precision": 0.9884770942335055,
+        "Recall": 0.9739130434782608
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.06789459,
+        "lr": "1e-4",
+        "ACC": 0.9852459016393442,
+        "F1": 0.9799271674271675,
+        "Precision": 0.984434045819556,
+        "Recall": 0.9756159420289855
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.06787191,
+        "lr": "1.1e-4",
+        "ACC": 0.9868852459016394,
+        "F1": 0.9821574821574821,
+        "Precision": 0.9866851676901275,
+        "Recall": 0.9778260869565217
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07317276,
+        "lr": "1.2e-4",
+        "ACC": 0.9868852459016394,
+        "F1": 0.9820749033954834,
+        "Precision": 0.9890170481640439,
+        "Recall": 0.9755797101449275
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.06996916,
+        "lr": "1.3e-4",
+        "ACC": 0.9811475409836066,
+        "F1": 0.9740816584782812,
+        "Precision": 0.9840272880518609,
+        "Recall": 0.965036231884058
+    },
+    {
+        "model": "Mistral-7B-Instruct-v0.3",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07189562,
+        "lr": "1.4e-4",
+        "ACC": 0.9852459016393442,
+        "F1": 0.9798808978469995,
+        "Precision": 0.9855765665554319,
+        "Recall": 0.9744927536231884
+    }
+]

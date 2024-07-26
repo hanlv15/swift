@@ -1,0 +1,79 @@
+[
+    {
+        "model": "Phi-3-medium-4k-instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.11201995,
+        "lr": "3e-5",
+        "ACC": 0.9708897088970889,
+        "F1": 0.9604746808934594,
+        "Precision": 0.9667266236974612,
+        "Recall": 0.954613949548023
+    },
+    {
+        "model": "Phi-3-medium-4k-instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.08796714,
+        "lr": "5e-5",
+        "ACC": 0.979909799097991,
+        "F1": 0.9727840824081342,
+        "Precision": 0.9780270532611077,
+        "Recall": 0.9678114044179277
+    },
+    {
+        "model": "Phi-3-medium-4k-instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.08036031,
+        "lr": "7e-5",
+        "ACC": 0.98359983599836,
+        "F1": 0.9776939229429755,
+        "Precision": 0.985084127249429,
+        "Recall": 0.9708188757807079
+    },
+    {
+        "model": "Phi-3-medium-4k-instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07492301,
+        "lr": "9e-5",
+        "ACC": 0.984419844198442,
+        "F1": 0.9789296646096934,
+        "Precision": 0.983364841921718,
+        "Recall": 0.974687040925764
+    },
+    {
+        "model": "Phi-3-medium-4k-instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07404908,
+        "lr": "1e-4",
+        "ACC": 0.983189831898319,
+        "F1": 0.9772790737040138,
+        "Precision": 0.981411390490508,
+        "Recall": 0.9733153383743252
+    },
+    {
+        "model": "Phi-3-medium-4k-instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.06844676,
+        "lr": "1.3e-4",
+        "ACC": 0.9868798687986879,
+        "F1": 0.9822364324288893,
+        "Precision": 0.9872880186620845,
+        "Recall": 0.9774304460286418
+    },
+    {
+        "model": "Phi-3-medium-4k-instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.06323853,
+        "lr": "1.5e-4",
+        "ACC": 0.986059860598606,
+        "F1": 0.981168897229403,
+        "Precision": 0.9850462566198607,
+        "Recall": 0.9774390079039628
+    }
+]

@@ -37,10 +37,10 @@ class DatasetName:
 #             for i in [1.0]:
 #                 subprocess.run(["bash", f"my_tuning/openchat_3.5/lora/sft2.sh", "0.2", f"{i}", sft_type, "3", lr, j, data_version])
 
-def run_lora(sft_model, lr, device, rank="8", rag_model="llama3", data_version=data_version):
+def run_lora(sft_model, lr, dataset_name, device, rank="8", rag_model="llama3", data_version=data_version, num_epochs="1"):
 	subprocess.run(
-		["bash", f"my_tuning/{sft_model}/lora/lora.sh",
-			"0.2", "1.0", "lora", rank, lr, f"with_{rag_model}_info/brave", data_version, device])
+		["bash", f"my_tuning/{sft_model}/lora/lora.sh", dataset_name,
+			"0.2", "1.0", "lora", rank, lr, f"with_{rag_model}_info/brave", data_version, num_epochs, device])
 
 def run_pissa(sft_model, lr, device, rank="8", rag_model="llama3", data_version=data_version):
 	subprocess.run(
@@ -62,10 +62,10 @@ def run_lora_plus(sft_model, lr, device, rank="8", rag_model="llama3", data_vers
 		["bash", f"my_tuning/{sft_model}/lora/lora_plus.sh",
 			"0.2", "1.0", "lora", rank, lr, f"with_{rag_model}_info/brave", data_version, device])
 
-def run_dora(sft_model, lr, dataset_name, device, rank="8", rag_model="llama3", data_version=data_version):
+def run_dora(sft_model, lr, dataset_name, device, rank="8", rag_model="llama3", data_version=data_version, num_epochs="1"):
 	subprocess.run(
 		["bash", f"my_tuning/{sft_model}/lora/dora.sh", dataset_name,
-   			"0.2", "1.0", "lora", rank, lr, f"with_{rag_model}_info/brave", data_version, device])
+   			"0.2", "1.0", "lora", rank, lr, f"with_{rag_model}_info/brave", data_version, num_epochs, device])
 
 # Llama-3
 # qlora

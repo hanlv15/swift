@@ -6,7 +6,7 @@ from tqdm import tqdm
 def cal_metric_single_llm(
         inference_prepare, inference_functions, 
         sft_args, ckpt_dir, train_loss, save=True, use_vllm=False,
-        data_dir=None
+        data_dir=None, data_type='test'
 ):
     def load_metrics(file_dir, model_name, template_type):
         os.makedirs(file_dir, exist_ok=True)
@@ -145,7 +145,7 @@ def cal_metric_single_llm(
         print(f'{model_name} sft_type={sft_type} lr={lr} train_loss={train_loss}')
         
     def get_claim(query):
-        pos_claim = query.find("Content: ") + len("Content: ")
+        pos_claim = query.find("CLAIM: ") + len("CLAIM: ")
         return query[pos_claim:query.find('\nPRIOR KNOWLEDGE:', pos_claim)].strip()
     
     def save_wrong_claims(file_dir, model_name, sft_type, lr, cnt_wrong, wrong_claims):
@@ -177,27 +177,24 @@ def cal_metric_single_llm(
     sft_type = get_sft_type(sft_args)
     lora_rank = sft_args["lora_rank"]
     vera_rank = sft_args["vera_rank"]
+    num_train_epochs = sft_args["num_train_epochs"]
 
     lr = get_lr(sft_args["output_dir"])
     dataset_name = get_dataset_name(sft_args["dataset"][0])
 
+    assert data_type in ["test", "valid"], f'data_type error: {data_type}'
+    
     if data_dir is None or data_dir == "":
         data_dir = f"../my_data/{dataset_name}/{with_or_without_info}/train_valid_split/{split_type}/\
-valid_data{data_version}.jsonl"
+{data_type}_data{data_version}.jsonl"
     else:
         dataset_name = get_dataset_name(data_dir)
+        if data_type not in dataset_name:
+            raise Exception()
         # split_type = get_split_type(data_dir)
     
     assert dataset_name in ["liar2", "covmis"], "Error dataset name!!"
-    if dataset_name == "liar2":
-        if "valid_data" in data_dir:
-            data_type = "/valid"
-        elif "test_data" in data_dir:
-            data_type = "/test"
-        else:
-            raise Exception("data type error!!!")
-    else:
-        data_type = ""
+
 
     data = []
     labels, preds = [], []
@@ -210,8 +207,8 @@ valid_data{data_version}.jsonl"
     do_update = False
 
     if train_ratio == "1.0":
-        file_dir = f"test_metric_single_llm/{dataset_name}{data_type}/{with_or_without_info}/\
-{dataset_name}_data{data_version}-split={split_type}-ratio={train_ratio}/{sft_type}"
+        file_dir = f"test_metric_single_llm/{dataset_name}/{data_type}/{with_or_without_info}/\
+{dataset_name}_data{data_version}-split={split_type}-ratio={train_ratio}-epochs={num_train_epochs}/{sft_type}"
         if sft_type == "adalora":
             r1, r2 = sft_args["adalora_target_r"], sft_args["adalora_init_r"]
             file_dir += f"-r={r1}_{r2}"
@@ -228,8 +225,8 @@ valid_data{data_version}.jsonl"
                 exist = True
                 break
     else:
-        file_dir = f"test_metric_single_llm/{dataset_name}{data_type}/{with_or_without_info}/\
-{dataset_name}_data{data_version}-split={split_type}-sft={sft_type}-lr={lr}"
+        file_dir = f"test_metric_single_llm/{dataset_name}/{data_type}/{with_or_without_info}/\
+{dataset_name}_data{data_version}-split={split_type}-epochs={num_train_epochs}-sft={sft_type}-lr={lr}"
         metrics = load_metrics(file_dir, model_name, template_type)
         for item in metrics:
             if item["train_test_split"] == split_type and \
@@ -269,8 +266,9 @@ valid_data{data_version}.jsonl"
             preds.append(get_label(pred_raw))
 
             if labels[-1] != preds[-1]:
+                
                 wrong_queries.append(query)
-                wrong_claims.append(f"Label: {label_raw} Pred: {pred_raw} Claim: {get_claim(query)}")
+                wrong_claims.append(f"Label: {label_raw} Pred: {pred_raw} Query:\n{query}" + '\n' + '*'*50 + '\n\n')
                 cnt_wrong += 1
         progress_bar.close()
     else:
@@ -297,7 +295,7 @@ valid_data{data_version}.jsonl"
 
             if labels[-1] != preds[-1]:
                 wrong_queries.append(item_data["query"])
-                wrong_claims.append(f"Label: {label_raw} Pred: {pred_raw} Claim: {get_claim(query)}")
+                wrong_claims.append(f"Label: {label_raw} Pred: {pred_raw} \nClaim: {get_claim(query)}\n")
                 cnt_wrong += 1
     # ratio为1.0
     if train_ratio == "1.0":

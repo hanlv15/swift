@@ -11,20 +11,23 @@ for _dir in dirs:
 
 import covmis, liar2
 
-def get_claim_with_date_old(claim, claim_date=None):
-    if claim_date is None:
-        return " " + claim
+# def get_claim_with_date_old(claim, claim_date=None):
+#     if claim_date is None:
+#         return  claim
     
-    res = "\n"
-    res += "Publication date: " + claim_date + '\n' + "Content: " + claim
-    return res
+#     res = "\n"
+#     res += "Publication date: " + claim_date + '\n' + "Content: " + claim
+#     return res
 
-def get_claim_with_date(claim, claim_date=None):
-    if claim_date is None:
-        return " " + claim
+def get_claim_with_date(claim, claim_date=None, claimant=None):
+    if claim_date is None and claimant is None:
+        return claim
     
-    # res = "\n"
-    res = claim + "\nPublication date: " + claim_date
+    res = claim
+    if claimant is not None:
+        res += "\nClaimant: " + claimant
+    if claim_date is not None:
+        res += "\nPublication date: " + claim_date
     return res
 
 def get_bing_snippet(bing_search_results, K=5, claim_date=None):
@@ -191,7 +194,7 @@ def get_prompt_for_generating_prior_knowledge_old(
 
 def get_prompt_for_generating_prior_knowledge(
         claim, claim_date, search_engine, search_results, model_name,
-        K=5, sort=False, ids=None, without_info=False, without_claim_date=False, n_truncate=0):
+        K=5, claimant=None, sort=False, ids=None, without_info=False, without_claim_date=False, n_truncate=0):
     """
     pre + info + text
     """
@@ -223,7 +226,7 @@ def get_prompt_for_generating_prior_knowledge(
             text = "CLAIM: "
         elif model_name == "llama3":
             text = "<CLAIM>: "
-        text += get_claim_with_date(claim, claim_date)
+        text += get_claim_with_date(claim, claim_date, claimant)
 
     if search_engine == "bing":
         snippet = get_bing_snippet_v2(search_results, K=K, claim_date=claim_date, sort=sort)
@@ -308,33 +311,33 @@ def get_prompt_for_generating_prior_knowledge_by_summary(claim, claim_date, summ
     return pre + text + info
 
 
-def get_prompt_with_prior_knowledge_old(
-        claim, search_engine, search_results, 
-        prior_knowledge, K=5, claim_date=None, sort=False, known_info=True, ids=None):
-    """
-    task + claim(with date) + prior knowledge with information
+# def get_prompt_with_prior_knowledge_old(
+#         claim, search_engine, search_results, 
+#         prior_knowledge, K=5, claim_date=None, sort=False, known_info=True, ids=None):
+#     """
+#     task + claim(with date) + prior knowledge with information
 
-    sort: 对search result 按时间进行排序
+#     sort: 对search result 按时间进行排序
     
-    known_info: prior knowledge中是否包含已知信息
-    """
-    claim = claim.strip()
-    pre = "According to the CLAIM and the PRIOR KNOWLEDGE, please classify the CLAIM as TRUE or FALSE. If the content described by the CLAIM is correct, then classify it as TRUE; if the content described by the CLAIM is incorrect, then classify it as FALSE.\n\n"
-    text = "CLAIM:" + get_claim_with_date(claim, claim_date) +'\n\n'
+#     known_info: prior knowledge中是否包含已知信息
+#     """
+#     claim = claim.strip()
+#     pre = "According to the CLAIM and the PRIOR KNOWLEDGE, please classify the CLAIM as TRUE or FALSE. If the content described by the CLAIM is correct, then classify it as TRUE; if the content described by the CLAIM is incorrect, then classify it as FALSE.\n\n"
+#     text = "CLAIM:" + get_claim_with_date(claim, claim_date) +'\n\n'
 
-    if search_engine == "bing":
-        snippet = get_bing_snippet_v2(search_results, K=K, claim_date=claim_date, sort=sort)
-    elif search_engine == "brave":
-        if ids is None:
-            ids = slice(0, K)
-        snippet = get_brave_snippet(search_results, ids=ids)
-    else:
-        raise Exception("Select search engines in [\"bing\", \"brave\"].")
+#     if search_engine == "bing":
+#         snippet = get_bing_snippet_v2(search_results, K=K, claim_date=claim_date, sort=sort)
+#     elif search_engine == "brave":
+#         if ids is None:
+#             ids = slice(0, K)
+#         snippet = get_brave_snippet(search_results, ids=ids)
+#     else:
+#         raise Exception("Select search engines in [\"bing\", \"brave\"].")
 
-    if known_info:
-        return pre + text + "PRIOR KNOWLEDGE:\n" + snippet + '\n' + prior_knowledge.strip()
-    else:
-        return pre + text + "PRIOR KNOWLEDGE:\n" + prior_knowledge.strip()
+#     if known_info:
+#         return pre + text + "PRIOR KNOWLEDGE:\n" + snippet + '\n' + prior_knowledge.strip()
+#     else:
+#         return pre + text + "PRIOR KNOWLEDGE:\n" + prior_knowledge.strip()
 
 def get_claim_id(claim, data_search):
     """
@@ -346,7 +349,9 @@ def get_claim_id(claim, data_search):
 
 def get_prompt_with_prior_knowledge(
         claim, search_engine, search_results, 
-        prior_knowledge, K=5, claim_date=None, known_info=True, rag_info=True, ids=None):
+        prior_knowledge, K=5, claim_date=None, claimant=None, justification=None,
+        known_info=True, rag_info=True, justify_info=False, 
+        ids=None):
     """
     task + claim(with date) + prior knowledge
 
@@ -354,9 +359,12 @@ def get_prompt_with_prior_knowledge(
     
     known_info: prompt是否包含已知信息
     """
+    if justify_info and justification is None:
+        raise Exception("只有LIAR2才能使用justify_info")
+    
     claim = claim.strip()
     pre = "Below is a CLAIM and the PRIOR KNOWLEDGE associated with it. Please classify the CLAIM as TRUE or FALSE based on the PRIOR KNOWLEDGE. If the content described by the CLAIM is correct, then classify it as TRUE; if the content described by the CLAIM is incorrect, then classify it as FALSE.\n\n"
-    text = "CLAIM: " + get_claim_with_date(claim, claim_date) +'\n\n'
+    text = "CLAIM: " + get_claim_with_date(claim, claim_date, claimant) +'\n\n'
 
     if search_engine == "brave":
         if ids is None:
@@ -370,14 +378,19 @@ def get_prompt_with_prior_knowledge(
     # else:
     #     return pre + text + "PRIOR KNOWLEDGE:\n" + prior_knowledge.strip()
     
-    if known_info and rag_info:
-        return pre + text + "PRIOR KNOWLEDGE:\n" + snippet + '\n' + prior_knowledge.strip()
-    elif rag_info:
-        return pre + text + "PRIOR KNOWLEDGE:\n" + prior_knowledge.strip()
-    elif known_info:
-        return pre + text + "PRIOR KNOWLEDGE:\n" + snippet
+    if justify_info:
+        assert not(known_info or rag_info), "justification 不能与 已知信息 和 rag信息 同时存在"
+
+        return pre + text + "PRIOR KNOWLEDGE:\n" + justification.strip()
     else:
-        raise Exception()
+        if known_info and rag_info:
+            return pre + text + "PRIOR KNOWLEDGE:\n" + snippet + '\n' + prior_knowledge.strip()
+        elif rag_info:
+            return pre + text + "PRIOR KNOWLEDGE:\n" + prior_knowledge.strip()
+        elif known_info:
+            return pre + text + "PRIOR KNOWLEDGE:\n" + snippet
+        else:
+            raise Exception()
 
 def get_claim_id(claim, data_search):
     """
@@ -395,16 +408,16 @@ def get_claim_id(claim, data_search):
 #     with open(f"/home/hanlv/workspace/data/machine_learning/dataset/research/misinformation_dataset/COVMIS-main/data/train_{search_engine}_search_summary.json", "w") as f:
 #         json.dump(x, f, indent=4)
 
-def save_search_llm_tmp(x):
-    with open(f"data_search_llm_tmp.json", "w") as f:
+def save_search_llm_tmp(x, dataset, data_type):
+    with open(f"data_search_llm_tmp_{dataset}_{data_type}.json", "w") as f:
         json.dump(x, f, indent=4)
 
-def load_search_llm_tmp():
-    try:
-        with open(f"data_search_llm_tmp.json", "r") as f:
-            return json.load(f)
-    except:
-        return []
+# def load_search_llm_tmp():
+#     try:
+#         with open(f"data_search_llm_tmp.json", "r") as f:
+#             return json.load(f)
+#     except:
+#         return []
 
 # def save_search_summary_part(x, part):
 #     with open(f"train_search_summary_v{part}.json", "w") as f:
@@ -418,29 +431,39 @@ def load_search_llm_tmp():
 #         return []
     
 def update_train_search_llm(
-        model_name, get_resp_list, search_engine, dataset, data_type=None, 
-        K=5, sort=False, use_random=False):
-    data_search_llm = load_search_llm_tmp()
-    len_data_search_llm = len(data_search_llm)
+        model_name, get_resp_list, search_engine, dataset, prior_knowledge_version,
+        data_type=None, K=5, sort=False, use_random=False):
+    data_llm_tmp = []
+    # len_data_search_llm = len(data_search_llm)
     
     if dataset == "covmis":
         data = covmis.load_train()
         data_search =  covmis.load_train_search(search_engine=search_engine)    
+        data_llm =  covmis.load_train_llm(search_engine=search_engine)    
         claim_key = 'claim'
+        claimant_key = 'None'
         # save_search = lambda data: covmis.save_train_search(
         #     data, search_engine=search_engine)
     elif dataset == "liar2":
         data = liar2.load_data(data_type)
         data_search = liar2.load_data_search(data_type, search_engine)
+        data_llm = liar2.load_data_llm(data_type, search_engine)
         claim_key = 'statement'
+        claimant_key = 'None' # 不用 claimant
         # save_search = lambda data: liar2.save_data_search(
         #     data, data_type, search_engine)
     else:
         raise Exception("数据集错误")
 
     prompt_list = []
-    for i in range(len_data_search_llm, len(data_search)):
-        # item = data_search[i]
+    id_list = []
+    for i in range(len(data_search)):
+        if data[i]["id"] != data_search[i]["id"]:
+            raise Exception("data_train 与 data 的 id 不匹配！")
+        
+        if data_llm[i].get(f"prior_knowledge_{model_name}_v{prior_knowledge_version}_K={K}") is not None:
+            continue
+
         if use_random:
             if K != 5 or sort:
                 raise Exception()
@@ -448,20 +471,19 @@ def update_train_search_llm(
         else:
             ids = None
 
-        if data[i]["id"] != data_search[i]["id"]:
-            raise Exception("data_train 与 data 的 id 不匹配！")
-        
         prompt = get_prompt_for_generating_prior_knowledge(
             data[i][claim_key], data[i]["date"], 
             search_engine, data_search[i][f"{search_engine}_search_results"], 
-            model_name, K=K, sort=sort, ids=ids
+            model_name, K=K, claimant=data[i].get(claimant_key), sort=sort, ids=ids
         )
         prompt_list.append(prompt)
+        id_list.append(data[i]["id"])
+
     request_list = [{'query': prompt} for prompt in prompt_list]
     resp_list = get_resp_list(request_list)
     resp_list = [i["response"] for i in resp_list]
 
-    with jsonlines.open("resp_list.jsonl", mode="w") as file_jsonl:
+    with jsonlines.open(f"resp_list_{dataset}_{data_type}.jsonl", mode="w") as file_jsonl:
         for item in resp_list:
             file_jsonl.write(item)
 
@@ -475,13 +497,20 @@ def update_train_search_llm(
 
     #     resp_list.append(resp)
 
-    for i in range(len_data_search_llm, len(data_search)):
+    i_resp = 0
+    for i in range(len(data_search)):
+        if data_llm[i].get(f"prior_knowledge_{model_name}_v{prior_knowledge_version}_K={K}") is not None:
+            continue
+        
+        if id_list[i_resp] != data_search[i]["id"]:
+            raise Exception()
+        
         item_llm = {}
         item_llm["id"] = data_search[i]["id"]
-        item_llm[f"prior_knowledge_{model_name}"] = resp_list[i - len_data_search_llm].strip()
-        data_search_llm.append(item_llm)
-
-    save_search_llm_tmp(data_search_llm)
+        item_llm[f"prior_knowledge_{model_name}"] = resp_list[i_resp].strip()
+        data_llm_tmp.append(item_llm)
+        i_resp += 1
+    save_search_llm_tmp(data_llm_tmp, dataset, data_type)
 
 # def update_train_search_summary(
 #         model, model_name, port, search_engine, data_search, part, K=20):

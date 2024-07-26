@@ -1,0 +1,24 @@
+[
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.11453485,
+        "lr": "1e-4",
+        "ACC": 0.9189852700490998,
+        "F1": 0.8799196009826546,
+        "Precision": 0.8753161950702982,
+        "Recall": 0.8847823989192318
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.10728487,
+        "lr": "2e-4",
+        "ACC": 0.9304418985270049,
+        "F1": 0.8982977827604608,
+        "Precision": 0.8886768666552061,
+        "Recall": 0.9090755572710605
+    }
+]

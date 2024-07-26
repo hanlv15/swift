@@ -54,6 +54,7 @@ get_resp_list = lambda request_list : inference_vllm(
 K = 5
 sort = False
 
+prior_knowledge_version = "1"
 search_engine = "brave"
 model_name = 'llama3'
 dataset = 'liar2' # liar2 covmis
@@ -62,6 +63,7 @@ data_type = 'train' # 只有数据集为liar2时才有效
 # data_search = data_search[:10] + [data_search[9690]]
 prompt_rag.update_train_search_llm(
     model_name, get_resp_list, search_engine,
-    dataset, data_type=data_type, 
+    dataset, prior_knowledge_version,
+    data_type=data_type, 
     K=K, sort=sort
 )

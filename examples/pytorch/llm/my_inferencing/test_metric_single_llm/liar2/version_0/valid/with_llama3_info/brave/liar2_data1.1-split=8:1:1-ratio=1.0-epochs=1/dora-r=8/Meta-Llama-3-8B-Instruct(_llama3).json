@@ -1,0 +1,68 @@
+[
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.13419897,
+        "lr": "1e-4",
+        "ACC": 0.8998911860718172,
+        "F1": 0.8827936120660973,
+        "Precision": 0.867450606493988,
+        "Recall": 0.9067773751304695
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.12778455,
+        "lr": "1.3e-4",
+        "ACC": 0.9064200217627857,
+        "F1": 0.889120528849931,
+        "Precision": 0.8757767834949043,
+        "Recall": 0.9077712885104785
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.1267698,
+        "lr": "1.5e-4",
+        "ACC": 0.9107725788900979,
+        "F1": 0.8940613156089388,
+        "Precision": 0.8809921478460805,
+        "Recall": 0.9119785619627296
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.12573798,
+        "lr": "1.7e-4",
+        "ACC": 0.9075081610446137,
+        "F1": 0.8902979362839067,
+        "Precision": 0.8771341496421883,
+        "Recall": 0.9085277181625209
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.12742281,
+        "lr": "2e-4",
+        "ACC": 0.9031556039173014,
+        "F1": 0.8846612149697449,
+        "Precision": 0.8726324570107623,
+        "Recall": 0.9007757801780248
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.1284593,
+        "lr": "2.5e-4",
+        "ACC": 0.9031556039173014,
+        "F1": 0.8831825822917871,
+        "Precision": 0.8744938029206037,
+        "Recall": 0.8936864511135347
+    }
+]

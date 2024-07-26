@@ -3,11 +3,15 @@ from run_base import SFTModels, DatasetName, run_lora, run_vera, run_dora, run_p
 DEVICE = "0"
 
 # Llama-3
-for lr in ["3e-4"]: # 8e-5
-    run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.liar2, DEVICE)
+for lr in ["9.5e-5"]: #  covmis: 9.5e-5 1.05e-4
+    run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, data_version="1")
 
-# for lr in ["1.5e-4"]:
-#     run_lora(SFTModels.llama_3_8b_instruct, lr, DEVICE)
+# for lr in ["7e-5"]: # 8e-5
+#     run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.liar2, DEVICE, data_version="1")
+
+
+# for lr in ["1e-4"]:
+#     run_lora(SFTModels.llama_3_8b_instruct, lr, DatasetName.liar2, DEVICE, data_version="1")
 
 # for lr in ["1e-5", "3e-5", ]:
 #     run_rslora(SFTModels.llama_3_8b_instruct, lr, DEVICE)

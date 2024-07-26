@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # 检查是否提供了足够的参数
-if [ "$#" -ne 9 ]; then
-    echo "错误：需要提供9个参数"
-    echo "用法: bash $0 <dataset_name> <test_size> <train_ratio> <sft_type> <lora_rank> <learning_rate> <with_or_without_info> <data_version> "
+if [ "$#" -ne 10 ]; then
+    echo "错误：需要提供10个参数"
+    echo "用法: bash $0 <dataset_name> <test_size> <train_ratio> <sft_type> <lora_rank> <learning_rate> <with_or_without_info> <data_version> <num_epochs> <device> "
     exit 1
 fi
 
@@ -15,9 +15,9 @@ lora_rank=$5
 learning_rate=$6 # 1e-4
 with_or_without_info=$7
 data_version=$8
-device=$9
+num_epochs=$9
+device=${10}
 
-num_epochs=1
 
 if [ "$dataset_name" == "liar2" ]; then
     split_type="8:1:1"
@@ -50,7 +50,7 @@ python llm_sft.py \
     --template_type _llama3 \
     --dtype AUTO \
     --add_output_dir_suffix false \
-    --output_dir output/$dataset_name/Llama-3-8B-Instruct/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/dora-r=$lora_rank/"$output_name" \
+    --output_dir output/$dataset_name/Llama-3-8B-Instruct/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio-epochs=$num_epochs/dora-r=$lora_rank/"$output_name" \
     --dataset $custom_train_dataset_path#-1 \
     --dataset_test_ratio 0 \
     --num_train_epochs $num_epochs \
