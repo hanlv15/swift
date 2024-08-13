@@ -67,6 +67,15 @@ def run_dora(sft_model, lr, dataset_name, device, rank="8", rag_model="llama3", 
 		["bash", f"my_tuning/{sft_model}/lora/dora.sh", dataset_name,
    			"0.2", "1.0", "lora", rank, lr, f"with_{rag_model}_info/brave", data_version, num_epochs, device])
 
+def run_dora_with_info_or_not(sft_model, lr, dataset_name, device, with_info, rank="8", data_version=data_version, num_epochs="1"):
+	if with_info:
+		with_info_or_not = "with_info"
+	else:
+		with_info_or_not = "without_info"
+	subprocess.run(
+		["bash", f"my_tuning/{sft_model}/lora/dora.sh", dataset_name,
+   			"0.2", "1.0", "lora", rank, lr, with_info_or_not, data_version, num_epochs, device])
+
 # Llama-3
 # qlora
 # for lr in ["1.5e-4"]:

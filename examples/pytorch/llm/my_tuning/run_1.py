@@ -1,10 +1,19 @@
-from run_base import SFTModels, DatasetName, run_lora, run_vera, run_dora, run_pissa, run_lora_plus, run_rslora
-
+from run_base import SFTModels, DatasetName, run_lora, run_vera, run_dora, run_pissa, run_lora_plus, run_rslora, run_dora_with_info_or_not
 DEVICE = "1"
 
 # Llama-3
-for lr in ["1.05e-4",]:
-    run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, data_version="1")
+# for lr in ["1.1e-4", "1.2e-4", "1.4e-4", "1.7e-4"]: 
+#     for rank in ["2", "4"]:
+#         run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, rank=rank, data_version="1")
+
+# for lr in ["7e-5", "9e-5", "1e-4", ]:
+#     with_info = True
+#     run_dora_with_info_or_not(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, with_info, data_version="1")
+
+############################
+
+# for lr in ["1.05e-4",]:
+#     run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, data_version="1")
 
 # for lr in ["3e-4"]:
 #     run_lora(SFTModels.llama_3_8b_instruct, lr, DatasetName.liar2, DEVICE, data_version="1")

@@ -1,0 +1,79 @@
+[
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.14000426,
+        "lr": "1e-5",
+        "ACC": 0.9754098360655737,
+        "F1": 0.9663904438665315,
+        "Precision": 0.9731089055793991,
+        "Recall": 0.9601086956521739
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.09029033,
+        "lr": "3e-5",
+        "ACC": 0.9877049180327869,
+        "F1": 0.983214689623101,
+        "Precision": 0.9895580523230965,
+        "Recall": 0.9772463768115942
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07827374,
+        "lr": "5e-5",
+        "ACC": 0.9877049180327869,
+        "F1": 0.9831756780983184,
+        "Precision": 0.9907551601928514,
+        "Recall": 0.976123188405797
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07122821,
+        "lr": "7e-5",
+        "ACC": 0.9827868852459016,
+        "F1": 0.9764459493376457,
+        "Precision": 0.9839209623148137,
+        "Recall": 0.9694927536231884
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.06982325,
+        "lr": "8e-5",
+        "ACC": 0.9868852459016394,
+        "F1": 0.9820331282606375,
+        "Precision": 0.9902217696650244,
+        "Recall": 0.9744565217391303
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.06987901,
+        "lr": "1e-4",
+        "ACC": 0.9852459016393442,
+        "F1": 0.9798342663199189,
+        "Precision": 0.9867444563662375,
+        "Recall": 0.9733695652173913
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07066307,
+        "lr": "1.5e-4",
+        "ACC": 0.9819672131147541,
+        "F1": 0.9752955513583765,
+        "Precision": 0.9833710187029245,
+        "Recall": 0.9678260869565217
+    }
+]
