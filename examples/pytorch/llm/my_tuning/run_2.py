@@ -1,5 +1,6 @@
 from run_base import SFTModels, DatasetName, run_lora, run_vera, run_dora, run_pissa, run_lora_plus, run_rslora, run_dora_with_info_or_not
-
+# import time
+# time.sleep(7200) # 让程序等待2小时
 DEVICE = "2"
 
 # Llama-3
@@ -11,9 +12,9 @@ DEVICE = "2"
 #     for rank in ["16", "32"]:
 #         run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, rank=rank, data_version="1")
 
-for lr in ["1.1e-4", "1.3e-4", "1.5e-4"]:
-    with_info = True
-    run_dora_with_info_or_not(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, with_info, data_version="1")
+for with_info in [True, False]:
+    for lr in ["6e-5", "8e-5", "1.2e-4", "1.4e-4"]:
+        run_dora_with_info_or_not(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, with_info, data_version="1")
 
 ############################
 # for lr in ["9e-5", "1.1e-4"]: # 8e-5

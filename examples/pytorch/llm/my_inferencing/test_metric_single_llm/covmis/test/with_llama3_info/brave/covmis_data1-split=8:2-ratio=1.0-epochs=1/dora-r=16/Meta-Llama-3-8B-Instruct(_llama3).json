@@ -14,6 +14,17 @@
         "model": "Meta-Llama-3-8B-Instruct",
         "train_test_split": "8:2",
         "train_ratio": "1.0",
+        "train_loss": 0.10547448,
+        "lr": "2e-5",
+        "ACC": 0.9819672131147541,
+        "F1": 0.9752955513583765,
+        "Precision": 0.9833710187029245,
+        "Recall": 0.9678260869565217
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
         "train_loss": 0.09029033,
         "lr": "3e-5",
         "ACC": 0.9877049180327869,
@@ -25,12 +36,34 @@
         "model": "Meta-Llama-3-8B-Instruct",
         "train_test_split": "8:2",
         "train_ratio": "1.0",
+        "train_loss": 0.08306699,
+        "lr": "4e-5",
+        "ACC": 0.9860655737704918,
+        "F1": 0.9809766482395144,
+        "Precision": 0.9872908915888337,
+        "Recall": 0.975036231884058
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
         "train_loss": 0.07827374,
         "lr": "5e-5",
         "ACC": 0.9877049180327869,
         "F1": 0.9831756780983184,
         "Precision": 0.9907551601928514,
         "Recall": 0.976123188405797
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07519975,
+        "lr": "6e-5",
+        "ACC": 0.9885245901639345,
+        "F1": 0.9843877968877969,
+        "Precision": 0.988936289560699,
+        "Recall": 0.980036231884058
     },
     {
         "model": "Meta-Llama-3-8B-Instruct",
@@ -53,6 +86,17 @@
         "F1": 0.9820331282606375,
         "Precision": 0.9902217696650244,
         "Recall": 0.9744565217391303
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.06896684,
+        "lr": "9e-5",
+        "ACC": 0.9868852459016394,
+        "F1": 0.9821163536417774,
+        "Precision": 0.9878383388950686,
+        "Recall": 0.9767028985507247
     },
     {
         "model": "Meta-Llama-3-8B-Instruct",
