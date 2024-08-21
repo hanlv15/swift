@@ -208,7 +208,7 @@ def cal_metric_single_llm(
 
     if train_ratio == "1.0":
         file_dir = f"test_metric_single_llm/{dataset_name}/{data_type}/{with_or_without_info}/\
-{dataset_name}_data{data_version}-split={split_type}-ratio={train_ratio}-epochs={num_train_epochs}/{sft_type}"
+{dataset_name}_data{data_version}-split={split_type}-ratio={train_ratio}/{sft_type}"
         if sft_type == "adalora":
             r1, r2 = sft_args["adalora_target_r"], sft_args["adalora_init_r"]
             file_dir += f"-r={r1}_{r2}"
@@ -226,7 +226,7 @@ def cal_metric_single_llm(
                 break
     else:
         file_dir = f"test_metric_single_llm/{dataset_name}/{data_type}/{with_or_without_info}/\
-{dataset_name}_data{data_version}-split={split_type}-epochs={num_train_epochs}-sft={sft_type}-lr={lr}"
+{dataset_name}_data{data_version}-split={split_type}-sft={sft_type}-lr={lr}"
         metrics = load_metrics(file_dir, model_name, template_type)
         for item in metrics:
             if item["train_test_split"] == split_type and \

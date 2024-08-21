@@ -39,6 +39,7 @@ lora_alpha=$(expr $lora_rank \* 4)
 max_length=8192
 
 NCCL_P2P_DISABLE="1" NCCL_IB_DISABLE="1" \
+PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:512 \
 PYTHONPATH=../../.. \
 CUDA_VISIBLE_DEVICES=$device \
 python llm_sft.py \

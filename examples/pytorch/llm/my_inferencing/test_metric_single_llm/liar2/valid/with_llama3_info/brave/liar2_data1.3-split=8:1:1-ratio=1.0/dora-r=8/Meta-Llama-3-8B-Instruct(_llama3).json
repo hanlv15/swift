@@ -1,0 +1,68 @@
+[
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.12106248,
+        "lr": "1e-4",
+        "ACC": 0.9073482428115016,
+        "F1": 0.9040064535751646,
+        "Precision": 0.89892617181251,
+        "Recall": 0.9132013725395434
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.11976161,
+        "lr": "1.1e-4",
+        "ACC": 0.9111821086261981,
+        "F1": 0.9080688219192903,
+        "Precision": 0.9028602378844657,
+        "Recall": 0.9178797785157518
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.1192237,
+        "lr": "1.2e-4",
+        "ACC": 0.9105431309904153,
+        "F1": 0.9071068555225419,
+        "Precision": 0.9022124456127325,
+        "Recall": 0.9151681844229189
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.11972405,
+        "lr": "1.3e-4",
+        "ACC": 0.9079872204472843,
+        "F1": 0.9044038048439478,
+        "Precision": 0.899614086996104,
+        "Recall": 0.9121536719575258
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.11786839,
+        "lr": "1.4e-4",
+        "ACC": 0.9054313099041533,
+        "F1": 0.9020445379743409,
+        "Precision": 0.8969759260123003,
+        "Recall": 0.9113320813857955
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.11727598,
+        "lr": "1.5e-4",
+        "ACC": 0.9073482428115016,
+        "F1": 0.9040064535751646,
+        "Precision": 0.89892617181251,
+        "Recall": 0.9132013725395434
+    }
+]

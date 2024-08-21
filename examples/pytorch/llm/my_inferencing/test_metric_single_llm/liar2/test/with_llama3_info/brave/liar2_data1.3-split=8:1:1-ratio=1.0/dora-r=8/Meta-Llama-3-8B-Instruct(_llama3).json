@@ -1,0 +1,68 @@
+[
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.12106248,
+        "lr": "1e-4",
+        "ACC": 0.9201277955271565,
+        "F1": 0.9167775944225993,
+        "Precision": 0.9124560122728282,
+        "Recall": 0.9229558446576486
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.11976161,
+        "lr": "1.1e-4",
+        "ACC": 0.9201277955271565,
+        "F1": 0.9168658698539176,
+        "Precision": 0.9123335952822331,
+        "Recall": 0.9235785526265856
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.1192237,
+        "lr": "1.2e-4",
+        "ACC": 0.9246006389776358,
+        "F1": 0.921583064965418,
+        "Precision": 0.9168494593361776,
+        "Recall": 0.9287697981460207
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.11972405,
+        "lr": "1.3e-4",
+        "ACC": 0.921405750798722,
+        "F1": 0.9181527466738326,
+        "Precision": 0.9137070724386317,
+        "Recall": 0.9246169742257548
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.11786839,
+        "lr": "1.4e-4",
+        "ACC": 0.923961661341853,
+        "F1": 0.9208978572105128,
+        "Precision": 0.9162192769062998,
+        "Recall": 0.9279392333619676
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.11727598,
+        "lr": "1.5e-4",
+        "ACC": 0.929073482428115,
+        "F1": 0.9261768924302789,
+        "Precision": 0.9215311920689933,
+        "Recall": 0.9330269817120502
+    }
+]

@@ -5,14 +5,21 @@ from run_base import SFTModels, DatasetName, run_lora, run_vera, run_dora, run_p
 DEVICE = "0"
 
 # Llama-3
-# for lr in ["7e-5", "9e-5"]: 
+for data_version in ["1.4", "1.6"]:
+    for lr in ["1e-4", "1.1e-4"]: # 8e-5
+        run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.liar2, DEVICE, data_version=data_version)
+for lr in ["9e-5"]:
+    run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.liar2, DEVICE, data_version="1.3")
+for lr in ["9e-5"]: # 8e-5
+    run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.liar2, DEVICE, data_version="1")
+
+# for lr in ["7e-5", "9e-5"]:
 #     for rank in ["2", "4"]:
 #         run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, rank=rank, data_version="1")
 
-for lr in ["9e-5"]: 
-    for rank in ["16", "32"]:
-        run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, rank=rank, data_version="1")
-
+# for lr in ["9e-5"]:
+#     for rank in ["16", "32"]:
+#         run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, rank=rank, data_version="1")
 
 # for lr in ["7e-5", "9e-5", "1e-4", ]:
 #     with_info = True
@@ -22,8 +29,8 @@ for lr in ["9e-5"]:
 # for lr in ["9e-5"]: #  covmis: 9.5e-5 1.05e-4
 #     run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, data_version="1")
 
-# for lr in ["7e-5"]: # 8e-5
-#     run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.liar2, DEVICE, data_version="1")
+for lr in ["9e-5"]: # 8e-5
+    run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.liar2, DEVICE, data_version="1.5")
 
 
 # for lr in ["1e-4"]:
