@@ -3,14 +3,15 @@ ckpt_list = [
 ]
 import os
 import subprocess
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+import run_infer_base
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 files = []
 
 # 获取当前目录下的所有文件
 for base_dir in [
-    '/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/liar2/Llama-3-8B-Instruct/with_llama3_info/brave/data1.3-split=8:1:1-ratio=1.0',
-    # '/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/covmis/Llama-3-8B-Instruct/with_info/data1-split=8:2-ratio=1.0',
+    '/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/liar2/Llama-3-8B-Instruct/with_llama3_info/brave/data1a-split=8:1:1-ratio=1.0',
+    "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/covmis/Llama-3-8B-Instruct/with_llama3_info/brave/data1a-split=8:2-ratio=1.0",
 ]:
     files.extend([os.path.join(base_dir, file) for file in os.listdir(base_dir)])
 
@@ -38,9 +39,8 @@ for path in files:
 
     if len(path) > 0:
         for file in os.listdir(path):
-            ckpt_dir = os.path.join(path, file, "checkpoint-782")
-            if os.path.exists(ckpt_dir):
-                ckpt_list.append(ckpt_dir)
+            ckpt_dir = run_infer_base.get_ckpts(os.path.join(path, file))[0]
+            ckpt_list.append(ckpt_dir)
 
     # 使用subprocess运行Python文件
     for ckpt in ckpt_list:

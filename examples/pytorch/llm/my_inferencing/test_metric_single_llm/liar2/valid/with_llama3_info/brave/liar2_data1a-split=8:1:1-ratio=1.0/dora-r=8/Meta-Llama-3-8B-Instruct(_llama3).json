@@ -1,0 +1,68 @@
+[
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.10487445,
+        "lr": "1.1e-4",
+        "ACC": 0.9299085764040053,
+        "F1": 0.9187269864327776,
+        "Precision": 0.9176420766895855,
+        "Recall": 0.9198374379286821
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.10469767,
+        "lr": "1.2e-4",
+        "ACC": 0.9303439268611232,
+        "F1": 0.9195016602563542,
+        "Precision": 0.9170886792617174,
+        "Recall": 0.9220470622661032
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.10395776,
+        "lr": "1.3e-4",
+        "ACC": 0.9307792773182412,
+        "F1": 0.9198563561734918,
+        "Precision": 0.9181688244704566,
+        "Recall": 0.921606812024164
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.10333094,
+        "lr": "1.4e-4",
+        "ACC": 0.933391380060949,
+        "F1": 0.9227074400035364,
+        "Precision": 0.9219200563374346,
+        "Recall": 0.9235079527085746
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.10270823,
+        "lr": "1.5e-4",
+        "ACC": 0.9264257727470614,
+        "F1": 0.9148158754296862,
+        "Precision": 0.9131487617032809,
+        "Recall": 0.9165454766601269
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:1:1",
+        "train_ratio": "1.0",
+        "train_loss": 0.10260571,
+        "lr": "1.6e-4",
+        "ACC": 0.9294732259468872,
+        "F1": 0.9185555123652638,
+        "Precision": 0.9158647322826428,
+        "Recall": 0.921413348704633
+    }
+]
