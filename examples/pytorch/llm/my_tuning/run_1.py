@@ -9,15 +9,14 @@ import time
 #     for rank in ["2", "4"]:
 #         run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, rank=rank, data_version="1")
 
-# for lr in ["7e-5", "9e-5", "1e-4", ]:
-#     with_info = True
-#     run_dora_with_info_or_not(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, with_info, data_version="1")
+for lr in ["1.6e-4"]:
+    with_info = True
+    run_dora_with_info_or_not(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, with_info, data_version="2")
 
 ############################
-
-for lr in ["1.3e-4", "1.4e-4", "1.5e-4", "1.6e-4"]:
-    run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.liar2, DEVICE, data_version="1a")
-    run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, data_version="1a")
+# for lr in ["1.3e-4", "1.4e-4", "1.5e-4", "1.6e-4"]:
+#     run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.liar2, DEVICE, data_version="1a")
+#     run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, data_version="1a")
 
 # for lr in ["3e-4"]:
 #     run_lora(SFTModels.llama_3_8b_instruct, lr, DatasetName.liar2, DEVICE, data_version="1")

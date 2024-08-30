@@ -1,3 +1,5 @@
+import time
+# time.sleep(3600*2.8) # 让程序等待x小时
 ckpt_list = [
 
 ]
@@ -11,8 +13,7 @@ files = []
 
 # 获取当前目录下的所有文件
 for base_dir in [
-    '/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/liar2/Llama-3-8B-Instruct/with_llama3_info/brave/data1a-split=8:1:1-ratio=1.0',
-    "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/covmis/Llama-3-8B-Instruct/with_llama3_info/brave/data1a-split=8:2-ratio=1.0",
+    '/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/covmis/Llama-3-8B-Instruct/with_info/data2-split=8:2-ratio=1.0',
 ]:
     files.extend([os.path.join(base_dir, file) for file in os.listdir(base_dir)])
 
