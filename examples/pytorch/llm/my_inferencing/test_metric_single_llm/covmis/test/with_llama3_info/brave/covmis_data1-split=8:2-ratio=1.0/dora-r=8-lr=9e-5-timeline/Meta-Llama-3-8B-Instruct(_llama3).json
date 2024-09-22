@@ -1,0 +1,86 @@
+[
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07930025,
+        "lr": "9e-5",
+        "search_date": "2024-09-08",
+        "ACC": 0.978688524590164,
+        "F1": 0.9705969595847237,
+        "Precision": 0.9824088145896657,
+        "Recall": 0.960036231884058
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07930025,
+        "lr": "9e-5",
+        "search_date": "2024-09-09",
+        "ACC": 0.9795081967213115,
+        "F1": 0.9718278896503056,
+        "Precision": 0.9817268856700017,
+        "Recall": 0.9628260869565217
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07930025,
+        "lr": "9e-5",
+        "search_date": "2024-09-10",
+        "ACC": 0.9811475409836066,
+        "F1": 0.9740204188767674,
+        "Precision": 0.985259172512592,
+        "Recall": 0.9639130434782609
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07930025,
+        "lr": "9e-5",
+        "search_date": "2024-09-11",
+        "ACC": 0.980327868852459,
+        "F1": 0.9728587319243605,
+        "Precision": 0.984726443768997,
+        "Recall": 0.9622463768115942
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07930025,
+        "lr": "9e-5",
+        "search_date": "2024-09-12",
+        "ACC": 0.980327868852459,
+        "F1": 0.9728587319243605,
+        "Precision": 0.984726443768997,
+        "Recall": 0.9622463768115942
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07930025,
+        "lr": "9e-5",
+        "search_date": "2024-09-13",
+        "ACC": 0.9795081967213115,
+        "F1": 0.9716942346260251,
+        "Precision": 0.984194729164048,
+        "Recall": 0.9605797101449276
+    },
+    {
+        "model": "Meta-Llama-3-8B-Instruct",
+        "train_test_split": "8:2",
+        "train_ratio": "1.0",
+        "train_loss": 0.07930025,
+        "lr": "9e-5",
+        "search_date": "2024-09-14",
+        "ACC": 0.9770491803278688,
+        "F1": 0.9682597497203216,
+        "Precision": 0.9813346774809452,
+        "Recall": 0.9567028985507247
+    }
+]

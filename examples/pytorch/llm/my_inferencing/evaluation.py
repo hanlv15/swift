@@ -36,7 +36,10 @@ def cal_metric_single_llm(
             item["train_loss"] = train_loss
         return do_update
     
-    def update_metrics(metrics, model_name, split_type, train_ratio, labels, preds, lr=None):
+    def update_metrics(
+            metrics, model_name, split_type, train_ratio, labels, preds, 
+            search_date=None, lr=None
+    ):
         new_item = {
             "model": model_name,
             # "train_data": dataset_name,
@@ -47,6 +50,8 @@ def cal_metric_single_llm(
         
         if lr is not None:
             new_item.update(lr=lr)
+        if search_date is not None:
+            new_item.update(search_date=search_date)
         new_item.update(
             ACC=accuracy_score(labels, preds),
             F1=f1_score(labels, preds, average='macro'),
@@ -181,7 +186,8 @@ def cal_metric_single_llm(
 
     lr = get_lr(sft_args["output_dir"])
     dataset_name = get_dataset_name(sft_args["dataset"][0])
-
+    search_date = None
+    
     assert data_type in ["test", "valid"], f'data_type error: {data_type}'
     
     if data_dir is None or data_dir == "":
@@ -189,8 +195,11 @@ def cal_metric_single_llm(
 {data_type}_data{data_version}.jsonl"
     else:
         dataset_name = get_dataset_name(data_dir)
-        if data_type not in dataset_name:
-            raise Exception()
+
+        # if f"{data_type}" not in dataset_name:
+        #     raise Exception()
+        if "timeline" in data_dir:
+            search_date = data_dir[-16:-6]
         # split_type = get_split_type(data_dir)
     
     assert dataset_name in ["liar2", "covmis"], "Error dataset name!!"
@@ -206,9 +215,11 @@ def cal_metric_single_llm(
     exist = False
     do_update = False
 
+    base_dir = "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/my_inferencing/"
     if train_ratio == "1.0":
-        file_dir = f"test_metric_single_llm/{dataset_name}/{data_type}/{with_or_without_info}/\
+        file_dir = base_dir + f"test_metric_single_llm/{dataset_name}/{data_type}/{with_or_without_info}/\
 {dataset_name}_data{data_version}-split={split_type}-ratio={train_ratio}/{sft_type}"
+
         if sft_type == "adalora":
             r1, r2 = sft_args["adalora_target_r"], sft_args["adalora_init_r"]
             file_dir += f"-r={r1}_{r2}"
@@ -216,16 +227,18 @@ def cal_metric_single_llm(
             file_dir += f"-r={vera_rank}" 
         else:
             file_dir += f"-r={lora_rank}" 
+        if search_date is not None:
+            file_dir +=f"-lr={lr}-timeline"
         metrics = load_metrics(file_dir, model_name, template_type)
         for item in metrics:
             if item["train_test_split"] == split_type and \
-                item["train_ratio"] == train_ratio and item["lr"] == lr:
-
+                item["train_ratio"] == train_ratio and \
+                    ((search_date is not None and item["search_date"] == search_date) or (search_date is None and item["lr"] == lr)):
                 do_update = update_metric_item(item, train_loss)
                 exist = True
                 break
     else:
-        file_dir = f"test_metric_single_llm/{dataset_name}/{data_type}/{with_or_without_info}/\
+        file_dir = base_dir + f"test_metric_single_llm/{dataset_name}/{data_type}/{with_or_without_info}/\
 {dataset_name}_data{data_version}-split={split_type}-sft={sft_type}-lr={lr}"
         metrics = load_metrics(file_dir, model_name, template_type)
         for item in metrics:
@@ -240,8 +253,6 @@ def cal_metric_single_llm(
             save_metrics(file_dir, model_name, template_type, metrics, save=save)
         return
 
-
-    
     wrong_queries = []
     wrong_claims = []
     cnt_wrong = 0
@@ -301,10 +312,14 @@ def cal_metric_single_llm(
     if train_ratio == "1.0":
         new_metric = update_metrics(
             metrics, model_name, split_type, train_ratio, 
-            labels=labels, preds=preds, lr=lr
+            labels=labels, preds=preds, search_date=search_date, lr=lr
         )
-        metrics.sort(key=lambda x: (x["train_test_split"], x["train_ratio"], float(x["lr"])))
+        if search_date is None:
+            metrics.sort(key=lambda x: (x["train_test_split"], x["train_ratio"], float(x["lr"])))
+        else:
+            metrics.sort(key=lambda x: (x["train_test_split"], x["train_ratio"], search_date))
         # save_metrics(file_dir, model_name, template_type, metrics, save=save)
+
     else:
         # 不同的ratio
         new_metric = update_metrics(
@@ -323,5 +338,6 @@ def cal_metric_single_llm(
 
     # save_wrong_claims(file_dir, model_name, sft_type, lr, cnt_wrong, wrong_claims)
 
+    return labels, preds
 
     

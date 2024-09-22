@@ -408,8 +408,8 @@ def get_claim_id(claim, data_search):
 #     with open(f"/home/hanlv/workspace/data/machine_learning/dataset/research/misinformation_dataset/COVMIS-main/data/train_{search_engine}_search_summary.json", "w") as f:
 #         json.dump(x, f, indent=4)
 
-def save_search_llm_tmp(x, dataset, data_type):
-    with open(f"data_search_llm_tmp_{dataset}_{data_type}.json", "w") as f:
+def save_search_llm_tmp(x, dataset, data_type, search_date):
+    with open(f"data_search_llm_tmp_{dataset}_{data_type}_{search_date}.json", "w") as f:
         json.dump(x, f, indent=4)
 
 # def load_search_llm_tmp():
@@ -432,14 +432,14 @@ def save_search_llm_tmp(x, dataset, data_type):
     
 def update_train_search_llm(
         model_name, get_resp_list, search_engine, dataset, prior_knowledge_version,
-        data_type=None, K=5, sort=False, use_random=False):
+        data_type, search_date, K=5, sort=False, use_random=False):
     data_llm_tmp = []
     # len_data_search_llm = len(data_search_llm)
     
     if dataset == "covmis":
-        data = covmis.load_train()
-        data_search =  covmis.load_train_search(search_engine=search_engine)    
-        data_llm =  covmis.load_train_llm(search_engine=search_engine)    
+        data = covmis.load_data(data_type)
+        data_search =  covmis.load_data_search(data_type, search_date, search_engine=search_engine)    
+        data_llm =  covmis.load_data_llm(data_type, search_date, search_engine=search_engine)    
         claim_key = 'claim'
         claimant_key = 'None'
         # save_search = lambda data: covmis.save_train_search(
@@ -510,7 +510,7 @@ def update_train_search_llm(
         item_llm[f"prior_knowledge_{model_name}"] = resp_list[i_resp].strip()
         data_llm_tmp.append(item_llm)
         i_resp += 1
-    save_search_llm_tmp(data_llm_tmp, dataset, data_type)
+    save_search_llm_tmp(data_llm_tmp, dataset, data_type, search_date)
 
 # def update_train_search_summary(
 #         model, model_name, port, search_engine, data_search, part, K=20):
