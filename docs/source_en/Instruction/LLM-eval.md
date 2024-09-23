@@ -13,11 +13,37 @@ SWIFT supports the eval (evaluation) capability to provide standardized evaluati
 
 SWIFT's eval capability utilizes the [EvalScope evaluation framework](https://github.com/modelscope/eval-scope) from the ModelScope community and [Open-Compass](https://hub.opencompass.org.cn/home) and provides advanced encapsulation to support evaluation needs for various models. Currently, we support the evaluation process for **standard evaluation sets** and **user-defined evaluation sets**. The **standard evaluation sets** include:
 
+NLP eval datasets：
 ```text
-'obqa', 'AX_b', 'siqa', 'nq', 'mbpp', 'winogrande', 'mmlu', 'BoolQ', 'cluewsc', 'ocnli', 'lambada', 'CMRC', 'ceval', 'csl', 'cmnli', 'bbh', 'ReCoRD', 'math', 'humaneval', 'eprstmt', 'WSC', 'storycloze', 'MultiRC', 'RTE', 'chid', 'gsm8k', 'AX_g', 'bustm', 'afqmc', 'piqa', 'lcsts', 'strategyqa', 'Xsum', 'agieval', 'ocnli_fc', 'C3', 'tnews', 'race', 'triviaqa', 'CB', 'WiC', 'hellaswag', 'summedits', 'GaokaoBench', 'ARC_e', 'COPA', 'ARC_c', 'DRCD'
+'obqa', 'cmb', 'AX_b', ''siqa', 'nq', 'mbpp', 'winogrande', 'mmlu', 'BoolQ', 'cluewsc', 'ocnli', 'lambada',
+'CMRC', 'ceval', 'csl', 'cmnli', 'bbh', 'ReCoRD', 'math', 'humaneval', 'eprstmt', 'WSC', 'storycloze',
+'MultiRC', 'RTE', 'chid', 'gsm8k', 'AX_g', 'bustm', 'afqmc', 'piqa', 'lcsts', 'strategyqa', 'Xsum', 'agieval',
+'ocnli_fc', 'C3', 'tnews', 'race', 'triviaqa', 'CB', 'WiC', 'hellaswag', 'summedits', 'GaokaoBench',
+'ARC_e', 'COPA', 'ARC_c', 'DRCD'
 ```
-
 Check out the detail descriptions of these datasets: https://hub.opencompass.org.cn/home
+
+Multi Modal eval datasets：
+```text
+'COCO_VAL', 'MME', 'HallusionBench', 'POPE', 'MMBench_DEV_EN', 'MMBench_TEST_EN', 'MMBench_DEV_CN', 'MMBench_TEST_CN',
+'MMBench', 'MMBench_CN', 'MMBench_DEV_EN_V11', 'MMBench_TEST_EN_V11', 'MMBench_DEV_CN_V11',
+'MMBench_TEST_CN_V11', 'MMBench_V11', 'MMBench_CN_V11', 'SEEDBench_IMG', 'SEEDBench2',
+'SEEDBench2_Plus', 'ScienceQA_VAL', 'ScienceQA_TEST', 'MMT-Bench_ALL_MI', 'MMT-Bench_ALL',
+'MMT-Bench_VAL_MI', 'MMT-Bench_VAL', 'AesBench_VAL', 'AesBench_TEST', 'CCBench', 'AI2D_TEST', 'MMStar',
+'RealWorldQA', 'MLLMGuard_DS', 'BLINK', 'OCRVQA_TEST', 'OCRVQA_TESTCORE', 'TextVQA_VAL', 'DocVQA_VAL',
+'DocVQA_TEST', 'InfoVQA_VAL', 'InfoVQA_TEST', 'ChartQA_TEST', 'MathVision', 'MathVision_MINI',
+'MMMU_DEV_VAL', 'MMMU_TEST', 'OCRBench', 'MathVista_MINI', 'LLaVABench', 'MMVet', 'MTVQA_TEST',
+'MMLongBench_DOC', 'VCR_EN_EASY_500', 'VCR_EN_EASY_100', 'VCR_EN_EASY_ALL', 'VCR_EN_HARD_500',
+'VCR_EN_HARD_100', 'VCR_EN_HARD_ALL', 'VCR_ZH_EASY_500', 'VCR_ZH_EASY_100', 'VCR_ZH_EASY_ALL',
+'VCR_ZH_HARD_500', 'VCR_ZH_HARD_100', 'VCR_ZH_HARD_ALL', 'MMDU', 'MMBench-Video', 'Video-MME',
+'MMBench_DEV_EN', 'MMBench_TEST_EN', 'MMBench_DEV_CN', 'MMBench_TEST_CN', 'MMBench', 'MMBench_CN',
+'MMBench_DEV_EN_V11', 'MMBench_TEST_EN_V11', 'MMBench_DEV_CN_V11', 'MMBench_TEST_CN_V11', 'MMBench_V11',
+'MMBench_CN_V11', 'SEEDBench_IMG', 'SEEDBench2', 'SEEDBench2_Plus', 'ScienceQA_VAL', 'ScienceQA_TEST',
+'MMT-Bench_ALL_MI', 'MMT-Bench_ALL', 'MMT-Bench_VAL_MI', 'MMT-Bench_VAL', 'AesBench_VAL',
+'AesBench_TEST', 'CCBench', 'AI2D_TEST', 'MMStar', 'RealWorldQA', 'MLLMGuard_DS', 'BLINK'
+```
+Check out the detail descriptions of these datasets: https://github.com/open-compass/VLMEvalKit
+
 
 > At the first time of running eval, a resource dataset will be downloaded: https://www.modelscope.cn/datasets/swift/evalscope_resource/files
 > If downloading fails, you can manually download the dataset to your local disk, please pay attention to the log of the `eval` command.
@@ -43,15 +69,15 @@ Evaluation supports the use of vLLM for acceleration. Here we demonstrate the ev
 ```shell
 # Original model (approximately half an hour on a single A100)
 CUDA_VISIBLE_DEVCIES=0 swift eval --model_type qwen2-7b-instruct \
-    --eval_dataset ARC_e --infer_backend vllm
+    --eval_dataset ARC_c --infer_backend vllm
 
 # After LoRA fine-tuning
 CUDA_VISIBLE_DEVICES=0 swift eval --ckpt_dir qwen2-7b-instruct/vx-xxx/checkpoint-xxx \
-    --eval_dataset ARC_e --infer_backend vllm \
+    --eval_dataset ARC_c --infer_backend vllm \
     --merge_lora true \
 ```
 
-You can refer to [here](./Command-line-parameters.md#eval-parameters) for the list of evaluation parameters.
+You can refer to [here](Command-line-parameters.mdval-parameters) for the list of evaluation parameters.
 
 Please pay attention: The eval result will be saved in {--eval_output_dir}/{--name}/{some-timestamp}, if you changed nothing, the default dir will be:
 ```text
@@ -67,7 +93,7 @@ CUDA_VISIBLE_DEVICES=0 swift deploy --model_type qwen2-7b-instruct
 
 # Evaluate using the API
 # If it is not a Swift deployment, you need to additionally pass in `--eval_is_chat_model true --model_type qwen2-7b-instruct`.
-swift eval --eval_url http://127.0.0.1:8000/v1 --eval_dataset ARC_e
+swift eval --eval_url http://127.0.0.1:8000/v1 --eval_dataset ARC_c
 
 # The same applies to the model after LoRA fine-tuning.
 ```

@@ -1,5 +1,5 @@
 # LLM Inference Documentation
-If you want to use vllm for inference acceleration, you can check out [VLLM Inference Acceleration and Deployment](VLLM-inference-acceleration-and-deployment.md#inference-acceleration)
+If you want to use vllm for inference acceleration, you can check out [VLLM Inference Acceleration and Deployment](../LLM/VLLM-inference-acceleration-and-deployment.md#inference-acceleration)
 
 ## Table of Contents
 - [Environment Preparation](#Environment-Preparation)
@@ -13,7 +13,7 @@ GPU devices: A10, 3090, V100, A100 are all supported.
 pip install 'ms-swift[llm]' -U
 
 # If you want to use models based on auto_gptq for inference.
-# Models using auto_gptq: `https://github.com/modelscope/swift/blob/main/docs/source/LLM/Supported Models and Datasets.md#Models`
+# Models using auto_gptq: `https://github.com/modelscope/swift/blob/main/docs/source/Instruction/Supported Models and Datasets.md#Models`
 # auto_gptq and cuda versions have a correspondence, please select the version according to `https://github.com/PanQiWei/AutoGPTQ#quick-installation`
 pip install auto_gptq -U
 
@@ -40,8 +40,9 @@ print(f'template_type: {template_type}')  # template_type: qwen
 
 kwargs = {}
 # kwargs['use_flash_attn'] = True  # use flash_attn
-
-model, tokenizer = get_model_tokenizer(model_type, model_kwargs={'device_map': 'auto'}, **kwargs)
+model_id_or_path = None
+model, tokenizer = get_model_tokenizer(model_type, model_id_or_path=model_id_or_path,
+                                       model_kwargs={'device_map': 'auto'}, **kwargs)
 # modify max_new_tokens
 model.generation_config.max_new_tokens = 128
 
@@ -176,8 +177,8 @@ from swift.utils import seed_everything
 model_type = ModelType.qwen_7b_chat
 template_type = get_default_template_type(model_type)
 print(f'template_type: {template_type}')  # template_type: qwen
-
-model, tokenizer = get_model_tokenizer(model_type, model_kwargs={'device_map': 'auto'})
+model_id_or_path = None
+model, tokenizer = get_model_tokenizer(model_type, model_id_or_path=model_id_or_path, model_kwargs={'device_map': 'auto'})
 
 template = get_template(template_type, tokenizer)
 seed_everything(42)
@@ -244,27 +245,28 @@ model, tokenizer = get_model_tokenizer(model_type, model_kwargs={'device_map': '
 
 template = get_template(template_type, tokenizer)
 seed_everything(42)
-query = tokenizer.from_list_format([
-    {'image': 'https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg'},
-    {'text': 'What is this?'},
-])
-response, history = inference(model, template, query)
+query = '<image>What is this'
+images = ['https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg']
+response, history = inference(model, template, query, images=images)
 print(f'query: {query}')
 print(f'response: {response}')
 query = 'Output the bounding box for the high-five'
-response, history = inference(model, template, query, history)
+response, history = inference(model, template, query, history, images=images)
 print(f'query: {query}')
 print(f'response: {response}')
 print(f'history: {history}')
+
+def _fetch_latest_picture(*args, **kwargs):
+    return images[0]
+tokenizer._fetch_latest_picture = _fetch_latest_picture
 image = tokenizer.draw_bbox_on_latest_picture(response, history)
 image.save('output_chat.jpg')
 """
-query: Picture 1:<img>https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg</img>
-What is this
-response: The image shows a woman playing with a dog, which appears to be a Labrador Retriever, on a beach.
+query: <image>What is this
+response: This is an image of a woman sitting on a beach next to a dog. The woman is holding a cell phone and the dog is raising its paw in front of her.
 query: Output the bounding box for the high-five
-response: <ref>High-five</ref><box>(523,513),(584,605)</box>
-history: [('Picture 1:<img>https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg</img>\nWhat is this', 'The image shows a woman playing with a dog, which appears to be a Labrador Retriever, on a beach.'), ('Output the bounding box for the high-five', '<ref>High-five</ref><box>(523,513),(584,605)</box>')]
+response: <ref>the high-five</ref><box>(529,506),(587,602)</box>
+history: [['<image>What is this', 'This is an image of a woman sitting on a beach next to a dog. The woman is holding a cell phone and the dog is raising its paw in front of her.'], ['Output the bounding box for the high-five', '<ref>the high-five</ref><box>(529,506),(587,602)</box>']]
 """
 ```
 
@@ -287,25 +289,22 @@ model, tokenizer = get_model_tokenizer(model_type, model_kwargs={'device_map': '
 template = get_template(template_type, tokenizer)
 
 seed_everything(42)
-query = tokenizer.from_list_format([
-    {'audio': 'https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-Audio/1272-128104-0000.flac'},
-    {'text': 'what does the person say?'},
-])
-response, history = inference(model, template, query)
+query = '<audio>what does the person say?'
+audios = ['https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-Audio/1272-128104-0000.flac']
+response, history = inference(model, template, query, audios=audios)
 print(f'query: {query}')
 print(f'response: {response}')
 query = 'Find the start time and end time of the word "middle classes'
-response, history = inference(model, template, query, history)
+response, history = inference(model, template, query, history, audios=audios)
 print(f'query: {query}')
 print(f'response: {response}')
 print(f'history: {history}')
-"""Out[0]
-query: Audio 1:<audio>https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-Audio/1272-128104-0000.flac</audio>
-what does the person say?
+"""
+query: <audio>what does the person say?
 response: The person says: "mister quilter is the apostle of the middle classes and we are glad to welcome his gospel".
 query: Find the start time and end time of the word "middle classes
 response: The word "middle classes" starts at <|2.33|> seconds and ends at <|3.26|> seconds.
-history: [('Audio 1:<audio>https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-Audio/1272-128104-0000.flac</audio>\nwhat does the person say?', 'The person says: "mister quilter is the apostle of the middle classes and we are glad to welcome his gospel".'), ('Find the start time and end time of the word "middle classes', 'The word "middle classes" starts at <|2.33|> seconds and ends at <|3.26|> seconds.')]
+history: [['<audio>what does the person say?', 'The person says: "mister quilter is the apostle of the middle classes and we are glad to welcome his gospel".'], ['Find the start time and end time of the word "middle classes', 'The word "middle classes" starts at <|2.33|> seconds and ends at <|3.26|> seconds.']]
 """
 ```
 
@@ -466,4 +465,4 @@ app_ui_main(app_ui_args)
 ```
 
 ### Fine-tuned Models
-To use the web-ui with fine-tuned models, you can check out the [LLM Fine-tuning Documentation](LLM-fine-tuning#fine-tuned-model)
+To use the web-ui with fine-tuned models, you can check out the [LLM Fine-tuning Documentation](LLM-fine-tuning.md#fine-tuned-model)

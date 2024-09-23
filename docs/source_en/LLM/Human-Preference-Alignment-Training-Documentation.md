@@ -9,7 +9,6 @@ This document provides training scripts for various human preference alignment a
 - [CPO](#cpo)
 - [ORPO](#orpo)
 - [SimPO](#simpo)
-- [Custom Data](#custom-data)
 
 ## Environment Setup
 ```bash
@@ -28,15 +27,14 @@ pip install -r requirements/llm.txt  -U
 Human preference alignment training typically requires data in the format $(x,y_w,y_l)$, where $x$ represents the model input, and $y_w,y_l$ represent the preferred and rejected answers according to human preference, such as ![dpo_data](../../resources/dpo_data.png)
 
 
-Data for the KTO algorithm is somewhat special, requiring only data in the format $(x,y,\text{label})$, where $x$ represents the model input, $y$ represents the model output, and the label indicates whether the answer aligns with human preferences
+Data for the KTO algorithm is somewhat special, requiring only data in the format $(x,y,\text{label})$ , where $x$ represents the model input, $y$ represents the model output, and the label indicates whether the answer aligns with human preferences
 
 For example, ![kto_data](../../resources/kto_data.png)
 
-KTO can also be trained using the first data format, see the KTO section for differences in training scripts.
 **Training Tips**:
 
 - If you are training a base model with history data, you need to specify a template that supports multi-turn dialogue (base models often do not support multi-turn dialogue); for this situation, we have set the default chatml template, but you can also use --model_type to select the template for the training model
-- For training with a custom dataset, please refer to [Customization](Customization.md)
+- For training with a custom dataset, please refer to [Customization](../Instruction/Customization.md)
 - The following training scripts use --lora_target_modules ALL to train all linear layers of the model, but you can set --lora_target_modules DEFAULT to only train the model's QKV matrices
 
 ## DPO
@@ -47,7 +45,7 @@ Hyperparameters
 
 It is recommended to train with the preferred answer part of the preference dataset before starting DPO training to ensure data fits the distribution requirements of the DPO algorithm.
 
-We also mix sft loss in the DPO loss to stabilize training; you can adjust the sft loss coefficient by setting the hyperparameter `sft_beta`, the default is 0.1
+We also mix sft loss in the DPO loss to stabilize training; you can adjust the sft loss coefficient by setting the hyperparameter `rpo_alpha`, the default is `1.`.
 
 For training script, we provide single card/multi-card device map/multi-card ddp versions, for brevity, only the single card version is given for subsequent algorithms.
 
@@ -59,7 +57,7 @@ swift rlhf \
     --rlhf_type dpo \
     --model_type  llama3-8b-instruct \
     --beta 0.1 \
-    --sft_beta 0.1 \
+    --rpo_alpha 0.1 \
     --sft_type  lora \
     --dataset shareai-llama3-dpo-zh-en-emoji \
     --num_train_epochs  2  \
@@ -78,7 +76,7 @@ swift rlhf \
     --rlhf_type dpo \
     --model_type  llama3-8b-instruct \
     --beta 0.1 \
-    --sft_beta 0.1 \
+    --rpo_alpha 0.1 \
     --sft_type  lora \
     --dataset shareai-llama3-dpo-zh-en-emoji \
     --num_train_epochs  2  \
@@ -92,13 +90,16 @@ swift rlhf \
 
 # DDP + MP
 # Memory usage: 4*24G
+nproc_per_node=2
+
 CUDA_VISIBLE_DEVICES=0,1,2,3 \
-NPROC_PER_NODE=2 \
+NPROC_PER_NODE=$nproc_per_node \
+MASTER_PORT=29500 \
 swift rlhf \
     --rlhf_type dpo \
     --model_type  llama3-8b-instruct \
     --beta 0.1 \
-    --sft_beta 0.1 \
+    --rpo_alpha 0.1 \
     --sft_type  lora \
     --dataset shareai-llama3-dpo-zh-en-emoji \
     --num_train_epochs  2  \

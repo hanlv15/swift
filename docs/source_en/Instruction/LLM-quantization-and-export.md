@@ -1,4 +1,4 @@
-# LLM Quantization Documentation
+# LLM Quantization and Export Documentation
 Swift supports the use of awq, gptq, bnb, hqq, and eetq technologies to quantize models. Among them, awq and gptq quantization technologies support vllm for accelerated inference, requiring the use of a calibration dataset for better quantization performance, but with slower quantization speed. On the other hand, bnb, hqq, and eetq do not require calibration data and have faster quantization speed. All five quantization methods support qlora fine-tuning.
 
 
@@ -29,24 +29,22 @@ pip install autoawq -U
 
 # Using GPTQ quantization:
 # Auto_GPTQ and CUDA versions have a corresponding relationship, please select the version according to `https://github.com/PanQiWei/AutoGPTQ#quick-installation`
-pip install auto_gptq -U
+pip install auto_gptq optimum -U
 
 # Using bnb quantization:
 pip install bitsandbytes -U
 
 # Using hqq quantization:
-# Requires transformers version >4.40, install from source
-pip install git+https://github.com/huggingface/transformers pip install hqq
-# If compatibility with training is desired, install peft from source
-pip install git+https://github.com/huggingface/peft.git
+# pip install transformers>=4.41
+pip install hqq
 
 # Using eetq quantization:
-# Requires transformers version >4.40, install from source
-pip install git+https://github.com/huggingface/transformers
-# See https://github.com/NetEase-FuXi/EETQ for reference
-git clone https://github.com/NetEase-FuXi/EETQ.git cd EETQ/ git submodule update --init --recursive pip install .
-# If compatibility with training is desired, install peft from source
-pip install git+https://github.com/huggingface/peft.git
+# pip install transformers>=4.41
+# 参考https://github.com/NetEase-FuXi/EETQ
+git clone https://github.com/NetEase-FuXi/EETQ.git
+cd EETQ/
+git submodule update --init --recursive
+pip install .
 
 # Environment alignment (usually not needed. If you encounter errors, you can run the code below, the repository uses the latest environment for testing)
 pip install -r requirements/framework.txt -U

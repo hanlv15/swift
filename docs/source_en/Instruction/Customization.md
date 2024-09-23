@@ -58,7 +58,7 @@ system,query,response
 ```jsonl
 {"system": "00000", "query": "11111", "response": "22222"}
 {"query": "aaaaa", "response": "bbbbb"}
-{"query": "AAAAA", "response": "BBBBB"}
+{"system": "00001", "query": "AAAAA", "response": "BBBBB"}
 ```
 
 Multi-Round Dialogue
@@ -66,13 +66,13 @@ Multi-Round Dialogue
 ```jsonl
 {"system": "00000", "query": "55555", "response": "66666"}
 {"query": "eeeee", "response": "fffff", "history": []}
-{"query": "EEEEE", "response": "FFFFF", "history": [["AAAAA", "BBBBB"], ["CCCCC", "DDDDD"]]}
+{"system": "00001", "query": "EEEEE", "response": "FFFFF", "history": [["query1", "response1"], ["query2", "response2"]]}
 ```
 
 ```json
 [{"system": "00000", "query": "55555", "response": "66666"},
 {"query": "eeeee", "response": "fffff", "history": []},
-{"query": "EEEEE", "response": "FFFFF", "history": [["AAAAA", "BBBBB"], ["CCCCC", "DDDDD"]]}]
+{"system": "00001", "query": "EEEEE", "response": "FFFFF", "history": [["query1", "response1"], ["query2", "response2"]]}]
 ```
 
 **Format 2:**
@@ -96,7 +96,7 @@ Multi-Round Dialogue
 ```jsonl
 {"system": "00000", "conversation": [{"human": "11111", "assistant": "22222"}]}
 {"conversation": [{"human": "aaaaa", "assistant": "bbbbb"}]}
-{"conversation": [{"human": "AAAAA", "assistant": "BBBBB"}, {"human": "CCCCC", "assistant": "DDDDD"}, {"human": "EEEEE", "assistant": "FFFFF"}]}
+{"system": "00001", "conversation": [{"human": "AAAAA", "assistant": "BBBBB"}, {"human": "CCCCC", "assistant": "DDDDD"}, {"human": "EEEEE", "assistant": "FFFFF"}]}
 ```
 
 **Format 5:**
@@ -108,13 +108,47 @@ system,instruction,input,output
 00002,AAAAA,BBBBB,CCCCC
 ```
 
-**Human preference alignment (DPO/ORPO/SimPO/CPO)**
+**Extra pre-training format:**
+```jsonl
+{"text": "11111"}
+{"text": "aaaaa"}
+{"text": "AAAAA"}
+```
+
+
+**Human preference alignment:**
+
+Language model (DPO/ORPO/SimPO/CPO)
+```jsonl
+{"system": "123", "query": "11111", "response": "22222", "rejected_response": "33333", "history": [["query1", "response1"], ["query2", "response2"]]}
+{"system": "123", "query": "aaaaa", "response": "bbbbb", "rejected_response": "ccccc", "history": [["query1", "response1"], ["query2", "response2"]]}
+{"system": "123", "query": "AAAAA", "response": "BBBBB", "rejected_response": "CCCCC", "history": [["query1", "response1"], ["query2", "response2"]]}
+```
+- system and history are optional.
+
+Language model (KTO)
+```jsonl
+{"query": "11111", "response": "22222", "label": true}
+{"query": "aaaaa", "response": "bbbbb", "label": false}
+{"system": "123", "query": "AAAAA", "response": "BBBBB", "label": true, "history": [["query1", "response1"], ["query2", "response2"]]}
+```
+Note:  `label` needs to be of type bool, not str.
+
+- system and history are optional.
+
+
+Vision MLLM (DPO/ORPO/SimPO/CPO)
 
 ```jsonl
-{"query": "11111", "response": "22222", "rejected_response": "33333", "history": [["AAAAA", "BBBBB"], ["CCCCC", "DDDDD"]]}
-{"query": "aaaaa", "response": "bbbbb", "rejected_response": "ccccc", "history": [["AAAAA", "BBBBB"], ["CCCCC", "DDDDD"]]}
-{"query": "AAAAA", "response": "BBBBB", "rejected_response": "CCCCC", "history": [["AAAAA", "BBBBB"], ["CCCCC", "DDDDD"]]}
+{"system": "123", "query": "11111", "response": "22222", "rejected_response": "33333", "images": ["image_path"], "history": [["query1", "response1"], ["query2", "response2"]]}
+{"system": "123", "query": "aaaaa", "response": "bbbbb", "rejected_response": "ccccc", "images": ["image_path"], "history": [["query1", "response1"], ["query2", "response2"]]}
+{"system": "123", "query": "AAAAA", "response": "BBBBB", "rejected_response": "CCCCC", "images": ["image_path"], "history": [["query1", "response1"], ["query2", "response2"]]}
 ```
+
+- different models have varying support for the number of images. Please refer to the corresponding best practices document for each model.
+
+- system and history are optional.
+
 
 **Tool-Calling Agent**
 
@@ -131,7 +165,7 @@ Format 2
 {"tools":"{API_LIST}","messages": [{"role": "user", "content": "aaaaa"}, {"role": "assistant", "content": "bbbbb"}, {"role": "tool", "content": "ccccc"}, {"role": "assistant", "content": "ddddd"}]}
 {"tools":"{API_LIST}","messages": [{"role": "user", "content": "AAAAA"}, {"role": "assistant", "content": "BBBBB"}, {"role": "tool", "content": "CCCCC"}, {"role": "assistant", "content": "DDDDD"}]}
 ```
-For the tools format, please refer to [Agent-Deoloyment Document](./Agent-deployment-best-practice.md) You can choose the corresponding prompt by setting `--tools_prompt`.
+For the tools format, please refer to [Agent-Deoloyment Document](../LLM/Agent-deployment-best-practice.md) You can choose the corresponding prompt by setting `--tools_prompt`.
 
 The `tool` field represents the return result of the tool calling.
 
@@ -241,10 +275,10 @@ The following is an example of **custom models**. The complete py file can be vi
 
 ```python
 from typing import Any, Dict
+import torch
 
 from modelscope import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 
-from torch import dtype as Dtype
 from transformers.utils.versions import require_version
 
 from swift.llm import LoRATM, TemplateType, get_model_tokenizer, register_model
@@ -273,7 +307,7 @@ class CustomTemplateType:
                 'TigerResearch/tigerbot-13b-chat-v4', LoRATM.llama,
                 CustomTemplateType.tigerbot)
 def get_tigerbot_model_tokenizer(model_dir: str,
-                                 torch_dtype: Dtype,
+                                 torch_dtype: torch.dtype,
                                  model_kwargs: Dict[str, Any],
                                  load_model: bool = True,
                                  **kwargs):
