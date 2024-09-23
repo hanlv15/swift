@@ -432,7 +432,6 @@ def trainer_train(args,
         trainer_kwargs['compute_metrics'] = compute_metrics
         trainer_kwargs['preprocess_logits_for_metrics'] = preprocess_logits_for_metrics
 
-    training_args.full_determinism = True
     trainer = trainer_cls(
         model=model,
         args=training_args,

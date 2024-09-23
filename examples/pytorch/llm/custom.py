@@ -95,7 +95,7 @@ def get_tigerbot_model_tokenizer(model_dir: str,
                 '/home/css/models/Orca-2-13b', LoRATM.llama2,
                 CustomTemplateType.orca2)
 def get_orca2_model_tokenizer(model_dir: str,
-                                 torch_dtype: Dtype,
+                                 torch_dtype,
                                  model_kwargs: Dict[str, Any],
                                  load_model: bool = True,
                                  **kwargs):
@@ -165,7 +165,7 @@ def get_orca2_model_tokenizer(model_dir: str,
     tags=['general'])
 def get_model_tokenizer(
     model_dir: str,
-    torch_dtype: Dtype, 
+    torch_dtype: torch.dtype, 
     model_kwargs: Dict[str, Any], 
     load_model: bool = True,
     model_config=None,
@@ -215,7 +215,7 @@ def get_model_tokenizer(
                 function_kwargs={'is_awq': True})
 def get_model_tokenizer_llama(
     model_dir: str,
-    torch_dtype: Dtype,
+    torch_dtype: torch.dtype,
     model_kwargs: Dict[str, Any],
     load_model: bool = True,
     **kwargs
@@ -236,7 +236,7 @@ def get_model_tokenizer_llama(
     support_gradient_checkpointing=False,
     tags=['general'])
 def get_model_tokenizer_phi_3_small(model_dir: str,
-                                   torch_dtype: Dtype,
+                                   torch_dtype: torch.dtype,
                                    model_kwargs: Dict[str, Any],
                                    load_model: bool = True,
                                    model_config=None,
