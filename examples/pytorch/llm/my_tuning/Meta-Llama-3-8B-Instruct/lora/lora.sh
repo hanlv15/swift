@@ -49,7 +49,7 @@ python llm_sft.py \
     --template_type _llama3 \
     --dtype AUTO \
     --add_output_dir_suffix false \
-    --output_dir output/$dataset_name/Llama-3-8B-Instruct/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio-epochs=$num_epochs/$sft_type-r=$lora_rank/"$output_name" \
+    --output_dir output/$dataset_name/Llama-3-8B-Instruct/$with_or_without_info/data$data_version-split=$split_type-ratio=$train_ratio/$sft_type-r=$lora_rank/"$output_name" \
     --dataset $custom_train_dataset_path#-1 \
     --dataset_test_ratio 0 \
     --num_train_epochs $num_epochs \
@@ -71,5 +71,6 @@ python llm_sft.py \
     --save_total_limit 1 \
     --logging_steps 10 \
     --use_flash_attn false \
+    --full_determinism true \
     --do_sample false
 

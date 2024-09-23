@@ -19,16 +19,16 @@ DEVICE = "0"
 #     run_dora_with_info_or_not(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, with_info, data_version="2")
 
 ############################
-for lr in ["1e-4"]: #  covmis: 9.5e-5 1.05e-4
-    run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, data_version="1")
+# for lr in ["1e-4"]: #  covmis: 9.5e-5 1.05e-4
+#     run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, data_version="1")
 
 # for lr in ["9e-5", "1e-4", "1.1e-4", "1.2e-4"]:
 #     run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.liar2, DEVICE, data_version="1a")
 #     run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, data_version="1a")
 
 
-# for lr in ["1e-4"]:
-#     run_lora(SFTModels.llama_3_8b_instruct, lr, DatasetName.liar2, DEVICE, data_version="1")
+for lr in ["1e-4"]:
+    run_lora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, data_version="1")
 
 # for lr in ["1e-5", "3e-5", ]:
 #     run_rslora(SFTModels.llama_3_8b_instruct, lr, DEVICE)

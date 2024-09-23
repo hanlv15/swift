@@ -80,5 +80,6 @@ torchrun \
     --save_total_limit 1 \
     --logging_steps 10 \
     --use_flash_attn false \
+    --full_determinism true \
     --do_sample false
 
