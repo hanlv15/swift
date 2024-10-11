@@ -1,5 +1,5 @@
 ckpt_list = [
-    "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/covmis/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/dora-r=8/lr=9e-5-20240626-01:48:13/checkpoint-609",
+    "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/covmis/version_paper/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/dora-r=8/lr=1e-4-20240626-06:24:36/checkpoint-609",
 ]
 
 path = "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/covmis/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0/dora-r=8"
@@ -8,7 +8,7 @@ path = ""
 
 
 data_dir = ""
-data_dir = "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/my_data/covmis/with_llama3_info/brave/train_valid_split/8:2/timeline_data1/test_data1_2024-09-11.jsonl"
+# data_dir = "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/my_data/covmis/with_llama3_info/brave/train_valid_split/8:2/timeline_data1/test_data1_2024-09-11.jsonl"
 
 data_type = "test" # test, valid
 
