@@ -21,8 +21,8 @@ from swift.utils import (append_to_jsonl, check_json_format, compute_acc_metrics
 from .accelerator import ta_accelerate
 from .tuner import prepare_model
 from .utils import (TEMPLATE_MAPPING, LazyLLMDataset, PtArguments, RLHFArguments, SftArguments, Template, dataset_map,
-                    dynamic_vit_gradient_checkpointing, get_dataset, get_model_tokenizer, get_template, get_time_info,
-                    print_example, set_generation_config, sort_by_max_length, stat_dataset)
+                    deep_getattr, dynamic_vit_gradient_checkpointing, get_dataset, get_mllm_arch, get_model_tokenizer,
+                    get_template, get_time_info, print_example, set_generation_config, sort_by_max_length, stat_dataset)
 
 logger = get_logger()
 
@@ -53,6 +53,13 @@ def _get_train_val_dataset(args: SftArguments) -> Tuple[HfDataset, Optional[HfDa
             streaming_buffer_size=args.streaming_buffer_size)
 
     train_dataset, val_dataset = args._handle_dataset_compat(train_dataset, val_dataset)
+    if args.train_type == 'ppo':  # Remove response columns from dataset
+        existing_columns = list(next(iter(train_dataset)).keys())
+        columns_to_remove = [col for col in ['response', 'rejected_response'] if col in existing_columns]
+        train_dataset = train_dataset.map(remove_columns=columns_to_remove)
+        logger.info(f'remove columns: {columns_to_remove} in PPO')
+        if val_dataset is not None:
+            val_dataset = val_dataset.map(remove_columns=columns_to_remove)
     # The random shuffling of the training set occurs in the dataloader of the trainer.
     logger.info(f'train_dataset: {train_dataset}')
     logger.info(f'val_dataset: {val_dataset}')
@@ -248,11 +255,24 @@ def prepare_model_template_train(args, msg: Optional[Dict[str, Any]] = None):
         label_names = find_labels(model)
         return_loss = can_return_loss(model)
         model = patch_acc_model(model, args)
-        model.label_names = label_names
-        model.return_loss = return_loss
 
     if args.is_multimodal and args.gradient_checkpointing and args.vit_use_gc:
         dynamic_vit_gradient_checkpointing(model, args.model_type)
+
+    if args.gradient_checkpointing:
+        model.config.use_cache = False  # fix transformers==4.36
+        logger.info('Setting model.config.use_cache: False')
+        model.enable_input_require_grads()
+        mllm_arch = get_mllm_arch(args.model_type)
+        if mllm_arch is not None:
+            for vision_tower_name in mllm_arch.vision_tower:
+                vision_tower = deep_getattr(model, vision_tower_name)
+                if hasattr(vision_tower, 'enable_input_require_grads'):
+                    try:
+                        vision_tower.enable_input_require_grads()
+                    except NotImplementedError:
+                        pass
+
     # Preparing LoRA
     model, callbacks = prepare_model(model, args)
 
@@ -262,11 +282,6 @@ def prepare_model_template_train(args, msg: Optional[Dict[str, Any]] = None):
     logger.info(model_info)
     if isinstance(msg, dict):
         msg['model_info'] = model_info
-
-    if args.gradient_checkpointing:
-        model.config.use_cache = False  # fix transformers==4.36
-        logger.info('Setting model.config.use_cache: False')
-        model.enable_input_require_grads()
 
     if use_torchacc():
         model.config.use_cache = False
@@ -279,6 +294,8 @@ def prepare_model_template_train(args, msg: Optional[Dict[str, Any]] = None):
             args.fp16,
             gradient_checkpointing=True,
             fsdp_flatten_parameters=(args.sft_type == 'full'))
+        model.label_names = label_names
+        model.return_loss = return_loss
 
     template_kwargs = {}
     template_kwargs['use_loss_scale'] = args.use_loss_scale
@@ -312,7 +329,7 @@ def prepare_model_template_train(args, msg: Optional[Dict[str, Any]] = None):
 
     # ref_model
     ref_model = None
-    if not args.ref_model_free and (args.ref_model_type or args.sft_type == 'full'):
+    if not args.ref_model_free and (args.ref_model_type or args.sft_type == 'full' or args.rlhf_type == 'ppo'):
         if args.ref_model_type:
             kwargs['model_id_or_path'] = args.ref_model_id_or_path
             kwargs['revision'] = args.ref_model_revision
@@ -400,14 +417,18 @@ def prepare_dataset(args, template: Template, msg: Optional[Dict[str, Any]] = No
     return train_dataset, val_dataset
 
 
-def trainer_train(args,
-                  model,
-                  template,
-                  train_dataset,
-                  val_dataset,
-                  callbacks=None,
-                  msg=None,
-                  ref_model=None) -> Dict[str, Any]:
+def trainer_train(
+    args,
+    model,
+    template,
+    train_dataset,
+    val_dataset,
+    callbacks=None,
+    msg=None,
+    ref_model=None,
+    reward_model=None,
+    value_model=None,
+) -> Dict[str, Any]:
     if msg is None:
         msg = {}
     training_args = args.training_args
@@ -442,7 +463,9 @@ def trainer_train(args,
             compute_acc_metrics, acc_strategy=args.acc_strategy, is_encoder_decoder=is_encoder_decoder)
         trainer_kwargs['compute_metrics'] = compute_metrics
         trainer_kwargs['preprocess_logits_for_metrics'] = preprocess_logits_for_metrics
-
+    if args.train_type == 'ppo':
+        trainer_kwargs['reward_model'] = reward_model
+        trainer_kwargs['value_model'] = value_model
     trainer = trainer_cls(
         model=model,
         args=training_args,

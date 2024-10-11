@@ -132,6 +132,8 @@ output/
 my_data/
 benchmarks/
 eval_outputs/
+transformers/
+vlmeval/
 
 # Pytorch
 *.pth
