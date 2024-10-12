@@ -432,14 +432,14 @@ def save_search_llm_tmp(x, dataset, data_type, search_date):
     
 def update_train_search_llm(
         model_name, get_resp_list, search_engine, dataset, prior_knowledge_version,
-        data_type, search_date, K=5, sort=False, use_random=False):
+        data_type, search_date, K=5, sort=False, use_random=False, wsc=False):
     data_llm_tmp = []
     # len_data_search_llm = len(data_search_llm)
     
     if dataset == "covmis":
         data = covmis.load_data(data_type)
-        data_search =  covmis.load_data_search(data_type, search_date, search_engine=search_engine)    
-        data_llm =  covmis.load_data_llm(data_type, search_date, search_engine=search_engine)    
+        data_search =  covmis.load_data_search(data_type, search_date, search_engine=search_engine)
+        data_llm =  covmis.load_data_llm(data_type, search_date, search_engine=search_engine)
         claim_key = 'claim'
         claimant_key = 'None'
         # save_search = lambda data: covmis.save_train_search(
@@ -457,11 +457,17 @@ def update_train_search_llm(
 
     prompt_list = []
     id_list = []
+
+    data_llm_key = f"prior_knowledge_{model_name}_v{prior_knowledge_version}_K={K}"
+    if wsc:
+        claim_key += '_corrected'
+        data_llm_key += '_wsc'
+
     for i in range(len(data_search)):
         if data[i]["id"] != data_search[i]["id"]:
             raise Exception("data_train 与 data 的 id 不匹配！")
         
-        if data_llm[i].get(f"prior_knowledge_{model_name}_v{prior_knowledge_version}_K={K}") is not None:
+        if data_llm[i].get(data_llm_key) is not None:
             continue
 
         if use_random:
@@ -499,7 +505,7 @@ def update_train_search_llm(
 
     i_resp = 0
     for i in range(len(data_search)):
-        if data_llm[i].get(f"prior_knowledge_{model_name}_v{prior_knowledge_version}_K={K}") is not None:
+        if data_llm[i].get(data_llm_key) is not None:
             continue
         
         if id_list[i_resp] != data_search[i]["id"]:

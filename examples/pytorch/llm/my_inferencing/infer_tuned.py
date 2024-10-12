@@ -25,6 +25,7 @@ from swift.llm import (
     get_model_tokenizer, get_template, get_vllm_engine, 
     inference_vllm, inference, VllmGenerationConfig, LoRARequest
 )
+
 from swift.tuners import Swift
 from custom import CustomModelType, CustomTemplateType
 import evaluation
@@ -48,12 +49,11 @@ def get_engine_config_request(ckpt_dir):
         #     subprocess.run(["python", "../llm_export.py", "--ckpt", ckpt_dir, "--to_peft_format", "true"])
         # ckpt_dir = ckpt_dir + '-peft'
 
-
     lora_request = LoRARequest('default-lora', 1, ckpt_dir)
 
     model_type, template_type = sft_args["model_type"], sft_args["template_type"]
     vllm_engine = get_vllm_engine(
-        model_type, 
+        model_type,
         tensor_parallel_size=1,
         max_model_len=4096,
         enable_lora=True,
