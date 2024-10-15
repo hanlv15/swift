@@ -22,8 +22,8 @@ DEVICE = "0"
 # for lr in ["1e-4"]: #  covmis: 9.5e-5 1.05e-4
 #     run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, data_version="1")
 
-for lr in ["1e-4", "8e-5", "7e-5", ]:
-    run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, data_version="1")
+for lr in ["7e-5", "1.7e-4"]:
+    run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis_wsc, DEVICE, data_version="1")
 
 # for lr in ["1e-4"]:
 #     run_lora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, data_version="1")

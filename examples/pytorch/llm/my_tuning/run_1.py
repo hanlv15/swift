@@ -14,8 +14,8 @@ import time
 #     run_dora_with_info_or_not(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, with_info, data_version="2")
 
 ############################
-for lr in ["9e-5", "1.1e-4", "1.3e-4", ]:
-    run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, data_version="1")
+for lr in ["2e-4", "1.8e-4"]:
+    run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis_wsc, DEVICE, data_version="1")
 
 # for lr in []:
 #     run_lora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, data_version="1")

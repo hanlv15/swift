@@ -21,6 +21,7 @@ class SFTModels:
 class DatasetName:
 	covmis = "covmis"
 	liar2 = "liar2"
+	covmis_wsc = "covmis_wsc"
 
 
 # openchat 3.5

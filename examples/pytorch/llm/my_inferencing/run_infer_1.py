@@ -42,8 +42,10 @@ for path in files:
 
     if len(path) > 0:
         for file in os.listdir(path):
-            ckpt_dir = run_infer_base.get_ckpts(os.path.join(path, file))[0]
-            ckpt_list.append(ckpt_dir)
+            ckpts = run_infer_base.get_ckpts(os.path.join(path, file))
+            if len(ckpts) == 0:
+                continue
+            ckpt_list.append(ckpts[0])
 
     # 使用subprocess运行Python文件
     for ckpt in ckpt_list:

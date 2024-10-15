@@ -202,7 +202,7 @@ def cal_metric_single_llm(
             search_date = data_dir[-16:-6]
         # split_type = get_split_type(data_dir)
     
-    assert dataset_name in ["liar2", "covmis"], "Error dataset name!!"
+    assert dataset_name in ["liar2", "covmis", "liar2_wsc", "covmis_wsc"], "Error dataset name!!"
 
 
     data = []

@@ -13,7 +13,7 @@ files = []
 
 # 获取当前目录下的所有文件
 for base_dir in [
-    '/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/covmis/Llama-3-8B-Instruct/with_info/data2-split=8:2-ratio=1.0',
+    '/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/output/covmis_wsc/Llama-3-8B-Instruct/with_llama3_info/brave/data1-split=8:2-ratio=1.0',
 ]:
     files.extend([os.path.join(base_dir, file) for file in os.listdir(base_dir)])
 
@@ -31,7 +31,7 @@ for path in files:
     data_dir = ""
     # data_dir = "/home/hanlv/workspace/code/research/infodemic/LLM/swift/examples/pytorch/llm/my_data/liar2/with_llama3_info/brave/train_valid_split/8:1:1/test_data1.jsonl"
 
-    data_type = "test" # test, valid
+    data_type = "valid" # test, valid
 
     # 要运行的Python文件的路径
     if len(ckpt_list) == 0 and len(path) == 0:
@@ -41,8 +41,10 @@ for path in files:
 
     if len(path) > 0:
         for file in os.listdir(path):
-            ckpt_dir = run_infer_base.get_ckpts(os.path.join(path, file))[0]
-            ckpt_list.append(ckpt_dir)
+            ckpts = run_infer_base.get_ckpts(os.path.join(path, file))
+            if len(ckpts) == 0:
+                continue
+            ckpt_list.append(ckpts[0])
 
     # 使用subprocess运行Python文件
     for ckpt in ckpt_list:

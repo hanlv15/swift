@@ -4,8 +4,8 @@ from run_base import SFTModels, DatasetName, run_lora, run_vera, run_dora, run_p
 DEVICE = "2"
 
 # Llama-3
-for lr in ["1.5e-4", "1.2e-4", "1.4e-4"]:
-    run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis, DEVICE, data_version="1")
+for lr in ["1.6e-4", "1.9e-4"]:
+    run_dora(SFTModels.llama_3_8b_instruct, lr, DatasetName.covmis_wsc, DEVICE, data_version="1")
 
 # for lr in ["1.1e-4"]:
 #     run_lora(SFTModels.llama_3_8b_instruct, lr, DEVICE, data_version="3")

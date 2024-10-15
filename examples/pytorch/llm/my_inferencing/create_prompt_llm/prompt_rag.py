@@ -462,6 +462,7 @@ def update_train_search_llm(
     if wsc:
         claim_key += '_corrected'
         data_llm_key += '_wsc'
+        dataset += 'wsc'
 
     for i in range(len(data_search)):
         if data[i]["id"] != data_search[i]["id"]:
